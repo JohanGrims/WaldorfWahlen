@@ -1,5 +1,4 @@
 # WaldorfWahlen
----
 
 ## Beschreibung
 
@@ -10,11 +9,8 @@ WaldorfWahlen ist eine Webanwendung, die es der Waldorfschule Potsdam ermöglich
 ## Funktionalitäten
 
 - **Benutzerregistrierung und -anmeldung:** Schülerinnen und Schüler können sich mit ihren Schulzugangsdaten anmelden und ihre Teilnahme an Projekten verwalten.
-  
 - **Projektauswahl:** Schülerinnen und Schüler können aus einer Liste von verfügbaren Projekten auswählen und ihre Präferenzen angeben.
-  
 - **Administrative Funktionen:** Lehrkräfte und Administratoren haben Zugriff auf ein Dashboard, über das sie Projekte erstellen, bearbeiten und verwalten können.
-  
 - **Auswertung:** Die Anwendung bietet Möglichkeiten zur Auswertung der Wahlen und zur Zuweisung von Schülerinnen und Schülern zu den entsprechenden Projekten.
 
 ---
@@ -22,7 +18,6 @@ WaldorfWahlen ist eine Webanwendung, die es der Waldorfschule Potsdam ermöglich
 ## Technologien
 
 - **Frontend:** ReactJS, Vite
-  
 - **Backend / Datenbank:** Firebase
 
 ---
@@ -33,3 +28,4 @@ WaldorfWahlen ist eine Webanwendung, die es der Waldorfschule Potsdam ermöglich
 
    ```bash
    git clone https://github.com/dein-repository.git
+   ```
