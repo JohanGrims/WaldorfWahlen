@@ -1,6 +1,6 @@
 # WaldorfWahlen
 
-[https://waldorfwahlen.web.app](Internetauftritt)
+[Internetauftritt](https://waldorfwahlen.web.app)
 
 ## Beschreibung
 
