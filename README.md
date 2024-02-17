@@ -43,3 +43,9 @@ WaldorfWahlen ist eine Webanwendung, die es der Waldorfschule Potsdam ermöglich
    ```bash
    npm run dev
    ```
+
+---
+
+## Autor
+
+WaldorfWahlen wurde von @JohanGrims entwickelt.
