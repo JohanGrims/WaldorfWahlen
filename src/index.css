@@ -83,5 +83,29 @@ h1 {
   }
   .button {
     background-color: #f9f9f9;
+    color: gray;
+  }
+  .button:hover {
+    background-color: white;
+    color: black;
+  }
+  .button.disabled {
+    background-color: #5a5a5a;
+    cursor: default;
+    color: black;
+  }
+  .button.disabled:hover {
+    border-color: #5a5a5a;
+  }
+  .button.active {
+    background-color: #f89e23;
+    cursor: default;
+    color: black;
+  }
+  .button.active:hover {
+    border-color: #f89e23;
+  }
+  input.button {
+    color: black;
   }
 }
