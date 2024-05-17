@@ -1,0 +1,238 @@
+:root {
+  font-family: -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI",
+    Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji",
+    "Segoe UI Symbol";
+  line-height: 1.5;
+  font-weight: 400;
+
+  color-scheme: light;
+  color: black;
+  background-color: white;
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+
+  scroll-behavior: smooth;
+  scroll-padding-top: 10px;
+}
+
+.wrapper {
+  max-width: 100%;
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+}
+
+.logo {
+  margin: 10px;
+  width: 100px;
+}
+
+a {
+  text-decoration: none;
+  color: #1b4485;
+  font-weight: bold;
+}
+
+a:hover {
+  color: #f89e24;
+}
+
+h3 {
+  font-weight: 100;
+}
+
+.two-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+input {
+  width: 100%;
+  outline: none;
+  border: 1px solid #f89e24;
+  border-radius: 4px;
+  font-size: 20px;
+}
+
+h1 {
+  text-align: center;
+}
+.vote {
+  width: 100%;
+  max-width: 500px;
+}
+
+body {
+  font-family: Arial, sans-serif;
+  background-color: #f4f4f9;
+  min-height: 100dvh;
+  margin: 0;
+  padding: 0;
+}
+
+.vote {
+  width: 600px;
+  max-width: 100%;
+  margin: 20px auto;
+  padding: 20px;
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+.vote h1 {
+  font-size: 24px;
+  margin-bottom: 20px;
+}
+
+.label {
+  display: block;
+  font-weight: bold;
+  margin-bottom: 5px;
+}
+
+input {
+  width: calc(100% - 20px);
+  padding: 10px;
+  margin-bottom: 15px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+input:hover {
+  border-color: #1b4485;
+}
+.options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.option {
+  flex: 1 1 45%; /* Nimmt 45% der Breite des Containers, sodass zwei in eine Zeile passen */
+  background-color: #f9f9f9;
+  border: 2px solid #e0e0e0;
+  border-radius: 4px;
+  padding: 10px;
+  cursor: pointer;
+  transition: background-color 0.3s, border-color 0.3s;
+  box-sizing: border-box;
+}
+
+.option:hover {
+  border-color: #1b4485;
+}
+
+.option.active {
+  background-color: #fff1dd;
+  border-color: #f89e24;
+}
+
+.option.disabled {
+  background-color: #d4d4d4;
+  border-color: #ccc;
+  cursor: not-allowed;
+}
+
+.option .title {
+  font-size: 20px;
+  font-weight: bold;
+}
+
+.option .teacher {
+  font-size: 14px;
+}
+
+.option .description {
+  font-size: 14px;
+  margin-top: 10px;
+}
+
+.option .max {
+  font-size: 12px;
+  font-style: italic;
+}
+
+button {
+  width: 100%;
+  padding: 10px;
+  background-color: #1b4485;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+  font-size: 20px;
+}
+
+button:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+button:not(:disabled):hover {
+  background-color: #f89e24;
+}
+
+@media only screen and (max-width: 600px) {
+  .vote {
+    width: 100%;
+    margin: 0px;
+  }
+  .option {
+    flex: 1 1 100%;
+  }
+}
+
+.credits {
+  font-size: 14px;
+}
+
+.login {
+  width: 50%;
+}
+
+.delete-button {
+  width: 30px;
+  margin: 0px;
+  padding: 0px;
+  height: 100%;
+  background-color: transparent;
+  color: black;
+  font-size: 30px;
+}
+
+.extrafield {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.extrafield input {
+  margin: 0px;
+}
+
+.option.nohover {
+  border: none;
+  cursor: default;
+}
+.option.nohover:hover {
+  border: none;
+}
+
+.admin {
+  display: flex;
+  padding: 20px;
+}
+
+.secondary {
+  margin-top: 10px;
+  display: block;
+  width: 100%;
+  text-align: center;
+}

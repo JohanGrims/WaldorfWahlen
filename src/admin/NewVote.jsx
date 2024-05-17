@@ -99,28 +99,28 @@ export default function NewVote() {
         className="button"
         placeholder="Anzahl der Wahlen"
         type="number"
+        min={1}
+        max={10}
         value={selectCount}
         onChange={(e) => setSelectCount(e.target.value)}
       />
       <p />
       {extraFields.map((e, i) => (
-        <>
+        <div className="extrafield">
           <input
-            className="button"
             value={e}
-            style={{ width: "140px" }}
             onChange={(e) => handleInputChange(i, e.target.value)}
-            placeholder="Extrafeld"
+            placeholder="z.B. Musikinstrument"
           />
           <button
             style={{ marginLeft: "4px" }}
             onClick={() => removeItem(i)}
-            className="button"
+            className="delete-button"
           >
             ×
           </button>
           <p />
-        </>
+        </div>
       ))}
       <button
         className="button"
@@ -133,21 +133,16 @@ export default function NewVote() {
 
       {options.map((e) => (
         <>
-          <div className="button">
-            <h2>
-              {e.title}
-              <br />
-              <i>{e.teacher}</i>
-            </h2>
-            <br />
-            {e.description}
-            <br />
-            <i>max. {e.max} Schüler</i>
+          <div className={`option disabled`}>
+            <div className="title">{e.title}</div>
+            <div className="teacher">{e.teacher}</div>
+            <div className="description">{e.description}</div>
+            <div className="max">max. {e.max} SchülerInnen</div>
           </div>
           <br />
         </>
       ))}
-      <div className="button active">
+      <div className="option active nohover">
         <h3>Neu</h3>
         <input
           className="button"

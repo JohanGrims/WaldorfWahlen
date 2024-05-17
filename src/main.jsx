@@ -9,7 +9,8 @@ import Submitted from "./Submitted.jsx";
 import Vote from "./Vote.jsx";
 import Overview from "./admin/Overview.jsx";
 import VoteDetail from "./admin/VoteDetail.jsx";
-import "./index.css";
+// import "./index.css";
+import "./styles.css";
 
 const router = createBrowserRouter([
   {
@@ -48,5 +49,7 @@ const router = createBrowserRouter([
 ]);
 
 ReactDOM.createRoot(document.getElementById("root")).render(
-  <RouterProvider router={router} />
+  <div className="wrapper">
+    <RouterProvider router={router} />
+  </div>
 );

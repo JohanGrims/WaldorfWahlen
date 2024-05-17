@@ -243,7 +243,7 @@ console.log(options)
   }
 
   return (
-    <div style={{ display: "flex" }}>
+    <div className="admin">
       <div style={{ width: "60%" }}>
         <h2>{title}</h2>
         {}
@@ -256,9 +256,13 @@ console.log(options)
         </button>{" "}
         {!active && (
           <>
-            <b style={{ cursor: "pointer" }} onClick={activate}>
-              {"\u{21BA}"}
-            </b>
+            <a
+              className="secondary"
+              style={{ cursor: "pointer" }}
+              onClick={activate}
+            >
+              {"Umfrage erneut aktivieren"}
+            </a>
             <p />
             {!results ? (
               <div className="button disabled">
@@ -430,7 +434,7 @@ console.log(options)
               Bearbeiten
             </button>{" "}
             <CSVLink
-              className="button"
+              className="secondary"
               separator=";"
               data={downloadResults()}
               filename={"results.csv"}

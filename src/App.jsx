@@ -1,8 +1,7 @@
 import { collection, getDocs } from "firebase/firestore/lite";
 import React from "react";
-import "./App.css";
+// import "./App.css";
 import { db } from "./firebase";
-import logo from "/WSP.png";
 
 function App() {
   const [activeVotes, setActiveVotes] = React.useState([]);
@@ -10,6 +9,8 @@ function App() {
   const [loading, setLoading] = React.useState(true);
 
   React.useEffect(() => {
+    setActiveVotes([]);
+    setExpiredVotes([]);
     getDocs(collection(db, "/votes")).then((data) => {
       data.docs.map((e) => {
         let data = e.data();
@@ -32,11 +33,9 @@ function App() {
   return (
     <>
       <div>
-        <a href="https://waldorfschule-potsdam.de" target="_blank">
-          <img src={logo} className="logo" alt="Logo" />
-        </a>
+        <img src={"/WSP.png"} className="logo" alt="Logo" />
       </div>
-      developed by <a href="https://github.com/johangrims">@JohanGrims</a>
+      <p />
       {!loading && (
         <>
           <h1>Wahlen</h1>
@@ -62,6 +61,10 @@ function App() {
           {expiredVotes.length < 1 && "Keine beendeten Wahlen"}
         </>
       )}
+      <p />
+      <span className="credits">
+        developed by <a href="https://github.com/johangrims">@JohanGrims</a>
+      </span>
     </>
   );
 }

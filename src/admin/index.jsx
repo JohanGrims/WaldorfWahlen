@@ -42,7 +42,7 @@ export default function Admin(props) {
 
   if (!authUser) {
     return (
-      <div>
+      <div className="login">
         <h1>Login</h1>
         <input
           value={email}
@@ -61,9 +61,7 @@ export default function Admin(props) {
         />
         <p />
         <br />
-        <button onClick={handleLogin} className="button">
-          Login
-        </button>
+        <button onClick={handleLogin}>Login</button>
       </div>
     );
   }
@@ -91,9 +89,9 @@ export default function Admin(props) {
         </a>
         <div> {authUser.email}</div>
 
-        <button className="button" onClick={() => auth.signOut()}>
+        <a className="button" onClick={() => auth.signOut()}>
           Logout
-        </button>
+        </a>
       </div>
       <div style={{ height: "100px" }}></div>
 

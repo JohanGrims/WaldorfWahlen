@@ -5,12 +5,14 @@ import {
   getDoc,
   getDocs,
 } from "firebase/firestore/lite";
-import React from "react";
+import React, { useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { db } from "./firebase";
 
 export default function Vote() {
   const urlParams = new URLSearchParams(window.location.search);
+
+  const refs = useRef([]);
 
   let { id } = useParams();
   const navigate = useNavigate();
@@ -34,6 +36,16 @@ export default function Vote() {
       }
       navigate(`/submitted/${id}`);
     }
+    setLoading(true);
+    setTitle("");
+    setOptions([]);
+    setName("");
+    setGrade("");
+    setSelected("");
+    setSelectCount("");
+    setActive("");
+    setExtraFields([]);
+    setExtraFieldsValues([]);
     getDocs(collection(db, `/votes/${id}/options`)).then((e) => {
       e.docs.map((e) =>
         setOptions((options) => [...options, { id: e.id, ...e.data() }])
@@ -62,6 +74,9 @@ export default function Vote() {
     const newArray = [...selected];
     newArray[index] = newValue;
     setSelected(newArray);
+    if (newValue && refs.current[index + 1]) {
+      refs.current[index + 1].scrollIntoView();
+    }
   };
 
   function submit() {
@@ -94,96 +109,78 @@ export default function Vote() {
   if (active === false) {
     navigate(`/r/${id}`);
   }
+  if (loading) {
+    return null;
+  }
   return (
-    <>
+    <div className="vote">
       {!loading && (
         <div style={{ padding: "10px" }}>
           <h1>{title}</h1>
-          <h3>Name</h3>
-          {/* <i>
-            Aus Datenschutzgründen gib bitte nur den Vornamen und den ersten
-            Buchstaben des Nachnamens ein.
-          </i> */}
-          <p />
+          <span className="label">Name</span>
           <input
+            type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            className="button"
             placeholder="Max M."
           />
           <p />
-          <h3>Klasse</h3>
+          <span className="label">Klasse</span>
           <input
+            min={1}
+            max={13}
             type="number"
             value={grade}
             onChange={(e) => setGrade(e.target.value)}
-            className="button"
             placeholder="11"
           />
           <p />
           <br />
-          {extraFields.length > 0 && <h3>Weitere Felder</h3>}
           {extraFields.map((e, i) => (
             <>
               <input
                 value={extraFieldsValues[i]}
                 onChange={(e) => handleInputChange(i, e.target.value)}
-                className="button"
                 placeholder={e}
               />
               <p />
             </>
           ))}
-          <br />
-          <p />
           {Array.from({ length: selectCount }).map((e, index) => (
             <>
-              <h3>{index + 1}. Wahl</h3>
-              {options.map((e) => (
-                <>
-                  <div
-                    className={`button ${
-                      selected[index] === e.id
-                        ? "active"
-                        : selected.includes(e.id) && "disabled"
-                    }`}
-                    onClick={() => {
-                      selected[index] === e.id
-                        ? select(index, null)
-                        : !selected.includes(e.id) && select(index, e.id);
-                    }}
-                  >
-                    <h2>
-                      {e.title}
-                      <br />
-                      <i>{e.teacher}</i>
-                    </h2>
+              <h2 ref={(el) => (refs.current[index] = el)}>
+                {index + 1}. Wahl
+              </h2>
+              <div className="options">
+                {options.map((e) => (
+                  <>
+                    <div
+                      className={`option ${
+                        selected[index] === e.id
+                          ? "active"
+                          : selected.includes(e.id) && "disabled"
+                      }`}
+                      onClick={() => {
+                        selected[index] === e.id
+                          ? select(index, null)
+                          : !selected.includes(e.id) && select(index, e.id);
+                      }}
+                    >
+                      <div className="title">{e.title}</div>
+                      <div className="teacher">{e.teacher}</div>
+                      <div className="description">{e.description}</div>
+                      <div className="max">max. {e.max} SchülerInnen</div>
+                    </div>
                     <br />
-                    {e.description}
-                    <br />
-                    <i>max. {e.max} Schüler</i>
-                  </div>
-                  <br />
-                </>
-              ))}
+                  </>
+                ))}
+              </div>
             </>
           ))}
           <p />
           <p />
           <button
-            className={`button ${
-              selected.includes("null") ||
-              !name ||
-              !grade ||
-              name?.length < 2 ||
-              grade?.length < 1 ||
-              extraFieldsValues.length !== extraFields.length ||
-              extraFieldsValues.some(
-                (value) => !value || !/[a-zA-Z]/.test(value)
-              )
-                ? "disabled"
-                : undefined
-            }`}
+            ref={(el) => (refs.current[selectCount] = el)}
             disabled={
               selected.includes("null") ||
               !name ||
@@ -213,6 +210,6 @@ export default function Vote() {
           </button>
         </div>
       )}
-    </>
+    </div>
   );
 }
