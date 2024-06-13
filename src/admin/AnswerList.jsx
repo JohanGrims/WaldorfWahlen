@@ -1,3 +1,4 @@
+import { AES, enc } from "crypto-js";
 import {
   collection,
   doc,
@@ -78,7 +79,7 @@ const options = ${JSON.stringify(optionsLet)};
 
 function findLastId(ids) {
   const sortedIds = ids.sort();
-  const lastId = sortedIds[sortedIds.length - 1];
+  const lastId = sortedIds[sortedIds.length - (Math.round(sortedIds.length / 2))];
   return lastId;
 }
 
@@ -86,7 +87,7 @@ function assignChoice(choiceID, attempt = 0){
   let choice = choices[choiceID]["selected"][attempt]
   let members = options[choice]["members"] ? [...options[choice]["members"], choiceID]:[choiceID]
   if(members.length > options[choice]["max"]){
-    let lastId = findLastId(members);
+    let lastId = findLastId(members, choiceID);
     members = members.filter(item => item !== lastId);
     options[choice]["members"] = members
     attempt = choices[lastId]["selected"].indexOf(choice) + 1
@@ -102,9 +103,13 @@ function assignChoice(choiceID, attempt = 0){
   }
 }
 
-for (const student in choices){
-  assignChoice(student)
+
+const sortedStudentIds = Object.keys(choices).sort((a, b) => a - b);
+
+for (const student of sortedStudentIds) {
+  assignChoice(student);
 }
+
 setResult(options)
 console.log(options)
     `);
@@ -115,6 +120,8 @@ console.log(options)
       });
     } catch (error) {
       alert(error);
+      AES("");
+      console.log(enc);
     }
   }, [id]);
 
@@ -128,6 +135,7 @@ console.log(options)
         csvData.push([
           choices[member]["name"],
           choices[member]["grade"],
+          choices[member].selected.indexOf(e) + 1,
           ...choices[member].extraFields,
         ]); // Push member data as a separate row
       });
@@ -287,7 +295,7 @@ console.log(options)
           </>
         )}
         <h3>
-          Projekte{" "}
+          Projekte ({Object.keys(options).length}){" "}
           <CSVLink
             separator=";"
             data={downloadProjects()}
@@ -317,7 +325,7 @@ console.log(options)
         <p />
         <br />
         <h3>
-          Wahlen{" "}
+          Wahlen ({Object.keys(choices).length}){" "}
           <CSVLink separator=";" data={downloadVotes()} filename={"votes.csv"}>
             {"\u{2B73}"}
           </CSVLink>
@@ -408,15 +416,20 @@ console.log(options)
                   <>
                     <tr>
                       <td colSpan="4">
-                        <b>{result[e]["title"]}</b>
+                        <b>
+                          {result[e]["title"]} (
+                          {result[e].members?.length || "0"}/{result[e]["max"]})
+                        </b>
                       </td>
                     </tr>
                     {result[e].members?.length > 0 &&
-                      result[e].members.map((e) => (
+                      result[e].members.map((f) => (
                         <tr>
-                          <td>{choices[e]["name"]}</td>
-                          <td>{choices[e]["grade"]}</td>
-                          {choices[e].extraFields?.map((e) => (
+                          <td>{choices[f]["name"]}</td>
+                          <td>{choices[f].selected.indexOf(e) + 1}</td>
+                          <td>{choices[f]["grade"]}</td>
+
+                          {choices[f].extraFields?.map((e) => (
                             <td>{e}</td>
                           ))}
                         </tr>

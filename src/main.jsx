@@ -1,49 +1,100 @@
-import React from "react";
+import React, { Suspense, lazy } from "react";
 import ReactDOM from "react-dom/client";
 import { RouterProvider, createBrowserRouter } from "react-router-dom";
-import App from "./App.jsx";
 import ErrorPage from "./Error.jsx";
-import Result from "./Result.jsx";
-import Share from "./Share.jsx";
-import Submitted from "./Submitted.jsx";
-import Vote from "./Vote.jsx";
-import Overview from "./admin/Overview.jsx";
-import VoteDetail from "./admin/VoteDetail.jsx";
-// import "./index.css";
 import "./styles.css";
+
+const App = lazy(() => import("./App.jsx"));
+const Result = lazy(() => import("./Result.jsx"));
+const Share = lazy(() => import("./Share.jsx"));
+const Submitted = lazy(() => import("./Submitted.jsx"));
+const Vote = lazy(() => import("./Vote.jsx"));
+const Overview = lazy(() => import("./admin/Overview.jsx"));
+const VoteDetail = lazy(() => import("./admin/VoteDetail.jsx"));
+
+const Loader = () => (
+  <div className="loader-wrapper">
+    <div className="loader"></div>
+  </div>
+);
 
 const router = createBrowserRouter([
   {
     path: "/",
     errorElement: <ErrorPage />,
     children: [
-      { path: "/", element: <App /> },
+      {
+        path: "/",
+        element: (
+          <Suspense fallback={<Loader />}>
+            <App />
+          </Suspense>
+        ),
+      },
       {
         path: "/vote/:id",
-        element: <Vote />,
+        element: (
+          <Suspense fallback={<Loader />}>
+            <Vote />
+          </Suspense>
+        ),
       },
       {
         path: "/v/:id",
-        element: <Vote />,
+        element: (
+          <Suspense fallback={<Loader />}>
+            <Vote />
+          </Suspense>
+        ),
       },
       {
         path: "/results/:id",
-        element: <Result />,
+        element: (
+          <Suspense fallback={<Loader />}>
+            <Result />
+          </Suspense>
+        ),
       },
       {
         path: "/r/:id",
-        element: <Result />,
+        element: (
+          <Suspense fallback={<Loader />}>
+            <Result />
+          </Suspense>
+        ),
       },
       {
         path: "/submitted/:id",
-        element: <Submitted />,
+        element: (
+          <Suspense fallback={<Loader />}>
+            <Submitted />
+          </Suspense>
+        ),
       },
       {
         path: "/admin",
-        element: <Overview />,
+        element: (
+          <Suspense fallback={<Loader />}>
+            <Overview />
+          </Suspense>
+        ),
       },
-      { path: "/admin/:id", element: <VoteDetail /> },
-      { path: "/share/:id", element: <Share /> },
+      {
+        path: "/admin/:id",
+        element: (
+          <Suspense fallback={<Loader />}>
+            <VoteDetail />
+          </Suspense>
+        ),
+      },
+      {
+        path: "/share/:id",
+        element: (
+          <Suspense fallback={<Loader />}>
+            <Share />
+          </Suspense>
+        ),
+      },
     ],
   },
 ]);
