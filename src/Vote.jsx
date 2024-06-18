@@ -208,7 +208,6 @@ export default function Vote() {
           >
             Absenden
           </button>
-          {JSON.stringify(selected)}
         </div>
       )}
     </div>
