@@ -77,9 +77,17 @@ const choices = ${JSON.stringify(choicesLet)};
 const options = ${JSON.stringify(optionsLet)};
 
 
-function findLastId(ids) {
-  const sortedIds = ids.sort();
-  const lastId = sortedIds[sortedIds.length - (Math.round(sortedIds.length / 2))];
+function findMemberId(ids, choice) {
+  const sortedIds = ids.sort((a, b) => {
+  if (choices[a].selected.indexOf(choice) < choices[b].selected.indexOf(choice)) {
+    return 1;
+  }
+  if (choices[a].selected.indexOf(choice) > choices[b].selected.indexOf(choice)) {
+    return -1;
+  }
+  return b.localeCompare(a);
+  });
+  const lastId = sortedIds[0];
   return lastId;
 }
 
@@ -87,7 +95,7 @@ function assignChoice(choiceID, attempt = 0){
   let choice = choices[choiceID]["selected"][attempt]
   let members = options[choice]["members"] ? [...options[choice]["members"], choiceID]:[choiceID]
   if(members.length > options[choice]["max"]){
-    let lastId = findLastId(members, choiceID);
+    let lastId = findMemberId(members, choice);
     members = members.filter(item => item !== lastId);
     options[choice]["members"] = members
     attempt = choices[lastId]["selected"].indexOf(choice) + 1
@@ -307,9 +315,18 @@ console.log(options)
         <table style={{ width: "100%" }}>
           <thead>
             <tr>
-              <th style={{ width: `${100 / 4}%` }}>Name</th>
-              <th style={{ width: `${100 / 4}%` }}>Lehrer</th>
-              <th style={{ width: `${100 / 4}%` }}>Max</th>
+              <th style={{ width: `${100 / 3}%` }}>Name</th>
+              <th style={{ width: `${100 / 3}%` }}>Lehrer</th>
+              <th style={{ width: `${100 / 8}%` }}>Max</th>
+              {Array.from({ length: selectCount }).map((e, index) => (
+                <th
+                  style={{
+                    width: `${100 / 20}%`,
+                  }}
+                >
+                  {index + 1}. W
+                </th>
+              ))}
             </tr>
           </thead>
           <tbody>
@@ -317,7 +334,20 @@ console.log(options)
               <tr>
                 <td>{options[e].title}</td>
                 <td>{options[e].teacher || "—"}</td>
-                <td>{options[e].max}</td>
+                <td style={{ textAlign: "center" }}>{options[e].max}</td>
+                {Array.from({ length: selectCount }).map((_, index) => (
+                  <td
+                    style={{
+                      textAlign: "center",
+                    }}
+                  >
+                    {
+                      Object.keys(choices).filter(
+                        (f) => choices[f]["selected"][index] === e
+                      ).length
+                    }
+                  </td>
+                ))}
               </tr>
             ))}
           </tbody>

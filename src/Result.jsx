@@ -31,9 +31,13 @@ export default function Result() {
 
   return (
     <div>
-      <h2>{title}</h2>
+      <h2 style={{ textAlign: "center" }}>{title}</h2>
       {!result ? (
-        "Keine Ergebnisse online verfügbar"
+        <div style={{ padding: "0px 30px 0px 30px" }}>
+          Die Wahl ist beendet. Es sind (noch) keine Ergebnisse online
+          verfügbar. Bei Fragen oder Problemen melde Dich beim betreuenden
+          Lehrer der Wahl oder den SV-Vertretern Deiner Klasse.
+        </div>
       ) : (
         <table style={{ width: "100%" }}>
           {JSON.parse(result).map((e) => (

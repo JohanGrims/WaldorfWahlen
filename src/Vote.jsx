@@ -162,7 +162,7 @@ export default function Vote() {
                       }`}
                       onClick={() => {
                         selected[index] === e.id
-                          ? select(index, null)
+                          ? select(index, "null")
                           : !selected.includes(e.id) && select(index, e.id);
                       }}
                     >
@@ -208,6 +208,7 @@ export default function Vote() {
           >
             Absenden
           </button>
+          {JSON.stringify(selected)}
         </div>
       )}
     </div>
