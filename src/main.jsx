@@ -83,11 +83,11 @@ const router = createBrowserRouter([
             element: <Overview />,
           },
           {
-            path: "o/:id",
+            path: ":id",
             element: <AnswerList />,
           },
           {
-            path: ":id",
+            path: "n/:id",
             element: <AssignStudents />,
             loader: loader,
           },
