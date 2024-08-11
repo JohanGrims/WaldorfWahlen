@@ -4,13 +4,16 @@ import { RouterProvider, createBrowserRouter } from "react-router-dom";
 import ErrorPage from "./Error.jsx";
 import "./styles.css";
 
+import AnswerList from "./admin/AnswerList.jsx";
+import AssignStudents, { loader } from "./admin/AssignStudents.tsx";
+import Admin from "./admin/index.jsx";
+import Overview from "./admin/Overview.jsx";
+
 const App = lazy(() => import("./App.jsx"));
 const Result = lazy(() => import("./Result.jsx"));
 const Share = lazy(() => import("./Share.jsx"));
 const Submitted = lazy(() => import("./Submitted.jsx"));
 const Vote = lazy(() => import("./Vote.jsx"));
-const Overview = lazy(() => import("./admin/Overview.jsx"));
-const VoteDetail = lazy(() => import("./admin/VoteDetail.jsx"));
 
 const Loader = () => (
   <div className="loader-wrapper">
@@ -72,20 +75,23 @@ const router = createBrowserRouter([
         ),
       },
       {
-        path: "/admin",
-        element: (
-          <Suspense fallback={<Loader />}>
-            <Overview />
-          </Suspense>
-        ),
-      },
-      {
-        path: "/admin/:id",
-        element: (
-          <Suspense fallback={<Loader />}>
-            <VoteDetail />
-          </Suspense>
-        ),
+        path: "/admin/*",
+        element: <Admin />,
+        children: [
+          {
+            path: "",
+            element: <Overview />,
+          },
+          {
+            path: "o/:id",
+            element: <AnswerList />,
+          },
+          {
+            path: ":id",
+            element: <AssignStudents />,
+            loader: loader,
+          },
+        ],
       },
       {
         path: "/share/:id",

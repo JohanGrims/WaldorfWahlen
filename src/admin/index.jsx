@@ -1,5 +1,6 @@
 import { onAuthStateChanged, signInWithEmailAndPassword } from "firebase/auth";
 import React from "react";
+import { Outlet } from "react-router-dom";
 import { auth } from "../firebase";
 
 export default function Admin(props) {
@@ -95,8 +96,7 @@ export default function Admin(props) {
       </div>
       <div style={{ height: "100px" }}></div>
 
-      {props.children}
-      <div style={{ height: "100px" }}></div>
+      <Outlet />
     </div>
   );
 }

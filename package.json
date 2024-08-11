@@ -14,6 +14,7 @@
     "crypto-js": "^4.2.0",
     "firebase": "^10.7.1",
     "javascript-lp-solver": "^0.4.24",
+    "jsonpath": "^1.1.1",
     "localforage": "^1.10.0",
     "match-sorter": "^6.3.1",
     "mathjs": "^12.2.1",
