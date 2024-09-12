@@ -98,7 +98,7 @@ body {
 input {
   width: calc(100% - 20px);
   padding: 10px;
-  margin-bottom: 15px;
+  /* margin-bottom: 15px; */
   border: 1px solid #ccc;
   border-radius: 4px;
 }
@@ -175,16 +175,6 @@ button:disabled {
 
 button:not(:disabled):hover {
   background-color: #f89e24;
-}
-
-@media only screen and (max-width: 600px) {
-  .vote {
-    width: 100%;
-    margin: 0px;
-  }
-  .option {
-    flex: 1 1 100%;
-  }
 }
 
 .credits {
@@ -340,4 +330,51 @@ button:not(:disabled):hover {
 
 .project-link.selected {
   background-color: #ccc;
+}
+
+.text-info {
+  font-size: 12px;
+  width: 100%;
+  text-align: right;
+  font-style: italic;
+  display: block;
+}
+
+.flex-row {
+  display: flex;
+  justify-content: space-between;
+}
+.column {
+  display: block;
+}
+
+.grade {
+  width: 400%;
+}
+
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+@media only screen and (max-width: 600px) {
+  .vote {
+    width: 100%;
+    margin: 0px;
+  }
+  .option {
+    flex: 1 1 100%;
+  }
+  .flex-row {
+    flex-direction: column;
+  }
+  .column {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 10px;
+  }
+  .grade {
+    width: calc(100% - 20px);
+  }
 }

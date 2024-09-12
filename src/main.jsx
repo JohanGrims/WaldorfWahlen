@@ -5,15 +5,17 @@ import ErrorPage from "./Error.jsx";
 import "./styles.css";
 
 import AnswerList from "./admin/AnswerList.jsx";
-import AssignStudents, { loader } from "./admin/AssignStudents.tsx";
+import AssignStudents, {
+  loader as assignStudentsLoader,
+} from "./admin/AssignStudents.tsx";
 import Admin from "./admin/index.jsx";
 import Overview from "./admin/Overview.jsx";
+import Vote, { loader as voteLoader } from "./Vote.jsx";
 
 const App = lazy(() => import("./App.jsx"));
 const Result = lazy(() => import("./Result.jsx"));
 const Share = lazy(() => import("./Share.jsx"));
 const Submitted = lazy(() => import("./Submitted.jsx"));
-const Vote = lazy(() => import("./Vote.jsx"));
 
 const Loader = () => (
   <div className="loader-wrapper">
@@ -36,19 +38,13 @@ const router = createBrowserRouter([
       },
       {
         path: "/vote/:id",
-        element: (
-          <Suspense fallback={<Loader />}>
-            <Vote />
-          </Suspense>
-        ),
+        element: <Vote />,
+        loader: voteLoader,
       },
       {
         path: "/v/:id",
-        element: (
-          <Suspense fallback={<Loader />}>
-            <Vote />
-          </Suspense>
-        ),
+        element: <Vote />,
+        loader: voteLoader,
       },
       {
         path: "/results/:id",
@@ -89,7 +85,7 @@ const router = createBrowserRouter([
           {
             path: "n/:id",
             element: <AssignStudents />,
-            loader: loader,
+            loader: assignStudentsLoader,
           },
         ],
       },

@@ -11,18 +11,20 @@ export default function ListVotes() {
     getDocs(collection(db, "/votes")).then((data) => {
       data.docs.map((e) => {
         let data = e.data();
+        console.log(data.version > 1);
         if (data.active) {
           setActiveVotes((activeVotes) => [
             ...activeVotes,
-            { id: e.id, title: data.title },
+            { id: e.id, title: data.title, version: data.version },
           ]);
         } else {
           setExpiredVotes((expiredVotes) => [
             ...expiredVotes,
-            { id: e.id, title: data.title },
+            { id: e.id, title: data.title, version: data.version },
           ]);
         }
       });
+
       setLoading(false);
     });
   }, []);
@@ -38,7 +40,10 @@ export default function ListVotes() {
 
       {activeVotes.map((e) => (
         <>
-          <a href={`/admin/${e.id}`} className="link">
+          <a
+            href={`/admin${e.version >= 2 ? "/n" : ""}/${e.id}`}
+            className="link"
+          >
             {e.title}
           </a>
           <p />

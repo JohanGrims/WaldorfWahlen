@@ -86,7 +86,7 @@ export default function NewVote() {
     setExtraFields(extraFields.filter((item, index) => index !== idx));
 
   return (
-    <div style={{ width: "40vw" }}>
+    <div style={{ width: "100%" }}>
       <h2>Neue Umfrage</h2>
       <input
         className="button"
@@ -94,6 +94,7 @@ export default function NewVote() {
         value={title}
         onChange={(e) => setTitle(e.target.value)}
       />
+      <span className="text-info">{title.length} / 20</span>
       <p />
       <input
         className="button"
@@ -106,7 +107,7 @@ export default function NewVote() {
       />
       <p />
       {extraFields.map((e, i) => (
-        <div className="extrafield">
+        <div className="extrafield" key={i}>
           <input
             value={e}
             onChange={(e) => handleInputChange(i, e.target.value)}
@@ -119,6 +120,7 @@ export default function NewVote() {
           >
             ×
           </button>
+
           <p />
         </div>
       ))}
@@ -128,11 +130,11 @@ export default function NewVote() {
       >
         Feld hinzufügen
       </button>
-      <h2>Optionen</h2>
+      <h2>Wahlmöglichkeiten</h2>
       {/*map the options*/}
 
-      {options.map((e) => (
-        <>
+      {options.map((e, index) => (
+        <div key={index}>
           <div className={`option disabled`}>
             <div className="title">{e.title}</div>
             <div className="teacher">{e.teacher}</div>
@@ -140,7 +142,7 @@ export default function NewVote() {
             <div className="max">max. {e.max} SchülerInnen</div>
           </div>
           <br />
-        </>
+        </div>
       ))}
       <div className="option active nohover">
         <h3>Neu</h3>
@@ -150,6 +152,7 @@ export default function NewVote() {
           value={name}
           onChange={(e) => setName(e.target.value)}
         />
+        <span className="text-info">{name.length} / 20</span>
         <p />
         <input
           className="button"
@@ -165,6 +168,7 @@ export default function NewVote() {
           value={teacher}
           onChange={(e) => setTeacher(e.target.value)}
         />
+        <span className="text-info">{teacher.length} / 20</span>
         <p />
         <input
           className="button"
@@ -172,15 +176,11 @@ export default function NewVote() {
           value={description}
           onChange={(e) => setDescription(e.target.value)}
         />
+        <span className="text-info">{description.length} / 100</span>
         <p />
         <button
           className={`button ${(!name || !max) && "disabled"}`}
-          disabled={
-            !name ||
-            // teacher.length < 2 ||
-            // description.length < 2 ||
-            !max
-          }
+          disabled={!name || !max}
           onClick={addOption}
         >
           Hinzufügen
@@ -207,6 +207,7 @@ export default function NewVote() {
       >
         Veröffentlichen
       </button>
+      <p />
     </div>
   );
 }

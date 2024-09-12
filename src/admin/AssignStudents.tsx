@@ -21,6 +21,10 @@ export default function AssignStudents() {
     [key: string]: string[];
   }>({});
 
+  React.useEffect(() => {
+    document.title = `Admin - ${vote.title}`;
+  }, []);
+
   const [selectedOption, setSelectedOption] = useState("");
 
   React.useEffect(() => {
@@ -38,6 +42,7 @@ export default function AssignStudents() {
   console.log(assignments);
 
   function deactivate() {
+    if (prompt("Möchten Sie wirklich die Wahl beenden?") !== "Ja") return;
     updateDoc(doc(db, `/votes/${vote.id}`), {
       active: false,
     }).then(() => {
@@ -46,6 +51,7 @@ export default function AssignStudents() {
   }
 
   function activate() {
+    if (!window.confirm("Möchten Sie wirklich die Wahl reaktivieren?")) return;
     updateDoc(doc(db, `/votes/${vote.id}`), {
       active: true,
     }).then(() => {
@@ -148,14 +154,25 @@ export default function AssignStudents() {
 export async function loader({ params }: { params: { id: string } }) {
   const vote = await getDoc(doc(db, `/votes/${params.id}`));
   if (!vote.exists()) {
-    throw new Error("Document not found");
+    throw new Response("Document not found", {
+      status: 404,
+      statusText: "Document not found",
+    });
+  }
+  const voteData = vote.data();
+
+  if (!voteData.version || voteData.version < 2) {
+    throw new Response("Please update the vote to the latest version", {
+      status: 400,
+      statusText: "Diese Wahl ist veraltet",
+    });
   }
 
   const choices = await getDocs(collection(db, `/votes/${params.id}/choices`));
   const options = await getDocs(collection(db, `/votes/${params.id}/options`));
 
   return {
-    vote: { id: vote.id, ...vote.data() },
+    vote: { id: vote.id, voteData },
     choices: choices.docs.map((e) => ({ id: e.id, ...e.data() })),
     options: options.docs.map((e) => ({ id: e.id, ...e.data() })),
   };

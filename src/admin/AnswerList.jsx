@@ -261,7 +261,7 @@ console.log(options)
   return (
     <div className="admin">
       <div style={{ width: "60%" }}>
-        <h2>{title}</h2>
+        <h2>{title} (alte Ansicht)</h2>
         {}
         <button
           disabled={!active}
