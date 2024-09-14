@@ -68,7 +68,6 @@ h1 {
 
 body {
   font-family: Arial, sans-serif;
-  background-color: #f4f4f9;
   min-height: 100dvh;
   margin: 0;
   padding: 0;
@@ -377,4 +376,13 @@ input::-webkit-inner-spin-button {
   .grade {
     width: calc(100% - 20px);
   }
+}
+
+.time-label {
+  font-size: 12px;
+  font-style: italic;
+  text-align: center;
+  width: 100%;
+  margin-top: -40px;
+  margin-bottom: 50px;
 }

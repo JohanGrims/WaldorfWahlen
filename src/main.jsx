@@ -9,19 +9,24 @@ import AssignStudents, {
   loader as assignStudentsLoader,
 } from "./admin/AssignStudents.tsx";
 import Admin from "./admin/index.jsx";
-import Overview from "./admin/Overview.jsx";
+import App, { loader as appLoader } from "./App.jsx";
+import Result from "./Result.jsx";
 import Vote, { loader as voteLoader } from "./Vote.jsx";
 
-const App = lazy(() => import("./App.jsx"));
-const Result = lazy(() => import("./Result.jsx"));
 const Share = lazy(() => import("./Share.jsx"));
 const Submitted = lazy(() => import("./Submitted.jsx"));
+
+import "mdui";
+import { setColorScheme } from "mdui";
+import "mdui/mdui.css";
 
 const Loader = () => (
   <div className="loader-wrapper">
     <div className="loader"></div>
   </div>
 );
+
+setColorScheme("#f89e24");
 
 const router = createBrowserRouter([
   {
@@ -30,11 +35,8 @@ const router = createBrowserRouter([
     children: [
       {
         path: "/",
-        element: (
-          <Suspense fallback={<Loader />}>
-            <App />
-          </Suspense>
-        ),
+        element: <App />,
+        loader: appLoader,
       },
       {
         path: "/vote/:id",
@@ -48,19 +50,13 @@ const router = createBrowserRouter([
       },
       {
         path: "/results/:id",
-        element: (
-          <Suspense fallback={<Loader />}>
-            <Result />
-          </Suspense>
-        ),
+        element: <Result />,
+        loader: voteLoader,
       },
       {
         path: "/r/:id",
-        element: (
-          <Suspense fallback={<Loader />}>
-            <Result />
-          </Suspense>
-        ),
+        element: <Result />,
+        loader: voteLoader,
       },
       {
         path: "/submitted/:id",
@@ -76,14 +72,42 @@ const router = createBrowserRouter([
         children: [
           {
             path: "",
-            element: <Overview />,
+            element: (
+              <div className="mdui-prose">
+                <h2>Dashboard</h2>
+              </div>
+            ),
           },
           {
-            path: ":id",
+            path: "new",
+            element: (
+              <div className="mdui-prose">
+                <h2>Neue Umfrage</h2>
+              </div>
+            ),
+          },
+          {
+            path: "settings",
+            element: (
+              <div className="mdui-prose">
+                <h2>Einstellungen</h2>
+              </div>
+            ),
+          },
+          {
+            path: "users",
+            element: (
+              <div className="mdui-prose">
+                <h2>Administratoren</h2>
+              </div>
+            ),
+          },
+          {
+            path: "o/:id",
             element: <AnswerList />,
           },
           {
-            path: "n/:id",
+            path: ":id",
             element: <AssignStudents />,
             loader: assignStudentsLoader,
           },

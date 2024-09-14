@@ -59,10 +59,6 @@ export default function AssignStudents() {
     });
   }
 
-  if (Object.keys(assignments).length < 1) {
-    return <div>lade..</div>;
-  }
-
   return (
     <div className="assign">
       <div className={`left ${selectedOption && "small"}`}>
@@ -172,7 +168,7 @@ export async function loader({ params }: { params: { id: string } }) {
   const options = await getDocs(collection(db, `/votes/${params.id}/options`));
 
   return {
-    vote: { id: vote.id, voteData },
+    vote: { id: vote.id, ...voteData },
     choices: choices.docs.map((e) => ({ id: e.id, ...e.data() })),
     options: options.docs.map((e) => ({ id: e.id, ...e.data() })),
   };

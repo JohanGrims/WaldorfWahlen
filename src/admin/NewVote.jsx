@@ -1,4 +1,10 @@
-import { addDoc, collection, doc, setDoc } from "firebase/firestore/lite";
+import {
+  addDoc,
+  collection,
+  doc,
+  setDoc,
+  Timestamp,
+} from "firebase/firestore/lite";
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { db } from "../firebase";
@@ -12,6 +18,7 @@ export default function NewVote() {
   const [teacher, setTeacher] = React.useState("");
   const [description, setDescription] = React.useState("");
   const [max, setMax] = React.useState();
+  const [endTime, setEndTime] = React.useState();
 
   const [extraFields, setExtraFields] = React.useState([]);
 
@@ -52,6 +59,8 @@ export default function NewVote() {
       selectCount: selectCount,
       active: true,
       extraFields: extraFields,
+      endTime: Timestamp.fromDate(new Date(endTime)),
+      version: 2,
     }).then((e) => {
       options.map((e, index) => {
         addDoc(collection(db, `/votes/${id}/options`), {
@@ -69,6 +78,7 @@ export default function NewVote() {
             setMax("");
             setOptions([]);
             setExtraFields([]);
+
             navigate(`/share/${id}`);
           }
         });
@@ -104,6 +114,13 @@ export default function NewVote() {
         max={10}
         value={selectCount}
         onChange={(e) => setSelectCount(e.target.value)}
+      />
+      <p />
+      <input
+        className="button"
+        type="datetime-local"
+        value={endTime}
+        onChange={(e) => setEndTime(e.target.value)}
       />
       <p />
       {extraFields.map((e, i) => (
@@ -193,6 +210,7 @@ export default function NewVote() {
         className={`button ${
           (title.length < 2 ||
             options.length < 1 ||
+            !endTime ||
             !selectCount ||
             extraFields.some((value) => !value || !/[a-zA-Z]/.test(value))) &&
           "disabled"
@@ -200,6 +218,7 @@ export default function NewVote() {
         disabled={
           title.length < 2 ||
           options.length < 1 ||
+          !endTime ||
           !selectCount ||
           extraFields.some((value) => !value || !/[a-zA-Z]/.test(value))
         }

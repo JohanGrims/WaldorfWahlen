@@ -1,0 +1,27 @@
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Regel für Hauptdokument /votes/{voteId}
+    match /votes/{voteId} {
+      // Erlaube Lesezugriff für alle Nutzer
+      allow read: if true;
+      // Erlaube Schreibzugriff nur für authentifizierte Nutzer
+      allow write: if request.auth != null;
+      
+      // Regel für Subcollection /choices/{choiceId}
+      match /choices/{choiceId} {
+        // Erlaube Lesezugriff nur für authentifizierte Nutzer
+        allow read: if request.auth != null;
+        // Erlaube Schreibzugriff für alle Nutzer
+      	allow create: if get(/databases/$(database)/documents/votes/$(voteId)).data.endTime > request.time && get(/databases/$(database)/documents/votes/$(voteId)).data.active == true;
+      }
+      
+      // Regel für Subcollection /options/{optionId}
+      match /options/{optionId} {
+        // Erlaube Lesezugriff für alle Nutzer
+        allow read: if true;
+        // Erlaube Schreibzugriff nur für authentifizierte Nutzer
+        allow write: if request.auth != null;
+      }
+    }
+  }
+}

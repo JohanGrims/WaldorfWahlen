@@ -1,72 +1,84 @@
 import { collection, getDocs } from "firebase/firestore/lite";
 import React from "react";
-// import "./App.css";
+import { useLoaderData } from "react-router-dom";
+import "./App.css";
 import { db } from "./firebase";
 
 function App() {
-  const [activeVotes, setActiveVotes] = React.useState([]);
-  const [expiredVotes, setExpiredVotes] = React.useState([]);
-  const [loading, setLoading] = React.useState(true);
-
-  React.useEffect(() => {
-    setActiveVotes([]);
-    setExpiredVotes([]);
-    getDocs(collection(db, "/votes")).then((data) => {
-      data.docs.map((e) => {
-        let data = e.data();
-        if (data.active) {
-          setActiveVotes((activeVotes) => [
-            ...activeVotes,
-            { id: e.id, title: data.title },
-          ]);
-        } else {
-          setExpiredVotes((expiredVotes) => [
-            ...expiredVotes,
-            { id: e.id, title: data.title },
-          ]);
-        }
-      });
-      setLoading(false);
-    });
-  }, []);
+  const { activeVotes, expiredVotes } = useLoaderData();
 
   return (
-    <>
-      <div>
-        <img src={"/WSP.png"} className="logo" alt="Logo" />
-      </div>
-      <p />
-      {!loading && (
-        <>
-          <h1>Wahlen</h1>
-          <h3>Aktiv</h3>
-          {activeVotes.map((e) => (
-            <>
-              <a href={`/v/${e.id}`} className="link">
-                {e.title}
-              </a>
-              <p />
-            </>
-          ))}
-          {activeVotes.length < 1 && "Keine aktiven Wahlen"}
-          <h3>Beendet</h3>
-          {expiredVotes.map((e) => (
-            <>
-              <a href={`/r/${e.id}`} className="link">
-                {e.title}
-              </a>
-              <p />
-            </>
-          ))}
-          {expiredVotes.length < 1 && "Keine beendeten Wahlen"}
-        </>
-      )}
-      <p />
-      <span className="credits">
-        developed by <a href="https://github.com/johangrims">@JohanGrims</a>
-      </span>
-    </>
+    <div className="waldorf-vote-landing-page">
+      <header className="waldorf-header">
+        <div className="waldorf-logo-container">
+          <img src={"/WSP.png"} className="waldorf-logo" alt="Logo" />
+        </div>
+        <h1>Wahlen</h1>
+        <p className="waldorf-description">
+          WaldorfWahlen ist eine Webanwendung, die es der Waldorfschule Potsdam
+          ermöglicht, Projektwahlen für ihre Schülerinnen und Schüler
+          durchzuführen. Die Anwendung basiert auf dem Vite-Framework in
+          Verbindung mit ReactJS für das Frontend und Firebase für das Backend
+          und die Datenbank.
+        </p>
+      </header>
+
+      <main className="waldorf-main-content">
+        <section className="waldorf-section">
+          <h3 className="waldorf-section-title">Aktiv</h3>
+          <div className="waldorf-vote-list">
+            {activeVotes.map((vote) => (
+              <div key={vote.id} className="waldorf-vote-card">
+                <a href={`/v/${vote.id}`} className="waldorf-link">
+                  {vote.title}
+                </a>
+              </div>
+            ))}
+            {activeVotes.length < 1 && (
+              <div className="waldorf-no-votes">Keine aktiven Wahlen</div>
+            )}
+          </div>
+        </section>
+
+        <section className="waldorf-section">
+          <h3 className="waldorf-section-title">Beendet</h3>
+          <div className="waldorf-vote-list">
+            {expiredVotes.map((vote) => (
+              <div key={vote.id} className="waldorf-vote-card">
+                <a href={`/r/${vote.id}`} className="waldorf-link">
+                  {vote.title}
+                </a>
+              </div>
+            ))}
+            {expiredVotes.length < 1 && (
+              <div className="waldorf-no-votes">Keine beendeten Wahlen</div>
+            )}
+          </div>
+        </section>
+      </main>
+
+      <footer className="waldorf-footer">
+        <span className="waldorf-credits">
+          Developed by <a href="https://github.com/johangrims">@JohanGrims</a>
+        </span>
+      </footer>
+    </div>
   );
 }
 
 export default App;
+
+export async function loader() {
+  const votes = await getDocs(collection(db, "/votes"));
+  const activeVotes = [];
+  const expiredVotes = [];
+  votes.docs.map((e) => {
+    let data = e.data();
+    if (data.active && Date.now() < data.endTime.seconds * 1000) {
+      activeVotes.push({ id: e.id, title: data.title });
+    } else {
+      expiredVotes.push({ id: e.id, title: data.title });
+    }
+  });
+  return { activeVotes, expiredVotes };
+}

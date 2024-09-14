@@ -4,32 +4,29 @@ import {
   doc,
   getDoc,
   getDocs,
+  serverTimestamp,
 } from "firebase/firestore/lite";
 import React, { useRef } from "react";
 import { useLoaderData, useNavigate, useParams } from "react-router-dom";
 import { db } from "./firebase";
 
+import "./vote.css";
+
 export default function Vote() {
   const refs = useRef([]);
   const urlParams = new URLSearchParams(window.location.search);
   let { id } = useParams();
-  const { voteData, optionsData } = useLoaderData();
+  const { vote, options } = useLoaderData();
 
   const navigate = useNavigate();
 
-  const [title, setTitle] = React.useState(voteData.title);
-  const [selectCount, setSelectCount] = React.useState(voteData.selectCount);
-  const [extraFields, setExtraFields] = React.useState(voteData.extraFields);
-  const [active, setActive] = React.useState(voteData.active);
-
-  const [options, setOptions] = React.useState(optionsData);
-
+  const { title, active, selectCount, extraFields, endTime } = vote;
   const [firstName, setFirstName] = React.useState();
   const [lastName, setLastName] = React.useState();
   const [grade, setGrade] = React.useState();
   const [listIndex, setListIndex] = React.useState();
   const [selected, setSelected] = React.useState(
-    Array.from({ length: voteData.selectCount }, () => "null")
+    Array.from({ length: selectCount }, () => "null")
   );
   const [extraFieldsValues, setExtraFieldsValues] = React.useState([]);
 
@@ -54,10 +51,11 @@ export default function Vote() {
       !lastName?.trim() ||
       !grade ||
       !listIndex ||
-      firstName.length < 2 ||
-      lastName.length < 2 ||
-      extraFieldsValues.length !== extraFields.length ||
-      extraFieldsValues.some((value) => !value?.trim())
+      firstName?.length < 2 ||
+      lastName?.length < 2 ||
+      (extraFields &&
+        (extraFieldsValues?.length !== extraFields?.length ||
+          extraFieldsValues?.some((value) => !value?.trim())))
     ) {
       return true;
     }
@@ -76,13 +74,13 @@ export default function Vote() {
 
   function submit() {
     addDoc(collection(db, `/votes/${id}/choices`), {
-      firstName,
-      lastName,
+      name: `${firstName} ${lastName.charAt(0)}.`,
       grade,
       listIndex,
       selected,
       extraFields: extraFieldsValues,
       version: 2,
+      timestamp: serverTimestamp(),
     })
       .then((e) => {
         localStorage.setItem(id, true);
@@ -93,7 +91,20 @@ export default function Vote() {
         navigate(`/submitted/${id}`);
       })
       .catch((error) => {
-        alert(error);
+        console.log(JSON.stringify(error));
+        if (error.code === "permission-denied") {
+          alert(
+            "Da hat etwas nicht geklappt. Du bist nicht (mehr) berechtigt, deine Daten abzugeben. Bitte wende dich an den zuständigen Lehrer."
+          );
+        } else if (error.message === "Network Error") {
+          alert(
+            "Netzwerkprobleme. Bitte überprüfe deine Internetverbindung und versuche es erneut."
+          );
+        } else {
+          alert(
+            "Ein unbekannter Fehler ist aufgetreten. Bitte versuche es später erneut."
+          );
+        }
       });
   }
 
@@ -103,123 +114,176 @@ export default function Vote() {
     setExtraFieldsValues(newValues);
   };
 
-  if (active === false) {
-    navigate(`/r/${id}`);
-  }
+  React.useEffect(() => {
+    if (active === false || Date.now() > endTime.seconds * 1000) {
+      navigate(`/r/${id}`);
+    }
+  }, []);
 
   const capitalizeWords = (str) => {
     return str
-      .replace(/[^a-zA-Z\s-]/g, "") // Remove non-alphabetic characters except hyphens
-      .replace(/\b\w/g, (char) => char.toUpperCase()); // Capitalize words
+      .replace(/[^a-zA-ZäöüÄÖÜß\s-]/g, "") // Remove non-alphabetic characters except hyphens and umlauts
+      .replace(/\b\w/g, (char, index) => {
+        if (index === 0 || str[index - 1].match(/\s/)) {
+          return char.toUpperCase();
+        } else if (str[index - 1] === "-") {
+          return char.toUpperCase();
+        }
+        return char;
+      }); // Capitalize words correctly
   };
 
   return (
-    <div className="vote">
-      <div style={{ padding: "10px" }}>
-        <h1>{title}</h1>
-
-        <div className="flex-row">
-          <div className="column">
-            <span className="label">Vorname(n)</span>
-            <input
-              type="text"
-              value={firstName}
-              onChange={(e) => setFirstName(capitalizeWords(e.target.value))}
-              placeholder="Max Erika"
-            />
-          </div>
-          <div className="column">
-            <span className="label">Nachname</span>
-            <input
-              type="text"
-              value={lastName}
-              onChange={(e) => setLastName(capitalizeWords(e.target.value))}
-              placeholder="Mustermann"
-            />
+    <div className="container">
+      <mdui-card variant="filled" class="card">
+        <div className="mdui-prose">
+          <h1>{title}</h1>
+          <div className="time-label">
+            Endet am{" "}
+            {new Date(endTime.seconds * 1000).toLocaleString("de-DE", {
+              weekday: "long",
+              year: "numeric",
+              month: "long",
+              day: "numeric",
+              hour: "numeric",
+              minute: "numeric",
+            })}
           </div>
         </div>
         <p />
         <div className="flex-row">
-          <div className="column">
-            <span className="label">Klasse</span>
-            <input
-              min={1}
-              max={13}
-              type="number"
-              value={grade}
-              onChange={(e) => setGrade(e.target.value)}
-              placeholder="11"
-              className="grade"
-            />
-          </div>
-          <div className="column">
-            <span className="label">Klassenlistennr.</span>
-            <input
-              min={1}
-              max={100}
-              type="number"
-              value={listIndex}
-              onChange={(e) => setListIndex(e.target.value)}
-              placeholder="17"
-            />
-          </div>
+          <mdui-text-field
+            label="Vorname(n)"
+            placeholder="Max Erika"
+            value={firstName}
+            onInput={(e) => setFirstName(capitalizeWords(e.target.value))}
+          ></mdui-text-field>
+          <mdui-text-field
+            label="Nachname"
+            placeholder="Mustermann"
+            value={lastName}
+            onInput={(e) => setLastName(capitalizeWords(e.target.value))}
+          ></mdui-text-field>
         </div>
-        <br />
-        <div className="divider">
-          <hr />
+        <p />
+        <div className="flex-row">
+          <mdui-text-field
+            type="number"
+            label="Klasse"
+            placeholder="11"
+            value={grade}
+            onInput={(e) => setGrade(e.target.value)}
+          ></mdui-text-field>
+          <mdui-text-field
+            type="number"
+            label="Klassenlistennr."
+            prefix="#"
+            placeholder="17"
+            value={listIndex}
+            onInput={(e) => setListIndex(e.target.value)}
+          ></mdui-text-field>
         </div>
-        {extraFields.map((e, i) => (
+        <p />
+        {extraFields?.map((e, i) => (
           <div key={i}>
-            <p />
-            <input
+            <mdui-text-field
+              label={e}
               value={extraFieldsValues[i]}
-              onChange={(e) =>
+              onInput={(e) =>
                 handleInputChange(i, capitalizeWords(e.target.value))
               }
-              placeholder={e}
-            />
+            ></mdui-text-field>
             <p />
           </div>
         ))}
+        <p />
+        <br />
+        <mdui-divider></mdui-divider>
+        <p />
         {Array.from({ length: selectCount }).map((e, index) => (
           <div key={index}>
-            <h2 ref={(el) => (refs.current[index] = el)}>{index + 1}. Wahl</h2>
-            <div className="options">
+            <div className="mdui-prosa">
+              {selectCount > 1 && (
+                <h2 ref={(el) => (refs.current[index] = el)}>
+                  {index + 1}. Wahl
+                </h2>
+              )}
+            </div>
+            <div className="flex-wrap">
               {options.map((e) => (
-                <>
-                  <div
-                    className={`option ${
-                      selected[index] === e.id
-                        ? "active"
-                        : selected.includes(e.id) && "disabled"
-                    }`}
-                    onClick={() => {
-                      selected[index] === e.id
-                        ? select(index, "null")
-                        : !selected.includes(e.id) && select(index, e.id);
-                    }}
-                  >
-                    <div className="title">{e.title}</div>
-                    <div className="teacher">{e.teacher}</div>
-                    <div className="description">{e.description}</div>
-                    <div className="max">max. {e.max} SchülerInnen</div>
-                  </div>
-                  <br />
-                </>
+                <mdui-card
+                  clickable={
+                    selected[index] !== e.id && !selected.includes(e.id)
+                  }
+                  style={{
+                    cursor:
+                      selected[index] !== e.id && selected.includes(e.id)
+                        ? "default"
+                        : "pointer",
+                  }}
+                  class={`option-card ${
+                    selected[index] === e.id ? "selected" : ""
+                  } ${
+                    selected[index] !== e.id && selected.includes(e.id)
+                      ? "disabled"
+                      : ""
+                  }`}
+                  variant={
+                    selected.includes(e.id)
+                      ? selected[index] === e.id
+                        ? "outlined"
+                        : "filled"
+                      : "elevated"
+                  }
+                  onClick={() => {
+                    selected[index] === e.id
+                      ? select(index, "null")
+                      : !selected.includes(e.id) && select(index, e.id);
+                  }}
+                >
+                  <b>{e.title}</b>
+                  <div className="teacher">{e.teacher}</div>
+                  <div className="description">{e.description}</div>
+                  <div className="max">max. {e.max} SchülerInnen</div>
+                </mdui-card>
               ))}
             </div>
           </div>
         ))}
         <p />
+        <br />
+        <mdui-divider></mdui-divider>
         <p />
-        <button
+        <br />
+        <div
+          className="button-container"
           ref={(el) => (refs.current[selectCount] = el)}
-          disabled={submitDisabled()}
-          onClick={submitDisabled() ? null : submit}
         >
-          Absenden
-        </button>
-      </div>
+          <mdui-button
+            variant="elevated"
+            icon="refresh"
+            onClick={() => {
+              setSelected(Array.from({ length: selectCount }, () => "null"));
+              setFirstName("");
+              setLastName("");
+              setGrade("");
+              setListIndex("");
+              setExtraFieldsValues([]);
+            }}
+          >
+            Zurücksetzen
+          </mdui-button>
+          {submitDisabled() ? (
+            <mdui-button disabled end-icon="send">
+              Absenden
+            </mdui-button>
+          ) : (
+            <mdui-button onClick={submit} end-icon="send">
+              Absenden
+            </mdui-button>
+          )}
+        </div>
+      </mdui-card>
     </div>
   );
 }
@@ -236,5 +300,5 @@ export async function loader({ params }) {
   const voteData = vote.data();
   const optionsData = options.docs.map((e) => ({ id: e.id, ...e.data() }));
 
-  return { voteData: voteData, optionsData: optionsData };
+  return { vote: voteData, options: optionsData };
 }

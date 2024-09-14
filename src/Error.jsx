@@ -3,7 +3,9 @@ import "./error.css";
 
 export default function ErrorPage() {
   let error = useRouteError();
-  document.title = "Oops! " + error.status;
+  document.title = "Oops! " + (error?.status || "Unknown Error");
+
+  console.error(error);
   return (
     <div className="error-container">
       <div className="error-content">
