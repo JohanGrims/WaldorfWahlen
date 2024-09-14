@@ -13,25 +13,30 @@ export default function DrawerList() {
   const navigate = useNavigate();
 
   React.useEffect(() => {
-    getDocs(collection(db, "/votes")).then((data) => {
-      data.docs.map((e) => {
-        let data = e.data();
-        console.log(data.version > 1);
-        if (data.active) {
-          setActiveVotes((activeVotes) => [
-            ...activeVotes,
-            { id: e.id, title: data.title, version: data.version },
-          ]);
-        } else {
-          setExpiredVotes((expiredVotes) => [
-            ...expiredVotes,
-            { id: e.id, title: data.title, version: data.version },
-          ]);
-        }
-      });
+    getDocs(collection(db, "/votes"))
+      .then((data) => {
+        data.docs.map((e) => {
+          let data = e.data();
+          console.log(data.version > 1);
+          if (data.active) {
+            setActiveVotes((activeVotes) => [
+              ...activeVotes,
+              { id: e.id, title: data.title, version: data.version },
+            ]);
+          } else {
+            setExpiredVotes((expiredVotes) => [
+              ...expiredVotes,
+              { id: e.id, title: data.title, version: data.version },
+            ]);
+          }
+        });
 
-      setLoading(false);
-    });
+        setLoading(false);
+      })
+      .catch((e) => {
+        console.error(e);
+        setLoading(false);
+      });
   }, []);
 
   if (loading) {

@@ -37,7 +37,7 @@ export default function Login() {
           .then(() => {
             alert({
               headline: "Email gesendet",
-              description: "Bitte überprüfe deinen Posteingang.",
+              description: "Bitte überprüfen Sie Ihren Posteingang.",
             });
           })
           .catch((error) => {
