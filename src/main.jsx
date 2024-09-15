@@ -4,21 +4,22 @@ import { RouterProvider, createBrowserRouter } from "react-router-dom";
 import ErrorPage from "./Error.jsx";
 import "./styles.css";
 
-import AnswerList from "./admin/AnswerList.jsx";
-import AssignStudents, {
-  loader as assignStudentsLoader,
-} from "./admin/AssignStudents.tsx";
 import Admin from "./admin/index.jsx";
 import App, { loader as appLoader } from "./App.jsx";
 import Result from "./Result.jsx";
 import Vote, { loader as voteLoader } from "./Vote.jsx";
 
-const Share = lazy(() => import("./Share.jsx"));
 const Submitted = lazy(() => import("./Submitted.jsx"));
 
 import "mdui";
 import { setColorScheme } from "mdui";
 import "mdui/mdui.css";
+import NewVote from "./admin/NewVote.jsx";
+import Answers, { loader as answersLoader } from "./admin/vote/Answers.jsx";
+import Delete from "./admin/vote/Delete.jsx";
+import Edit from "./admin/vote/Edit.jsx";
+import Schedule, { loader as scheduleLoader } from "./admin/vote/Schedule.jsx";
+import Share from "./admin/vote/share.jsx";
 
 const Loader = () => (
   <div className="loader-wrapper">
@@ -80,11 +81,7 @@ const router = createBrowserRouter([
           },
           {
             path: "new",
-            element: (
-              <div className="mdui-prose">
-                <h2>Neue Umfrage</h2>
-              </div>
-            ),
+            element: <NewVote />,
           },
           {
             path: "settings",
@@ -103,23 +100,41 @@ const router = createBrowserRouter([
             ),
           },
           {
-            path: "o/:id",
-            element: <AnswerList />,
-          },
-          {
-            path: ":id",
-            element: <AssignStudents />,
-            loader: assignStudentsLoader,
+            path: ":id/*",
+            children: [
+              {
+                path: "",
+                element: (
+                  <div className="mdui-prose">
+                    <h2>Wahl</h2>
+                  </div>
+                ),
+              },
+              {
+                path: "edit",
+                element: <Edit />,
+              },
+              {
+                path: "answers",
+                element: <Answers />,
+                loader: answersLoader,
+              },
+              {
+                path: "share",
+                element: <Share />,
+              },
+              {
+                path: "delete",
+                element: <Delete />,
+              },
+              {
+                path: "schedule",
+                element: <Schedule />,
+                loader: scheduleLoader,
+              },
+            ],
           },
         ],
-      },
-      {
-        path: "/share/:id",
-        element: (
-          <Suspense fallback={<Loader />}>
-            <Share />
-          </Suspense>
-        ),
       },
     ],
   },

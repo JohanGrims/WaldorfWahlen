@@ -74,10 +74,13 @@ export async function loader() {
   const expiredVotes = [];
   votes.docs.map((e) => {
     let data = e.data();
-    if (data.active && Date.now() < data.endTime.seconds * 1000) {
-      activeVotes.push({ id: e.id, title: data.title });
-    } else {
-      expiredVotes.push({ id: e.id, title: data.title });
+    console.log(data, e.id);
+    if (Date.now() > data.startTime.seconds * 1000) {
+      if (data.active && Date.now() < data.endTime.seconds * 1000) {
+        activeVotes.push({ id: e.id, title: data.title });
+      } else {
+        expiredVotes.push({ id: e.id, title: data.title });
+      }
     }
   });
   return { activeVotes, expiredVotes };

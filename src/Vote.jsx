@@ -10,6 +10,7 @@ import React, { useRef } from "react";
 import { useLoaderData, useNavigate, useParams } from "react-router-dom";
 import { db } from "./firebase";
 
+import { confirm, snackbar } from "mdui";
 import "./vote.css";
 
 export default function Vote() {
@@ -20,7 +21,7 @@ export default function Vote() {
 
   const navigate = useNavigate();
 
-  const { title, active, selectCount, extraFields, endTime } = vote;
+  const { title, active, selectCount, extraFields, endTime, startTime } = vote;
   const [firstName, setFirstName] = React.useState();
   const [lastName, setLastName] = React.useState();
   const [grade, setGrade] = React.useState();
@@ -33,7 +34,7 @@ export default function Vote() {
   React.useEffect(() => {
     document.title = title;
 
-    if (localStorage.getItem(id)) {
+    if (localStorage.getItem(id) && !urlParams.get("preview")) {
       if (urlParams.get("allowResubmission")) {
         navigate(`/submitted/${id}?allowResubmission=true`);
         window.location.href = `/submitted/${id}?allowResubmission=true`;
@@ -43,6 +44,8 @@ export default function Vote() {
       window.location.href = `/submitted/${id}`;
     }
   }, []);
+
+  const preview = urlParams.get("preview");
 
   const submitDisabled = () => {
     if (
@@ -55,7 +58,8 @@ export default function Vote() {
       lastName?.length < 2 ||
       (extraFields &&
         (extraFieldsValues?.length !== extraFields?.length ||
-          extraFieldsValues?.some((value) => !value?.trim())))
+          extraFieldsValues?.some((value) => !value?.trim()))) ||
+      preview
     ) {
       return true;
     }
@@ -115,8 +119,24 @@ export default function Vote() {
   };
 
   React.useEffect(() => {
-    if (active === false || Date.now() > endTime.seconds * 1000) {
+    if ((active === false || Date.now() > endTime.seconds * 1000) && !preview) {
+      snackbar({ message: "Die Wahl ist bereits beendet." });
       navigate(`/r/${id}`);
+    }
+    if (Date.now() < startTime.seconds * 1000 && !preview) {
+      snackbar({
+        message:
+          "Die Wahl startet erst am " +
+          new Date(startTime.seconds * 1000).toLocaleString("de-DE", {
+            weekday: "long",
+            year: "numeric",
+            month: "long",
+            day: "numeric",
+            hour: "numeric",
+            minute: "numeric",
+          }),
+      });
+      navigate("/");
     }
   }, []);
 
@@ -137,7 +157,7 @@ export default function Vote() {
     <div className="container">
       <mdui-card variant="filled" class="card">
         <div className="mdui-prose">
-          <h1>{title}</h1>
+          <h1 className="vote-title">{title}</h1>
           <div className="time-label">
             Endet am{" "}
             {new Date(endTime.seconds * 1000).toLocaleString("de-DE", {
@@ -153,12 +173,14 @@ export default function Vote() {
         <p />
         <div className="flex-row">
           <mdui-text-field
+            required
             label="Vorname(n)"
             placeholder="Max Erika"
             value={firstName}
             onInput={(e) => setFirstName(capitalizeWords(e.target.value))}
           ></mdui-text-field>
           <mdui-text-field
+            required
             label="Nachname"
             placeholder="Mustermann"
             value={lastName}
@@ -168,6 +190,7 @@ export default function Vote() {
         <p />
         <div className="flex-row">
           <mdui-text-field
+            required
             type="number"
             label="Klasse"
             placeholder="11"
@@ -175,6 +198,7 @@ export default function Vote() {
             onInput={(e) => setGrade(e.target.value)}
           ></mdui-text-field>
           <mdui-text-field
+            required
             type="number"
             label="Klassenlistennr."
             prefix="#"
@@ -187,6 +211,7 @@ export default function Vote() {
         {extraFields?.map((e, i) => (
           <div key={i}>
             <mdui-text-field
+              required
               label={e}
               value={extraFieldsValues[i]}
               onInput={(e) =>
@@ -260,9 +285,25 @@ export default function Vote() {
           ref={(el) => (refs.current[selectCount] = el)}
         >
           <mdui-button
-            variant="elevated"
+            variant="text"
             icon="refresh"
             onClick={() => {
+              confirm({
+                headline: "Zurücksetzen",
+                description: "Möchten Sie wirklich alle Eingaben zurücksetzen?",
+                onConfirm: () => {
+                  setSelected(
+                    Array.from({ length: selectCount }, () => "null")
+                  );
+                  setFirstName("");
+                  setLastName("");
+                  setGrade("");
+                  setListIndex("");
+                  setExtraFieldsValues([]);
+                },
+                confirmText: "Zurücksetzen",
+                cancelText: "Abbrechen",
+              });
               setSelected(Array.from({ length: selectCount }, () => "null"));
               setFirstName("");
               setLastName("");
@@ -273,6 +314,17 @@ export default function Vote() {
           >
             Zurücksetzen
           </mdui-button>
+          {preview && (
+            <mdui-tooltip
+              variant="rich"
+              headline="Vorschau"
+              content="Sie sehen eine Vorschau, da Sie den Link mit dem Parameter ?preview=true geöffnet haben. Es werden keine Daten gespeichert."
+            >
+              <mdui-button icon="visibility" disabled variant="text">
+                Sie sehen eine Vorschau
+              </mdui-button>
+            </mdui-tooltip>
+          )}
           {submitDisabled() ? (
             <mdui-button disabled end-icon="send">
               Absenden

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="de" class="mdui-theme-dark">
+<html lang="de">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/WSP.png" />
@@ -36,8 +36,13 @@
 
     <title>WaldorfWahlen</title>
   </head>
-  <body>
+  <body class="mdui-theme-dark">
     <div id="root"></div>
+    <style>
+      .firebase-emulator-warning {
+        display: none;
+      }
+    </style>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>
