@@ -155,7 +155,7 @@ export default function Vote() {
 
   return (
     <div className="container">
-      <mdui-card variant="filled" class="card">
+      <mdui-card variant="outlined" class="card">
         <div className="mdui-prose">
           <h1 className="vote-title">{title}</h1>
           <div className="time-label">

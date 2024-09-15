@@ -179,7 +179,7 @@ export default function DrawerList() {
           <mdui-collapse-item value="expired-votes">
             <mdui-list-item
               rounded
-              icon="restore"
+              icon="history"
               end-icon="expand_more"
               slot="header"
             >
