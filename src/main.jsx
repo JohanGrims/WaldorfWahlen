@@ -19,7 +19,7 @@ import Answers, { loader as answersLoader } from "./admin/vote/Answers.jsx";
 import Delete from "./admin/vote/Delete.jsx";
 import Edit from "./admin/vote/Edit.jsx";
 import Schedule, { loader as scheduleLoader } from "./admin/vote/Schedule.jsx";
-import Share from "./admin/vote/share.jsx";
+import Share from "./admin/vote/Share.jsx";
 
 const Loader = () => (
   <div className="loader-wrapper">
