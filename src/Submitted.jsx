@@ -1,5 +1,4 @@
 import { useNavigate, useParams } from "react-router-dom";
-import "./submitted.css";
 
 export default function Submitted() {
   const { id } = useParams();
@@ -8,32 +7,32 @@ export default function Submitted() {
   const navigate = useNavigate();
 
   return (
-    <div className="submitted-container">
-      <div className="submitted-content">
-        <div className="submitted-message">
-          <h2>Vielen Dank!</h2>
-          <p>
-            Deine Wahl wurde erfolgreich abgegeben. Bei Fragen oder Problemen
-            melde Dich beim betreuenden Lehrer der Wahl oder den SV-Vertretern
-            Deiner Klasse.
-          </p>
-          {urlParams.get("allowResubmission") && (
-            <button
-              className="button"
+    <mdui-dialog open headline="Vielen Dank!">
+      <div className="mdui-prose">
+        <p>
+          Deine Wahl wurde erfolgreich abgegeben. Bei Fragen oder Problemen
+          melden Sie sich beim betreuenden Lehrer der Wahl oder den
+          SV-Vertretern Deiner Klasse.
+        </p>
+        <p />
+        <div className="button-container">
+          {urlParams.get("allowResubmission") ? (
+            <mdui-button
               onClick={() => {
                 localStorage.removeItem(id);
                 navigate(`/v/${id}?allowResubmission=true`);
               }}
             >
               Erneut wählen
-            </button>
+            </mdui-button>
+          ) : (
+            <mdui-button onClick={() => navigate(`/`)}>Startseite</mdui-button>
           )}
-        </div>
-
-        <div className="submitted-details">
-          <img className="submitted-image" src="/WSP.png" />
+          <mdui-button disabled variant="text">
+            {JSON.parse(localStorage.getItem(id))?.choiceId}
+          </mdui-button>
         </div>
       </div>
-    </div>
+    </mdui-dialog>
   );
 }

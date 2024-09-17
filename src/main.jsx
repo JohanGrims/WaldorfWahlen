@@ -1,31 +1,27 @@
-import React, { Suspense, lazy } from "react";
+import React from "react";
 import ReactDOM from "react-dom/client";
 import { RouterProvider, createBrowserRouter } from "react-router-dom";
 import ErrorPage from "./Error.jsx";
 import "./styles.css";
 
-import Admin from "./admin/index.jsx";
-import App, { loader as appLoader } from "./App.jsx";
-import Result from "./Result.jsx";
-import Vote, { loader as voteLoader } from "./Vote.jsx";
-
-const Submitted = lazy(() => import("./Submitted.jsx"));
-
 import "mdui";
 import { setColorScheme } from "mdui";
 import "mdui/mdui.css";
+import Admin from "./admin/index.jsx";
 import NewVote from "./admin/NewVote.jsx";
+import Settings from "./admin/Settings.jsx";
 import Answers, { loader as answersLoader } from "./admin/vote/Answers.jsx";
+import Assign, { loader as assignLoader } from "./admin/vote/Assign.jsx";
 import Delete from "./admin/vote/Delete.jsx";
 import Edit from "./admin/vote/Edit.jsx";
 import Schedule, { loader as scheduleLoader } from "./admin/vote/Schedule.jsx";
 import Share from "./admin/vote/Share.jsx";
-
-const Loader = () => (
-  <div className="loader-wrapper">
-    <div className="loader"></div>
-  </div>
-);
+import App, { loader as appLoader } from "./App.jsx";
+import Gateway, { loader as gatewayLoader } from "./Gateway.jsx";
+import Result from "./Result.jsx";
+import Scheduled from "./Scheduled.jsx";
+import Submitted from "./Submitted.jsx";
+import Vote, { loader as voteLoader } from "./Vote.jsx";
 
 setColorScheme("#f89e24");
 
@@ -40,18 +36,13 @@ const router = createBrowserRouter([
         loader: appLoader,
       },
       {
-        path: "/vote/:id",
-        element: <Vote />,
-        loader: voteLoader,
+        path: "/:id",
+        element: <Gateway />,
+        loader: gatewayLoader,
       },
       {
         path: "/v/:id",
         element: <Vote />,
-        loader: voteLoader,
-      },
-      {
-        path: "/results/:id",
-        element: <Result />,
         loader: voteLoader,
       },
       {
@@ -60,12 +51,14 @@ const router = createBrowserRouter([
         loader: voteLoader,
       },
       {
-        path: "/submitted/:id",
-        element: (
-          <Suspense fallback={<Loader />}>
-            <Submitted />
-          </Suspense>
-        ),
+        path: "/x/:id",
+        element: <Submitted />,
+        loader: voteLoader,
+      },
+      {
+        path: "/s/:id",
+        element: <Scheduled />,
+        loader: voteLoader,
       },
       {
         path: "/admin/*",
@@ -85,19 +78,7 @@ const router = createBrowserRouter([
           },
           {
             path: "settings",
-            element: (
-              <div className="mdui-prose">
-                <h2>Einstellungen</h2>
-              </div>
-            ),
-          },
-          {
-            path: "users",
-            element: (
-              <div className="mdui-prose">
-                <h2>Administratoren</h2>
-              </div>
-            ),
+            element: <Settings />,
           },
           {
             path: ":id/*",
@@ -131,6 +112,11 @@ const router = createBrowserRouter([
                 path: "schedule",
                 element: <Schedule />,
                 loader: scheduleLoader,
+              },
+              {
+                path: "assign",
+                element: <Assign />,
+                loader: assignLoader,
               },
             ],
           },

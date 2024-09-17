@@ -22,7 +22,7 @@ function App() {
         {activeVotes.map((vote) => (
           <mdui-list-item
             key={vote.id}
-            href={`/v/${vote.id}`}
+            href={`/${vote.id}`}
             rounded
             end-icon="arrow_forward"
           >
@@ -47,7 +47,7 @@ function App() {
                 {scheduledVotes.map((e) => (
                   <mdui-list-item
                     rounded
-                    href={`/v/${e.id}`}
+                    href={`/${e.id}`}
                     end-icon="arrow_forward"
                   >
                     {e.title}
@@ -74,7 +74,7 @@ function App() {
                 {expiredVotes.map((e) => (
                   <mdui-list-item
                     rounded
-                    href={`/r/${e.id}`}
+                    href={`/${e.id}`}
                     end-icon="arrow_forward"
                   >
                     {e.title}

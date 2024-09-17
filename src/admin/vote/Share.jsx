@@ -51,9 +51,11 @@ export default function Share() {
         >
           <QRCode
             ref={qrCodeRef}
-            value={`https://waldorfwahlen.web.app/v/${id}${
-              allowResubmission ? "?allowResubmission=true" : ""
-            }`}
+            value={
+              allowResubmission
+                ? `https://waldorfwahlen.web.app/v/${id}?allowResubmission=true`
+                : `https://waldorfwahlen.web.app/${id}`
+            }
           />
         </div>
         <p />
@@ -91,9 +93,9 @@ export default function Share() {
             onClick={() =>
               navigator.share({
                 title: "Wahl",
-                text: `https://waldorfwahlen.web.app/v/${id}${
-                  allowResubmission ? "?allowResubmission=true" : ""
-                }`,
+                text: allowResubmission
+                  ? `https://waldorfwahlen.web.app/v/${id}?allowResubmission=true`
+                  : `https://waldorfwahlen.web.app/${id}`,
               })
             }
           ></mdui-segmented-button>
@@ -101,9 +103,9 @@ export default function Share() {
             icon="content_copy"
             onClick={() =>
               navigator.clipboard.writeText(
-                `https://waldorfwahlen.web.app/v/${id}${
-                  allowResubmission ? "?allowResubmission=true" : ""
-                }`
+                allowResubmission
+                  ? `https://waldorfwahlen.web.app/v/${id}?allowResubmission=true`
+                  : `https://waldorfwahlen.web.app/${id}`
               )
             }
           ></mdui-segmented-button>

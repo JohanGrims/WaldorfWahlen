@@ -6,7 +6,7 @@ import { db } from "../../firebase";
 import { DrawerItem } from "./components";
 import VoteDrawer from "./VoteDrawer";
 
-let pages = [undefined, "new", "settings", "users"];
+let pages = [undefined, "new", "settings"];
 
 export default function DrawerList() {
   const [activeVotes, setActiveVotes] = React.useState([]);
@@ -225,19 +225,6 @@ export default function DrawerList() {
             title={"Einstellungen"}
             icon={"settings"}
             onCLick={() => navigate("/admin/settings")}
-          />
-        </mdui-tooltip>
-
-        <mdui-tooltip
-          variant="rich"
-          headline="Administratoren"
-          content="Verwalten Sie, wer Zugriff auf diesen Administratoren-Bereich hat."
-        >
-          <DrawerItem
-            active={active === "users"}
-            title={"Administratoren"}
-            icon={"people"}
-            onCLick={() => navigate("/admin/users")}
           />
         </mdui-tooltip>
       </mdui-list>

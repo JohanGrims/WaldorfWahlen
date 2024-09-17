@@ -125,7 +125,7 @@ export default function VoteDrawer({}) {
         <DrawerItem
           icon={"auto_awesome"}
           title={"Zuteilen"}
-          active={active === "assign"}
+          active={active === "assign" || active === "manually"}
           onCLick={() => navigate(`/admin/${id}/assign`)}
         />
         <DrawerItem

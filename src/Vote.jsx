@@ -36,12 +36,12 @@ export default function Vote() {
 
     if (localStorage.getItem(id) && !urlParams.get("preview")) {
       if (urlParams.get("allowResubmission")) {
-        navigate(`/submitted/${id}?allowResubmission=true`);
-        window.location.href = `/submitted/${id}?allowResubmission=true`;
+        navigate(`/x/${id}?allowResubmission=true`);
+        window.location.href = `/x/${id}?allowResubmission=true`;
         return;
       }
-      navigate(`/submitted/${id}`);
-      window.location.href = `/submitted/${id}`;
+      navigate(`/x/${id}`);
+      window.location.href = `/x/${id}`;
     }
   }, []);
 
@@ -87,26 +87,29 @@ export default function Vote() {
       timestamp: serverTimestamp(),
     })
       .then((e) => {
-        localStorage.setItem(id, true);
+        localStorage.setItem(
+          id,
+          JSON.stringify({ choiceId: e.id, timestamp: Date.now() })
+        );
         if (urlParams.get("allowResubmission")) {
-          navigate(`/submitted/${id}?allowResubmission=true`);
+          navigate(`/x/${id}?allowResubmission=true`);
           return;
         }
-        navigate(`/submitted/${id}`);
+        navigate(`/x/${id}`);
       })
       .catch((error) => {
         console.log(JSON.stringify(error));
         if (error.code === "permission-denied") {
           alert(
-            "Da hat etwas nicht geklappt. Du bist nicht (mehr) berechtigt, deine Daten abzugeben. Bitte wende dich an den zuständigen Lehrer."
+            "Da hat etwas nicht geklappt. Sie sind nicht (mehr) berechtigt, Ihre Daten abzugeben. Bitte wenden Sie sich an den zuständigen Lehrer."
           );
         } else if (error.message === "Network Error") {
           alert(
-            "Netzwerkprobleme. Bitte überprüfe deine Internetverbindung und versuche es erneut."
+            "Netzwerkprobleme. Bitte überprüfen Sie Ihre Internetverbindung und versuchen Sie es erneut."
           );
         } else {
           alert(
-            "Ein unbekannter Fehler ist aufgetreten. Bitte versuche es später erneut."
+            "Ein unbekannter Fehler ist aufgetreten. Bitte versuchen Sie es später erneut."
           );
         }
       });
