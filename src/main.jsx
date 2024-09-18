@@ -7,21 +7,26 @@ import "./styles.css";
 import "mdui";
 import { setColorScheme } from "mdui";
 import "mdui/mdui.css";
-import Admin from "./admin/index.jsx";
-import NewVote from "./admin/NewVote.jsx";
-import Settings from "./admin/Settings.jsx";
-import Answers, { loader as answersLoader } from "./admin/vote/Answers.jsx";
-import Assign, { loader as assignLoader } from "./admin/vote/Assign.jsx";
-import Delete from "./admin/vote/Delete.jsx";
-import Edit from "./admin/vote/Edit.jsx";
-import Schedule, { loader as scheduleLoader } from "./admin/vote/Schedule.jsx";
-import Share from "./admin/vote/Share.jsx";
+
 import App, { loader as appLoader } from "./App.jsx";
 import Gateway, { loader as gatewayLoader } from "./Gateway.jsx";
 import Result from "./Result.jsx";
 import Scheduled from "./Scheduled.jsx";
 import Submitted from "./Submitted.jsx";
 import Vote, { loader as voteLoader } from "./Vote.jsx";
+
+import Admin from "./admin/index.jsx";
+import NewVote from "./admin/NewVote.jsx";
+import Overview, { loader as overviewLoader } from "./admin/Overview.jsx";
+import Settings from "./admin/Settings.jsx";
+import Answers, { loader as answersLoader } from "./admin/vote/Answers.jsx";
+import Assign, { loader as assignLoader } from "./admin/vote/Assign.jsx";
+import Delete from "./admin/vote/Delete.jsx";
+import Edit from "./admin/vote/Edit.jsx";
+import Export from "./admin/vote/Export.jsx";
+import AdminVote, { loader as adminVoteLoader } from "./admin/vote/index.jsx";
+import Schedule from "./admin/vote/Schedule.jsx";
+import Share from "./admin/vote/Share.jsx";
 
 setColorScheme("#f89e24");
 
@@ -66,11 +71,8 @@ const router = createBrowserRouter([
         children: [
           {
             path: "",
-            element: (
-              <div className="mdui-prose">
-                <h2>Dashboard</h2>
-              </div>
-            ),
+            element: <Overview />,
+            loader: overviewLoader,
           },
           {
             path: "new",
@@ -85,11 +87,8 @@ const router = createBrowserRouter([
             children: [
               {
                 path: "",
-                element: (
-                  <div className="mdui-prose">
-                    <h2>Wahl</h2>
-                  </div>
-                ),
+                element: <AdminVote />,
+                loader: adminVoteLoader,
               },
               {
                 path: "edit",
@@ -107,16 +106,21 @@ const router = createBrowserRouter([
               {
                 path: "delete",
                 element: <Delete />,
+                loader: adminVoteLoader,
               },
               {
                 path: "schedule",
                 element: <Schedule />,
-                loader: scheduleLoader,
+                loader: adminVoteLoader,
               },
               {
                 path: "assign",
                 element: <Assign />,
                 loader: assignLoader,
+              },
+              {
+                path: "export",
+                element: <Export />,
               },
             ],
           },

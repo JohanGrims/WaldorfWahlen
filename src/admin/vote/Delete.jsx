@@ -2,6 +2,7 @@ import { deleteDoc, doc } from "firebase/firestore/lite";
 import { snackbar } from "mdui";
 import React from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import AdminVote from ".";
 import { db } from "../../firebase";
 
 export default function Delete() {
@@ -22,33 +23,37 @@ export default function Delete() {
       });
   }
   return (
-    <mdui-dialog open={true} headline="Wahl löschen">
-      <p>
-        Wollen Sie diese Wahl wirklich löschen? Sie können Sie danach nicht mehr
-        aufrufen. Antworten können nur noch über die API abgerufen werden.
-      </p>
-      <p>
-        Geben Sie zur Bestätigung <code>{id}</code> ein:{" "}
-      </p>
-      <mdui-text-field
-        value={confirmtion}
-        onInput={(e) => setConfirmation(e.target.value)}
-        label="Bestätigen"
-        onPaste={(e) => {
-          return e.preventDefault();
-        }}
-      ></mdui-text-field>
-      <p />
-      <div className="button-container">
-        <mdui-button variant="text" onClick={() => navigate(-1)}>
-          Abbrechen
-        </mdui-button>
-        {confirmtion === id ? (
-          <mdui-button onClick={deleteVote}>Endgültig löschen</mdui-button>
-        ) : (
-          <mdui-button disabled>Endgültig löschen</mdui-button>
-        )}
-      </div>
-    </mdui-dialog>
+    <>
+      <AdminVote />
+      <mdui-dialog open={true} headline="Wahl löschen">
+        <p>
+          Wollen Sie diese Wahl wirklich löschen? Sie können Sie danach nicht
+          mehr aufrufen. Antworten können nur noch über die API abgerufen
+          werden.
+        </p>
+        <p>
+          Geben Sie zur Bestätigung <code>{id}</code> ein:{" "}
+        </p>
+        <mdui-text-field
+          value={confirmtion}
+          onInput={(e) => setConfirmation(e.target.value)}
+          label="Bestätigen"
+          onPaste={(e) => {
+            return e.preventDefault();
+          }}
+        ></mdui-text-field>
+        <p />
+        <div className="button-container">
+          <mdui-button variant="text" onClick={() => navigate(`/admin/${id}`)}>
+            Abbrechen
+          </mdui-button>
+          {confirmtion === id ? (
+            <mdui-button onClick={deleteVote}>Endgültig löschen</mdui-button>
+          ) : (
+            <mdui-button disabled>Endgültig löschen</mdui-button>
+          )}
+        </div>
+      </mdui-dialog>
+    </>
   );
 }

@@ -80,6 +80,7 @@ export default function DrawerList() {
         <mdui-list-item disabled>
           <mdui-list-item-content>Administrator</mdui-list-item-content>
         </mdui-list-item>
+        {loading && <mdui-linear-progress indeterminate></mdui-linear-progress>}
 
         <mdui-tooltip
           variant="rich"

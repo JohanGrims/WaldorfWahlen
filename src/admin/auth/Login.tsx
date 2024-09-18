@@ -59,7 +59,7 @@ export default function Login() {
           type="email"
           placeholder="user@example.com"
           label="Email"
-        />
+        ></mdui-text-field>
         <p />
         <mdui-text-field
           value={password}

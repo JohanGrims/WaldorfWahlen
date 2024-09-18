@@ -60,8 +60,7 @@ export default function Assign() {
       console.log(data);
 
       setResults(data);
-      //   setTimeout(() => setLoading(false), 5000);
-      setLoading(false);
+      setTimeout(() => setLoading(false), 5000);
     } catch (error) {
       console.error("Error fetching optimization:", error);
       snackbar({ message: "Fehler beim Laden der Optimierung." });

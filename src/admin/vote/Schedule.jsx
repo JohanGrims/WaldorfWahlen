@@ -5,10 +5,11 @@ import { useLoaderData, useNavigate, useParams } from "react-router-dom";
 import { db } from "../../firebase";
 
 import moment from "moment-timezone";
+import AdminVote from ".";
 
 export default function Schedule() {
   const { id } = useParams();
-  const vote = useLoaderData();
+  const { vote } = useLoaderData();
 
   const navigate = useNavigate();
 
@@ -49,36 +50,39 @@ export default function Schedule() {
   }
 
   return (
-    <mdui-dialog open={true} headline="Status einstellen">
-      <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-        <mdui-switch checked={vote.active} ref={switchRef}></mdui-switch>
-        <label>Nutzern erlauben, Wahlen abzugeben</label>
-      </div>
-      <p />
-      {active && (
-        <div className="fields-row">
-          <mdui-text-field
-            value={startTime}
-            onInput={(e) => setStartTime(e.target.value)}
-            label="Startzeitpunkt"
-            type="datetime-local"
-          ></mdui-text-field>
-          <mdui-text-field
-            value={endTime}
-            onInput={(e) => setEndTime(e.target.value)}
-            label="Endzeitpunkt"
-            type="datetime-local"
-          ></mdui-text-field>
+    <>
+      <AdminVote />
+      <mdui-dialog open={true} headline="Status einstellen">
+        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+          <mdui-switch checked={vote.active} ref={switchRef}></mdui-switch>
+          <label>Nutzern erlauben, Wahlen abzugeben</label>
         </div>
-      )}
-      <p />
-      <div className="button-container">
-        <mdui-button variant="text" onClick={() => navigate(`/admin/${id}`)}>
-          Abbrechen
-        </mdui-button>
-        <mdui-button onClick={save}>Speichern</mdui-button>
-      </div>
-    </mdui-dialog>
+        <p />
+        {active && (
+          <div className="fields-row">
+            <mdui-text-field
+              value={startTime}
+              onInput={(e) => setStartTime(e.target.value)}
+              label="Startzeitpunkt"
+              type="datetime-local"
+            ></mdui-text-field>
+            <mdui-text-field
+              value={endTime}
+              onInput={(e) => setEndTime(e.target.value)}
+              label="Endzeitpunkt"
+              type="datetime-local"
+            ></mdui-text-field>
+          </div>
+        )}
+        <p />
+        <div className="button-container">
+          <mdui-button variant="text" onClick={() => navigate(`/admin/${id}`)}>
+            Abbrechen
+          </mdui-button>
+          <mdui-button onClick={save}>Speichern</mdui-button>
+        </div>
+      </mdui-dialog>
+    </>
   );
 }
 

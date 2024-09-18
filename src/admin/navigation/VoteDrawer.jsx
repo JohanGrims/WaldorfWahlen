@@ -153,7 +153,7 @@ export default function VoteDrawer({}) {
         <DrawerItem
           icon="upgrade"
           title="Exportieren"
-          active={active === "import"}
+          active={active === "export"}
           onCLick={() => navigate(`/admin/${id}/export`)}
         />
         <DrawerItem
