@@ -5,7 +5,7 @@ import ErrorPage from "./Error.jsx";
 import "./styles.css";
 
 import "mdui";
-import { setColorScheme } from "mdui";
+import { setColorScheme, setTheme } from "mdui";
 import "mdui/mdui.css";
 
 import App, { loader as appLoader } from "./App.jsx";
@@ -29,6 +29,7 @@ import Schedule from "./admin/vote/Schedule.jsx";
 import Share from "./admin/vote/Share.jsx";
 
 setColorScheme("#f89e24");
+setTheme(localStorage.getItem("theme") || "dark");
 
 const router = createBrowserRouter([
   {

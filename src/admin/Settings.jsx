@@ -1,6 +1,75 @@
+import {
+  EmailAuthProvider,
+  reauthenticateWithCredential,
+  updateEmail,
+  updatePassword,
+} from "firebase/auth";
+import { snackbar } from "mdui";
+import React from "react";
 import { auth } from "../firebase";
 
 export default function Settings() {
+  const [email, setEmail] = React.useState(auth.currentUser.email);
+  const [password, setPassword] = React.useState("");
+  const [newPassword, setNewPassword] = React.useState("");
+
+  const [darkMode, setDarkMode] = React.useState(
+    localStorage.getItem("theme") === "light"
+  );
+
+  function updateUser() {
+    const userCredentials = EmailAuthProvider.credential(
+      auth.currentUser.email,
+      password
+    );
+    reauthenticateWithCredential(auth.currentUser, userCredentials)
+      .then(() => {
+        if (newPassword) {
+          changePassword();
+        }
+        if (email !== auth.currentUser.email) {
+          changeEmail();
+        }
+      })
+      .catch((error) => {
+        console.error(error);
+      });
+  }
+
+  function changeEmail() {
+    updateEmail(auth.currentUser, email)
+      .then(() => {
+        snackbar({ message: "E-Mail-Adresse geändert" });
+      })
+      .catch((error) => {
+        console.error(error);
+      });
+  }
+
+  function changePassword() {
+    updatePassword(auth.currentUser, password)
+      .then(() => {
+        snackbar({ message: "Passwort geändert" });
+      })
+      .catch((error) => {
+        console.error(error);
+      });
+  }
+
+  const switchRef = React.useRef(null);
+
+  React.useEffect(() => {
+    const handleToggle = () => {
+      setDarkMode(switchRef.current.checked);
+      localStorage.setItem(
+        "theme",
+        switchRef.current.checked ? "dark" : "light"
+      );
+    };
+
+    switchRef.current.addEventListener("change", handleToggle);
+  }, []);
+
   return (
     <div className="mdui-prose">
       <h1>Einstellungen</h1>
@@ -9,18 +78,28 @@ export default function Settings() {
         label="E-Mail"
         type="email"
         required
-        value={auth.currentUser.email}
-        disabled
+        value={email}
+        onInput={(e) => setEmail(e.target.value)}
       ></mdui-text-field>
       <mdui-text-field
         label="Passwort"
         type="password"
         required
-        disabled
+        value={password}
+        onInput={(e) => setPassword(e.target.value)}
+      ></mdui-text-field>
+      <mdui-text-field
+        label="Neues Passwort"
+        type="password"
+        required
+        value={newPassword}
+        onInput={(e) => setNewPassword(e.target.value)}
       ></mdui-text-field>
       <p />
       <div className="button-container">
-        <mdui-button variant="text">Passwort ändern</mdui-button>
+        <mdui-button variant="text" onClick={updateUser}>
+          Speichern
+        </mdui-button>
         <p />
         <mdui-button onClick={() => auth.signOut()}>Abmelden</mdui-button>
       </div>
@@ -29,7 +108,8 @@ export default function Settings() {
         <mdui-switch
           checked-icon="dark_mode"
           unchecked-icon="light_mode"
-          checked
+          checked={localStorage.getItem("theme") !== "light"}
+          ref={switchRef}
         ></mdui-switch>
         <label>Dark Mode</label>
       </div>

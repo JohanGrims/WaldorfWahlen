@@ -17,6 +17,14 @@ export default function Assign() {
   const [loading, setLoading] = React.useState(false);
   const [mode, setMode] = React.useState("by-option");
 
+  const [rules, setRules] = React.useState([
+    {
+      apply: "*",
+      scores: [1, 2, 4],
+    },
+  ]);
+  const [editRules, setEditRules] = React.useState(false);
+
   const navigate = useNavigate();
 
   async function fetchOptimization() {
@@ -45,6 +53,7 @@ export default function Assign() {
         projects: projects,
         preferences: preferences,
         selectCount: vote.selectCount,
+        rules: rules,
       };
 
       const response = await fetch("https://api.chatwithsteiner.de/assign", {
@@ -82,14 +91,13 @@ export default function Assign() {
             color: "gray",
           }}
         >
-          Um alle möglichen Kombinationen zu berechnen, würde es mit{" "}
-          {choices.length} Schülern und {vote.selectCount} Wahlen länger dauern
-          als das Universum alt ist. Es gäbe nämlich{" "}
-          {Math.pow(vote.selectCount, choices.length)} mögliche Kombinationen.
-          So lange wollen wir nicht warten. Deshalb optimiert ein schlauer
-          Algorithmus für uns. Die Berechnungsdauer hängt von der Anzahl der
-          Schüler und der Anzahl der Wahlen ab. Bei vielen Schülern und Wahlen
-          kann es einige Sekunden dauern. Gleich ist es fertig.
+          Um alle möglichen Kombinationen zu berechnen, würde es mit 100
+          Schülern und 3 Wahlen länger dauern als das Universum alt ist. Es gäbe
+          nämlich {Math.pow(3, 100)} mögliche Kombinationen. So lange wollen wir
+          nicht warten. Deshalb optimiert ein schlauer Algorithmus für uns. Die
+          Berechnungsdauer hängt von der Anzahl der Schüler und der Anzahl der
+          Wahlen ab. Bei vielen Schülern und Wahlen kann es einige Sekunden
+          dauern. Gleich ist es fertig.
         </div>
       </div>
     );
@@ -97,7 +105,80 @@ export default function Assign() {
 
   if (!results) {
     return (
-      <div>
+      <div className="mdui-prose">
+        <mdui-dialog
+          open={editRules}
+          onClosed={() => setEditRules(false)}
+          headline="Regeln anpassen"
+          fullscreen
+        >
+          {rules.map((rule, i) => (
+            <div
+              key={i}
+              style={{ display: "flex", gap: "10px", marginBottom: "10px" }}
+            >
+              <mdui-text-field
+                label="Anwenden auf"
+                placeholder="grade=12"
+                value={rule.apply}
+                onInput={(e) => {
+                  const newRules = [...rules];
+                  newRules[i].apply = e.target.value;
+                  setRules(newRules);
+                }}
+              />
+              <mdui-text-field
+                label="Punkte"
+                placeholder="1,2,4"
+                value={rule.scores.join(",")}
+                onInput={(e) => {
+                  const newRules = [...rules];
+                  newRules[i].scores = e.target.value.split(",").map(Number);
+                  setRules(newRules);
+                }}
+              />
+              <mdui-button-icon
+                icon="delete"
+                onClick={() => {
+                  const newRules = [...rules];
+                  newRules.splice(i, 1);
+                  setRules(newRules);
+                }}
+              />
+            </div>
+          ))}
+          <mdui-button
+            onClick={() =>
+              setRules([...rules, { apply: "", scores: [1, 2, 4] }])
+            }
+            icon="add"
+          >
+            Regel hinzufügen
+          </mdui-button>
+          <mdui-button
+            slot="action"
+            onClick={() => {
+              setEditRules(false);
+              snackbar({ message: "Regeln gespeichert." });
+            }}
+          >
+            Speichern
+          </mdui-button>
+        </mdui-dialog>
+        <div
+          style={{
+            display: "flex",
+            gap: "10px",
+            justifyContent: "space-between",
+            alignItems: "start",
+          }}
+        >
+          <h2>Zuteilung</h2>
+          <mdui-button icon="settings" onClick={() => setEditRules(true)}>
+            Regeln anpassen
+          </mdui-button>
+        </div>
+        <p />
         <mdui-card
           variant="filled"
           style={{ width: "100%", padding: "20px" }}
@@ -192,7 +273,17 @@ export default function Assign() {
 
   return (
     <div className="mdui-prose">
-      <h2>Ergebnisse</h2>
+      <div
+        style={{
+          display: "flex",
+          gap: "10px",
+          justifyContent: "space-between",
+          alignItems: "start",
+        }}
+      >
+        <h2>Ergebnisse</h2>
+        <mdui-button onClick={saveResults}>Ergebnisse speichern</mdui-button>
+      </div>
       <p />
       Hier sind die optimierten Zuordnungen der Schüler zu den Projekten.
       <p />
@@ -429,8 +520,6 @@ export default function Assign() {
           </div>
         </div>
       )}
-      <p />
-      <mdui-button onClick={saveResults}>Ergebnisse speichern</mdui-button>
     </div>
   );
 }
