@@ -9,6 +9,15 @@ function App() {
 
   return (
     <div className="mdui-prose">
+      <div style={{ position: "fixed", top: 0, left: 0, padding: "1rem" }}>
+        <mdui-button-icon icon="admin_panel_settings" href="/admin" />
+      </div>
+      <div style={{ position: "fixed", top: 0, right: 0, padding: "1rem" }}>
+        <mdui-button-icon
+          icon="code"
+          href="https://github.com/johangrims/waldorfwahlen"
+        />
+      </div>
       <p />
       <div style={{ display: "flex", justifyContent: "center" }}>
         <img src="/WSP.png" alt="Logo" className="waldorf-logo" />

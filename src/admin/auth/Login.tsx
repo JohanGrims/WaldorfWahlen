@@ -52,7 +52,7 @@ export default function Login() {
   return (
     <mdui-card variant="filled" class="card">
       <div className="mdui-prose">
-        <h1>Login</h1>
+        <h1>Administratoren-Bereich</h1>
         <mdui-text-field
           value={email}
           onInput={(e) => setEmail(e.target.value)}
