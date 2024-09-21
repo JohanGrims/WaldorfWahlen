@@ -69,6 +69,10 @@ export default function Assign() {
       console.log(data);
 
       setResults(data);
+      if (window.location.hostname === "localhost") {
+        console.log("Running on localhost");
+        setLoading(false);
+      }
       setTimeout(() => setLoading(false), 5000);
     } catch (error) {
       console.error("Error fetching optimization:", error);
@@ -299,7 +303,7 @@ export default function Assign() {
       </ul>
       <mdui-radio-group value={mode}>
         <mdui-radio value="by-option" onClick={() => setMode("by-option")}>
-          Nach Erstwahl
+          Nach Projekt
         </mdui-radio>
         <mdui-radio value="by-grade" onClick={() => setMode("by-grade")}>
           Nach Klasse
@@ -320,14 +324,12 @@ export default function Assign() {
               key={i}
               value={option.id}
             >
-              {option.title}
-              <mdui-badge>
-                {
-                  Object.values(results).filter(
-                    (result) => result === option.id
-                  ).length
-                }
-              </mdui-badge>
+              {option.title} (
+              {
+                sortedResults.filter(([key, value]) => value === option.id)
+                  .length
+              }
+              /{option.max})
             </mdui-tab>
           ))}
           {options.map((option, i) => (
@@ -344,6 +346,14 @@ export default function Assign() {
                         <th>
                           <b>Klasse</b>
                         </th>
+                        {Array.from(
+                          { length: vote.selectCount },
+                          (_, i) => i + 1
+                        ).map((i) => (
+                          <th key={i}>
+                            <b>Wahl {i}</b>
+                          </th>
+                        ))}
                       </tr>
                     </thead>
                     <tbody>
@@ -360,6 +370,136 @@ export default function Assign() {
                                   .grade
                               }
                             </td>
+                            {choices
+                              .find((choice) => choice.id === key)
+                              .selected.map((selected, i) => (
+                                <td
+                                  key={i}
+                                  style={{
+                                    cursor: selected !== value && "pointer",
+                                    textDecoration:
+                                      selected !== value && "underline",
+                                    color:
+                                      selected !== value && "rgb(27, 68, 133)",
+                                  }}
+                                  onClick={() => {
+                                    if (selected === value) return;
+                                    const newResults = { ...results };
+                                    newResults[key] = selected;
+                                    setResults(newResults);
+                                    const previousResults = { ...results };
+                                    snackbar({
+                                      message: "Änderung rückgängig machen",
+                                      action: "Rückgängig",
+                                      onActionClick: () =>
+                                        setResults(previousResults),
+                                    });
+                                  }}
+                                >
+                                  {selected === value
+                                    ? "✓"
+                                    : `${
+                                        options.find(
+                                          (option) => option.id === selected
+                                        ).title
+                                      } (${
+                                        sortedResults.filter(
+                                          ([key, value]) => value === selected
+                                        ).length
+                                      }/${
+                                        options.find(
+                                          (option) => option.id === selected
+                                        ).max
+                                      })`}
+                                </td>
+                              ))}
+                          </tr>
+                        ))}
+                    </tbody>
+                  </table>
+                </div>
+                <h2 style={{ color: "gray" }}>Alle Wähler</h2>
+                <div
+                  className="mdui-table"
+                  style={{ width: "100%", color: "gray" }}
+                >
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>
+                          <b>Name</b>
+                        </th>
+                        <th>
+                          <b>Klasse</b>
+                        </th>
+                        <th>
+                          <b>#</b>
+                        </th>
+                        {Array.from(
+                          { length: vote.selectCount },
+                          (_, i) => i + 1
+                        ).map((i) => (
+                          <th key={i}>
+                            <b>Wahl {i}</b>
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {choices
+                        .filter((choice) => choice.selected.includes(option.id))
+                        .sort((a, b) => a.name.localeCompare(b.name))
+                        .map((choice, i) => (
+                          <tr key={i}>
+                            <td>{choice.name}</td>
+                            <td>{choice.grade}</td>
+                            <td>{choice.listIndex}</td>
+                            {choice.selected.map((selected, i) => (
+                              <td
+                                key={i}
+                                style={{
+                                  cursor:
+                                    results[choice.id] !== selected &&
+                                    "pointer",
+                                  textDecoration:
+                                    results[choice.id] !== selected &&
+                                    "underline",
+                                  color:
+                                    results[choice.id] !== selected &&
+                                    "rgb(27, 68, 133)",
+                                }}
+                                onClick={() => {
+                                  if (results[choice.id] === selected) return;
+                                  const newResults = { ...results };
+                                  newResults[choice.id] = selected;
+                                  setResults(newResults);
+                                  const previousResults = { ...results };
+                                  snackbar({
+                                    message: "Änderung rückgängig machen",
+                                    action: "Rückgängig",
+                                    onActionClick: () =>
+                                      setResults(previousResults),
+                                  });
+                                }}
+                              >
+                                {
+                                  options.find(
+                                    (option) => option.id === selected
+                                  ).title
+                                }
+
+                                {results[choice.id] === selected &&
+                                  ` (${
+                                    sortedResults.filter(
+                                      ([key, value]) => value === selected
+                                    ).length
+                                  }/${
+                                    options.find(
+                                      (option) => option.id === selected
+                                    ).max
+                                  }) ✓`}
+                              </td>
+                            ))}
                           </tr>
                         ))}
                     </tbody>

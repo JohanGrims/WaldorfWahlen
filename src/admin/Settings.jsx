@@ -116,7 +116,17 @@ export default function Settings() {
       <p />
       <br />
       <p>Bei Problemen mit der Anzeige kann es helfen, den Cache zu leeren.</p>
-      <mdui-button onClick={() => localStorage.clear()} variant="tonal">
+      <mdui-button
+        onClick={() => {
+          localStorage.clear();
+          snackbar({
+            message: "Cache geleert",
+            action: "Neu laden",
+            onActionClick: () => window.location.reload(),
+          });
+        }}
+        variant="tonal"
+      >
         Cache leeren
       </mdui-button>
       <p />

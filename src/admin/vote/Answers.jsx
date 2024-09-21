@@ -1,4 +1,12 @@
-import { collection, doc, getDoc, getDocs } from "firebase/firestore/lite";
+import {
+  collection,
+  deleteDoc,
+  doc,
+  getDoc,
+  getDocs,
+  setDoc,
+} from "firebase/firestore/lite";
+import { confirm, prompt } from "mdui";
 import React from "react";
 import { useLoaderData } from "react-router-dom";
 import { db } from "../../firebase";

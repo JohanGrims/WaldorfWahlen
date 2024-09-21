@@ -25,6 +25,7 @@ import Delete from "./admin/vote/Delete.jsx";
 import Edit from "./admin/vote/Edit.jsx";
 import Export from "./admin/vote/Export.jsx";
 import AdminVote, { loader as adminVoteLoader } from "./admin/vote/index.jsx";
+import Results, { loader as resultsLoader } from "./admin/vote/Results.jsx";
 import Schedule from "./admin/vote/Schedule.jsx";
 import Share from "./admin/vote/Share.jsx";
 
@@ -122,6 +123,11 @@ const router = createBrowserRouter([
               {
                 path: "export",
                 element: <Export />,
+              },
+              {
+                path: "results",
+                element: <Results />,
+                loader: resultsLoader,
               },
             ],
           },

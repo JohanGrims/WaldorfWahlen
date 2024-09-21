@@ -10,7 +10,7 @@ import React, { useRef } from "react";
 import { useLoaderData, useNavigate, useParams } from "react-router-dom";
 import { db } from "./firebase";
 
-import { snackbar } from "mdui";
+import { confirm, snackbar } from "mdui";
 import "./vote.css";
 
 export default function Vote() {
