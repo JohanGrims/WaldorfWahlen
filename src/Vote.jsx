@@ -10,7 +10,7 @@ import React, { useRef } from "react";
 import { useLoaderData, useNavigate, useParams } from "react-router-dom";
 import { db } from "./firebase";
 
-import { confirm, snackbar } from "mdui";
+import { snackbar } from "mdui";
 import "./vote.css";
 
 export default function Vote() {
@@ -30,6 +30,8 @@ export default function Vote() {
     Array.from({ length: selectCount }, () => "null")
   );
   const [extraFieldsValues, setExtraFieldsValues] = React.useState([]);
+
+  const [confirmDialog, setConfirmDialog] = React.useState(false);
 
   React.useEffect(() => {
     document.title = title;
@@ -76,7 +78,31 @@ export default function Vote() {
     }
   };
 
+  function confirmSubmit() {
+    setConfirmDialog(true);
+  }
+
   function submit() {
+    if (
+      confirm({
+        headline: "Bestätigen",
+        description: `
+        Name: ${firstName} ${lastName}\n
+        Klasse: ${grade}\n
+        Klassenlistennr.: ${listIndex}\n
+        ${extraFields
+          ?.map((e, i) => `${e}: ${extraFieldsValues[i]}`)
+          .join("\n")}
+
+        Auswahl: ${selected
+          .map((e, i) => `${i + 1}. ${options.find((o) => o.id === e)?.title}`)
+          .join("\n")}
+      `,
+        confirmText: "Absenden",
+        cancelText: "Abbrechen",
+      }) === false
+    )
+      return;
     addDoc(collection(db, `/votes/${id}/choices`), {
       name: `${firstName} ${lastName.charAt(0)}.`,
       grade,
@@ -158,6 +184,46 @@ export default function Vote() {
 
   return (
     <div className="container">
+      <mdui-dialog open={confirmDialog} headline="Bestätigen">
+        <div className="mdui-prose">
+          <p>
+            Bitte überprüfen Sie Ihre Eingaben. Sie können diese nach dem
+            Absenden nicht mehr ändern.
+          </p>
+          Name: {firstName} {lastName}
+          <br />
+          Klasse: {grade}
+          <br />
+          Klassenlistennr.: {listIndex}
+          <br />
+          {extraFields?.map((e, i) => (
+            <div key={i}>
+              {e}: {extraFieldsValues[i]}
+              <br />
+            </div>
+          ))}
+          <br />
+          Auswahl:
+          <br />
+          {selected
+            .map(
+              (e, i) =>
+                `${i + 1}. ${
+                  options.find((o) => o.id === e)?.title || "Keine Wahl"
+                }`
+            )
+            .join(", ")}
+          <p />
+          <div className="button-container">
+            <mdui-button onClick={() => setConfirmDialog(false)} variant="text">
+              Abbrechen
+            </mdui-button>
+            <mdui-button onClick={submit} end-icon="send">
+              Absenden
+            </mdui-button>
+          </div>
+        </div>
+      </mdui-dialog>
       <mdui-card variant="outlined" class="card">
         <div className="mdui-prose">
           <h1 className="vote-title">{title}</h1>
@@ -329,12 +395,12 @@ export default function Vote() {
             </mdui-tooltip>
           )}
           {submitDisabled() ? (
-            <mdui-button disabled end-icon="send">
-              Absenden
+            <mdui-button disabled end-icon="arrow_forward">
+              Weiter
             </mdui-button>
           ) : (
-            <mdui-button onClick={submit} end-icon="send">
-              Absenden
+            <mdui-button onClick={confirmSubmit} end-icon="arrow_forward">
+              Weiter
             </mdui-button>
           )}
         </div>
