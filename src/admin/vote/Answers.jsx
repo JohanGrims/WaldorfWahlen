@@ -4,9 +4,8 @@ import {
   doc,
   getDoc,
   getDocs,
-  setDoc,
 } from "firebase/firestore/lite";
-import { confirm, prompt } from "mdui";
+import { confirm } from "mdui";
 import React from "react";
 import { useLoaderData } from "react-router-dom";
 import { db } from "../../firebase";
@@ -229,6 +228,7 @@ export default function Answers() {
                   <th>
                     <b>ID</b>
                   </th>
+                  <th></th>
                 </tr>
               </thead>
               <tbody>
@@ -251,6 +251,28 @@ export default function Answers() {
                         <td key={i}>{answer.extraFields[i]}</td>
                       ))}
                       <td>{answer.id}</td>
+                      <td
+                        style={{
+                          cursor: "pointer",
+                          color: "rgb(255, 100, 100)",
+                        }}
+                        onClick={() => {
+                          confirm({
+                            headline: "Löschen",
+                            description:
+                              "Sind Sie sicher, dass Sie diese Antwort löschen möchten?",
+                          }).then(() => {
+                            // Löschen
+                            deleteDoc(
+                              doc(db, `/votes/${vote.id}/choices/${answer.id}`)
+                            ).then(() => {
+                              window.location.reload();
+                            });
+                          });
+                        }}
+                      >
+                        Löschen
+                      </td>
                     </tr>
                   ))}
               </tbody>

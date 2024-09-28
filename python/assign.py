@@ -32,11 +32,11 @@ def assign():
         if decoded_token["uid"] == uid:
             # read more data from the request
 
-            # prefences = {studentId (string): {grade: string, selected: [idProject1, idProject2, ...], name: string},}
+            # prefences = {studentId (string): {selected: [idProject1, idProject2, ...], points: [number, number, number]},}
             preferences = data.get("preferences")
             print(
                 preferences
-            )  # => {'1': {'name': 'Johan', 'selected': [1, 2, 3]}, '2': {'name': 'Sara', 'selected': [1, 2, 3]}, '3': {'name': 'Karl', 'selected': [1, 2, 3]}, '4': {'name': 'Anna', 'selected': [1, 2, 3]}, '5': {'name': 'Eva', 'selected': [1, 2, 3]}}
+            )  # => {'1': {'points': [1,2,4], 'selected': [1, 2, 3]}, '2': {'points': [1,2,4], 'selected': [1, 2, 3]}, '3': {'points': [1,2,4], 'selected': [1, 2, 3]}, '4': {'points': [1,2,4], 'selected': [1, 2, 3]}, '5': {'points': [1,2,4], 'selected': [1, 2, 3]}}
 
             # projects = {projectId: {title: string, max: string}}
             projects = data.get("projects")
@@ -99,9 +99,20 @@ def assign():
 
             # Objective function: Minimize preference scores and overbooking penalties
             problem += pulp.lpSum(
-                scores["first"] * x[i, student_preferences[i][0]]
-                + scores["second"] * x[i, student_preferences[i][1]]
-                + scores["third"] * x[i, student_preferences[i][2]]
+                (
+                    preferences[list(student_ids.keys())[i]].get(
+                        "points", [scores["first"], scores["second"], scores["third"]]
+                    )[0]
+                    * x[i, student_preferences[i][0]]
+                    + preferences[list(student_ids.keys())[i]].get(
+                        "points", [scores["first"], scores["second"], scores["third"]]
+                    )[1]
+                    * x[i, student_preferences[i][1]]
+                    + preferences[list(student_ids.keys())[i]].get(
+                        "points", [scores["first"], scores["second"], scores["third"]]
+                    )[2]
+                    * x[i, student_preferences[i][2]]
+                )
                 for i in range(num_participants)
             ) + pulp.lpSum(10 * o[j] for j in range(num_courses))
 

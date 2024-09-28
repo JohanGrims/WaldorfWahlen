@@ -13,6 +13,7 @@
     "@mdui/icons": "^1.0.2",
     "@tanstack/react-table": "^8.11.2",
     "crypto-js": "^4.2.0",
+    "file-saver": "^2.0.5",
     "firebase": "^10.7.1",
     "javascript-lp-solver": "^0.4.24",
     "jsonpath": "^1.1.1",
@@ -31,7 +32,8 @@
     "react-qr-code": "^2.0.12",
     "react-router-dom": "^6.21.0",
     "react-table": "^7.8.0",
-    "sort-by": "^0.0.2"
+    "sort-by": "^0.0.2",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@types/react": "^18.2.43",

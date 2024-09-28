@@ -5,7 +5,7 @@ import {
   getDocs,
   setDoc,
 } from "firebase/firestore/lite";
-import { snackbar } from "mdui";
+import { confirm, snackbar } from "mdui";
 import React from "react";
 import { useLoaderData, useNavigate } from "react-router-dom";
 import { auth, db } from "../../firebase";
@@ -27,6 +27,14 @@ export default function Assign() {
 
   const navigate = useNavigate();
 
+  function assignToFirstChoice() {
+    const results = {};
+    choices.forEach((choice) => {
+      results[choice.id] = choice.selected[0];
+    });
+    setResults(results);
+  }
+
   async function fetchOptimization() {
     setLoading(true);
     try {
@@ -41,19 +49,52 @@ export default function Assign() {
       }
 
       const preferences = {};
+
       for (const choice of choices) {
+        let points = [1, 2, 4];
+        for (const rule of rules) {
+          if (rule.apply === "*") {
+            points = rule.scores;
+          }
+          const conditions = rule.apply.split(",");
+          let matches = true;
+          for (const condition of conditions) {
+            const [key, value] = condition.split("=");
+            if (key === "grade" && parseInt(choice.grade) !== parseInt(value)) {
+              matches = false;
+              break;
+            }
+            if (key === "listIndex" && choice.listIndex !== parseInt(value)) {
+              matches = false;
+              break;
+            }
+            if (key === "selected") {
+              const selected = value.split(",");
+              if (!selected.every((id) => choice.selected.includes(id))) {
+                matches = false;
+                break;
+              }
+            }
+          }
+          if (matches) {
+            points = rule.scores;
+          }
+        }
+
+        console.log(points);
         preferences[choice.id] = {
-          name: choice.name,
           selected: choice.selected,
+          points: points,
         };
       }
+      console.log(preferences);
+
       const requestObject = {
         token: authToken,
         uid: auth.currentUser.uid,
         projects: projects,
         preferences: preferences,
         selectCount: vote.selectCount,
-        rules: rules,
       };
 
       const response = await fetch("https://api.chatwithsteiner.de/assign", {
@@ -121,16 +162,30 @@ export default function Assign() {
               key={i}
               style={{ display: "flex", gap: "10px", marginBottom: "10px" }}
             >
-              <mdui-text-field
-                label="Anwenden auf"
-                placeholder="grade=12"
-                value={rule.apply}
-                onInput={(e) => {
-                  const newRules = [...rules];
-                  newRules[i].apply = e.target.value;
-                  setRules(newRules);
-                }}
-              />
+              {rule.apply === "*" ? (
+                <mdui-text-field
+                  label="Bedingung"
+                  placeholder="grade=12"
+                  value={rule.apply}
+                  onInput={(e) => {
+                    const newRules = [...rules];
+                    newRules[i].apply = e.target.value;
+                    setRules(newRules);
+                  }}
+                  disabled
+                />
+              ) : (
+                <mdui-text-field
+                  label="Bedingung"
+                  placeholder="grade=12"
+                  value={rule.apply}
+                  onInput={(e) => {
+                    const newRules = [...rules];
+                    newRules[i].apply = e.target.value;
+                    setRules(newRules);
+                  }}
+                />
+              )}
               <mdui-text-field
                 label="Punkte"
                 placeholder="1,2,4"
@@ -141,20 +196,50 @@ export default function Assign() {
                   setRules(newRules);
                 }}
               />
-              <mdui-button-icon
-                icon="delete"
-                onClick={() => {
-                  const newRules = [...rules];
-                  newRules.splice(i, 1);
-                  setRules(newRules);
-                }}
-              />
+              {rule.apply === "*" ? (
+                <mdui-button-icon icon="lock" disabled />
+              ) : (
+                <mdui-button-icon
+                  icon="delete"
+                  onClick={() => {
+                    const newRules = [...rules];
+                    newRules.splice(i, 1);
+                    setRules(newRules);
+                  }}
+                />
+              )}
+              {i === 0 ? (
+                <mdui-button-icon icon="arrow_upward" disabled />
+              ) : (
+                <mdui-button-icon
+                  icon="arrow_upward"
+                  onClick={() => {
+                    const newRules = [...rules];
+                    const temp = newRules[i - 1];
+                    newRules[i - 1] = newRules[i];
+                    newRules[i] = temp;
+                    setRules(newRules);
+                  }}
+                />
+              )}
+              {i === rules.length - 1 ? (
+                <mdui-button-icon icon="arrow_downward" disabled />
+              ) : (
+                <mdui-button-icon
+                  icon="arrow_downward"
+                  onClick={() => {
+                    const newRules = [...rules];
+                    const temp = newRules[i + 1];
+                    newRules[i + 1] = newRules[i];
+                    newRules[i] = temp;
+                    setRules(newRules);
+                  }}
+                />
+              )}
             </div>
           ))}
           <mdui-button
-            onClick={() =>
-              setRules([...rules, { apply: "", scores: [1, 2, 4] }])
-            }
+            onClick={() => setRules([...rules, { apply: "", scores: [] }])}
             icon="add"
           >
             Regel hinzufügen
@@ -168,6 +253,37 @@ export default function Assign() {
           >
             Speichern
           </mdui-button>
+          <p />
+          <div style={{ color: "gray" }}>
+            <b>Regeln</b> sind Bedingungen, die festlegen, wie die Schüler den
+            Projekten zugeordnet werden. Die Regeln werden in der Reihenfolge
+            angewendet, in der sie hier aufgelistet sind. Die Regeln werden auf
+            die Schüler angewendet, die die Bedingungen erfüllen. Die Punkte
+            geben an, wie viele Punkte die Schüler für die jeweilige Wahl
+            erhalten. Die Regeln können auf verschiedene Kriterien angewendet
+            werden. Die Kriterien sind in der Form <code>key=value</code>{" "}
+            angegeben. Mehrere Kriterien können durch Kommas getrennt werden.
+            Die Kriterien sind:
+            <ul>
+              <li>
+                <code>grade</code>: Klasse
+              </li>
+              <li>
+                <code>listIndex</code>: Nummer auf der Liste
+              </li>
+              <li>
+                <code>selected</code>: IDs der Projekte, die gewählt wurden
+              </li>
+            </ul>
+            <p />
+            <b>Beispiel:</b> Die Regel <code>grade=12</code> wird nur auf die
+            Schüler der 12. Klasse angewendet. Die Regel{" "}
+            <code>grade=12,listIndex=1</code> wird nur auf den Schüler
+            angewendet, der an erster Stelle steht.
+            <p />
+            Das Sternchen <code>*</code> steht für alle Schüler. Die Regel{" "}
+            <code>*</code> wird auf alle Schüler angewendet.
+          </div>
         </mdui-dialog>
         <div
           style={{
@@ -211,8 +327,7 @@ export default function Assign() {
           variant="outlined"
           style={{ width: "100%", padding: "20px" }}
           clickable
-          disabled
-          onClick={() => navigate("../manually")}
+          onClick={assignToFirstChoice}
         >
           <div
             className="mdui-prose"
@@ -228,7 +343,7 @@ export default function Assign() {
                 <h2>Manuelle Zuordnung</h2>
                 <mdui-icon name="touch_app"></mdui-icon>
               </div>
-              <div>Noch nicht verfügbar</div>
+              <div>Beta</div>
             </div>
             Diese Funktion ermöglicht es, die Schüler manuell den Projekten
             zuzuordnen. Dabei wird zunächst von der Erstwahl ausgegangen.
@@ -286,7 +401,27 @@ export default function Assign() {
         }}
       >
         <h2>Ergebnisse</h2>
-        <mdui-button onClick={saveResults}>Ergebnisse speichern</mdui-button>
+        <div>
+          <mdui-tooltip content="Regeln anpassen" variant="rich">
+            <mdui-button-icon
+              icon="settings"
+              onClick={() => {
+                confirm({
+                  headline: "Zurücksetzen?",
+                  description:
+                    "Dadurch werden die Ergebnisse zurückgesetzt und müssen erneut berechnet werden.",
+                  confirmText: "Zurücksetzen",
+                  cancelText: "Abbrechen",
+                  onConfirm: () => {
+                    setResults(null);
+                    setEditRules(true);
+                  },
+                });
+              }}
+            ></mdui-button-icon>
+          </mdui-tooltip>
+          <mdui-button onClick={saveResults}>Ergebnisse speichern</mdui-button>
+        </div>
       </div>
       <p />
       Hier sind die optimierten Zuordnungen der Schüler zu den Projekten.
@@ -324,6 +459,9 @@ export default function Assign() {
               key={i}
               value={option.id}
             >
+              {option.max <
+                sortedResults.filter(([key, value]) => value === option.id)
+                  .length && "! "}
               {option.title} (
               {
                 sortedResults.filter(([key, value]) => value === option.id)

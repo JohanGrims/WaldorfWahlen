@@ -123,6 +123,7 @@ const router = createBrowserRouter([
               {
                 path: "export",
                 element: <Export />,
+                loader: adminVoteLoader,
               },
               {
                 path: "results",

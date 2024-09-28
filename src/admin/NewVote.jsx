@@ -13,7 +13,7 @@ import { generateRandomHash } from "./utils";
 
 export default function NewVote() {
   const [title, setTitle] = React.useState("");
-  const [selectCount, setSelectCount] = React.useState();
+  const [selectCount, setSelectCount] = React.useState(3);
   const [startTime, setStartTime] = React.useState();
   const [endTime, setEndTime] = React.useState();
 
@@ -139,6 +139,7 @@ export default function NewVote() {
             label="Anzahl der Wahlen"
             type="number"
             placeholder="3"
+            disabled
             min={1}
             max={10}
             value={selectCount}
