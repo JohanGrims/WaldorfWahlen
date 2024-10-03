@@ -6,7 +6,6 @@ import { db } from "../../firebase";
 
 import moment from "moment-timezone";
 import AdminVote from ".";
-
 export default function Schedule() {
   const { id } = useParams();
   const { vote } = useLoaderData();
@@ -15,10 +14,14 @@ export default function Schedule() {
 
   const [active, setActive] = React.useState(vote.active);
   const [startTime, setStartTime] = React.useState(
-    moment.tz(vote.startTime?.seconds * 1000, "UTC").format("YYYY-MM-DDTHH:mm")
+    moment
+      .tz(vote.startTime?.seconds * 1000, "Europe/Berlin")
+      .format("YYYY-MM-DDTHH:mm")
   );
   const [endTime, setEndTime] = React.useState(
-    moment.tz(vote.endTime?.seconds * 1000, "UTC").format("YYYY-MM-DDTHH:mm")
+    moment
+      .tz(vote.endTime?.seconds * 1000, "Europe/Berlin")
+      .format("YYYY-MM-DDTHH:mm")
   );
 
   const switchRef = React.useRef(null);
@@ -35,8 +38,10 @@ export default function Schedule() {
     setDoc(doc(db, `/votes/${id}`), {
       ...vote,
       active: active,
-      startTime: Timestamp.fromDate(moment.tz(startTime, "UTC").toDate()),
-      endTime: Timestamp.fromDate(moment.tz(endTime, "UTC").toDate()),
+      startTime: Timestamp.fromDate(
+        moment.tz(startTime, "Europe/Berlin").toDate()
+      ),
+      endTime: Timestamp.fromDate(moment.tz(endTime, "Europe/Berlin").toDate()),
     })
       .then(() => {
         console.log("Saved");

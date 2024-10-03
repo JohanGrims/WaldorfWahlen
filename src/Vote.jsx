@@ -10,9 +10,10 @@ import React, { useRef } from "react";
 import { useLoaderData, useNavigate, useParams } from "react-router-dom";
 import { db } from "./firebase";
 
+import moment from "moment-timezone";
+
 import { confirm, snackbar } from "mdui";
 import "./vote.css";
-
 export default function Vote() {
   const refs = useRef([]);
   const urlParams = new URLSearchParams(window.location.search);
@@ -156,14 +157,9 @@ export default function Vote() {
       snackbar({
         message:
           "Die Wahl startet erst am " +
-          new Date(startTime.seconds * 1000).toLocaleString("de-DE", {
-            weekday: "long",
-            year: "numeric",
-            month: "long",
-            day: "numeric",
-            hour: "numeric",
-            minute: "numeric",
-          }),
+          moment
+            .tz(startTime.seconds * 1000, "Europe/Berlin")
+            .format("dddd, D. MMMM YYYY, HH:mm"),
       });
       navigate("/");
     }
@@ -229,14 +225,10 @@ export default function Vote() {
           <h1 className="vote-title">{title}</h1>
           <div className="time-label">
             Endet am{" "}
-            {new Date(endTime.seconds * 1000).toLocaleString("de-DE", {
-              weekday: "long",
-              year: "numeric",
-              month: "long",
-              day: "numeric",
-              hour: "numeric",
-              minute: "numeric",
-            })}
+            {moment
+              .tz(endTime.seconds * 1000, "Europe/Berlin")
+              .locale("de")
+              .format("dddd, D. MMMM YYYY, HH:mm")}
           </div>
         </div>
         <p />

@@ -27,7 +27,7 @@ export default function Result() {
           <p>
             Die Wahl ist beendet. Es sind (noch) keine Ergebnisse online
             verfügbar. Bei Fragen oder Problemen melden Sie sich beim
-            betreuenden Lehrer der Wahl oder den SV-Vertretern Deiner Klasse.
+            zuständigen Lehrer.
           </p>
         </div>
         <p />

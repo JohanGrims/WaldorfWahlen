@@ -1,38 +1,38 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
-import { RouterProvider, createBrowserRouter } from "react-router-dom";
-import ErrorPage from "./Error.jsx";
+import { createBrowserRouter, RouterProvider } from "react-router-dom";
+import ErrorPage from "./Error";
 import "./styles.css";
 
 import "mdui";
 import { setColorScheme, setTheme } from "mdui";
 import "mdui/mdui.css";
 
-import App, { loader as appLoader } from "./App.jsx";
-import Gateway, { loader as gatewayLoader } from "./Gateway.jsx";
-import Result from "./Result.jsx";
-import Scheduled from "./Scheduled.jsx";
-import Submitted from "./Submitted.jsx";
-import Vote, { loader as voteLoader } from "./Vote.jsx";
+import App, { loader as appLoader } from "./App";
+import Gateway, { loader as gatewayLoader } from "./Gateway";
+import Result from "./Result";
+import Scheduled from "./Scheduled";
+import Submitted from "./Submitted";
+import Vote, { loader as voteLoader } from "./Vote";
 
-import Admin from "./admin/index.jsx";
-import NewVote from "./admin/NewVote.jsx";
-import Overview, { loader as overviewLoader } from "./admin/Overview.jsx";
-import Settings from "./admin/Settings.jsx";
-import Answers, { loader as answersLoader } from "./admin/vote/Answers.jsx";
-import Assign, { loader as assignLoader } from "./admin/vote/Assign.jsx";
-import Delete from "./admin/vote/Delete.jsx";
-import Edit from "./admin/vote/Edit.jsx";
-import Export from "./admin/vote/Export.jsx";
-import AdminVote, { loader as adminVoteLoader } from "./admin/vote/index.jsx";
-import Results, { loader as resultsLoader } from "./admin/vote/Results.jsx";
-import Schedule from "./admin/vote/Schedule.jsx";
-import Share from "./admin/vote/Share.jsx";
+import Admin from "./admin/index";
+import NewVote from "./admin/NewVote";
+import Overview, { loader as overviewLoader } from "./admin/Overview";
+import Settings from "./admin/Settings";
+import Answers, { loader as answersLoader } from "./admin/vote/Answers";
+import Assign, { loader as assignLoader } from "./admin/vote/Assign";
+import Delete from "./admin/vote/Delete";
+import Edit from "./admin/vote/Edit";
+import Export from "./admin/vote/Export";
+import AdminVote, { loader as adminVoteLoader } from "./admin/vote/index";
+import Results, { loader as resultsLoader } from "./admin/vote/Results";
+import Schedule from "./admin/vote/Schedule";
+import Share from "./admin/vote/Share";
 
 setColorScheme("#f89e24");
 setTheme(localStorage.getItem("theme") || "dark");
 
-const router = createBrowserRouter([
+const routes = [
   {
     path: "/",
     errorElement: <ErrorPage />,
@@ -136,7 +136,9 @@ const router = createBrowserRouter([
       },
     ],
   },
-]);
+];
+
+const router = createBrowserRouter(routes);
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <div className="wrapper">

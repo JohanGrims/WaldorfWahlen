@@ -1,19 +1,30 @@
 import { doc, getDoc } from "firebase/firestore/lite";
+import moment from "moment-timezone";
 import React from "react";
 import { useLoaderData, useNavigate } from "react-router-dom";
 import { db } from "./firebase";
-
 export default function Gateway() {
   const { voteData } = useLoaderData();
 
   const navigate = useNavigate();
 
   React.useEffect(() => {
-    if (!voteData.active || Date.now() > voteData.endTime.seconds * 1000) {
+    const berlinTime = moment.tz(Date.now(), "Europe/Berlin");
+
+    if (
+      !voteData.active ||
+      berlinTime.isAfter(
+        moment.unix(voteData.endTime.seconds).tz("Europe/Berlin")
+      )
+    ) {
       navigate(`/r/${voteData.id}`);
       return;
     }
-    if (Date.now() < voteData.startTime.seconds * 1000) {
+    if (
+      berlinTime.isBefore(
+        moment.unix(voteData.startTime.seconds).tz("Europe/Berlin")
+      )
+    ) {
       navigate(`/s/${voteData.id}`);
       return;
     }
