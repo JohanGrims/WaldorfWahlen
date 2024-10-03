@@ -5,12 +5,12 @@ import {
   setDoc,
   Timestamp,
 } from "firebase/firestore/lite";
-import { confirm, snackbar } from "mdui";
+import { confirm, prompt, snackbar } from "mdui";
+import moment from "moment-timezone";
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { db } from "../firebase";
 import { generateRandomHash } from "./utils";
-
 export default function NewVote() {
   const [title, setTitle] = React.useState("");
   const [selectCount, setSelectCount] = React.useState(3);
@@ -25,6 +25,8 @@ export default function NewVote() {
   const [teacher, setTeacher] = React.useState("");
   const [description, setDescription] = React.useState("");
   const [max, setMax] = React.useState();
+
+  const [id, setId] = React.useState(generateRandomHash());
 
   const navigate = useNavigate();
 
@@ -50,11 +52,14 @@ export default function NewVote() {
   async function publish() {
     const id = generateRandomHash();
     console.log("Generating new vote with id: " + id);
+    const berlinStartTime = moment.tz(startTime, "Europe/Berlin").toDate();
+    const berlinEndTime = moment.tz(endTime, "Europe/Berlin").toDate();
+
     const vote = await setDoc(doc(db, "/votes", id), {
       title: title,
       selectCount: selectCount,
-      startTime: Timestamp.fromDate(new Date(startTime)),
-      endTime: Timestamp.fromDate(new Date(endTime)),
+      startTime: Timestamp.fromDate(berlinStartTime),
+      endTime: Timestamp.fromDate(berlinEndTime),
       active: true,
       version: 3,
     });
@@ -152,14 +157,26 @@ export default function NewVote() {
             label="Startzeitpunkt"
             type="datetime-local"
             value={startTime}
-            onInput={(e) => setStartTime(e.target.value)}
+            onInput={(e) =>
+              setStartTime(
+                moment
+                  .tz(e.target.value, "Europe/Berlin")
+                  .format("YYYY-MM-DDTHH:mm")
+              )
+            }
           ></mdui-text-field>
 
           <mdui-text-field
             label="Endzeitpunkt"
             type="datetime-local"
             value={endTime}
-            onInput={(e) => setEndTime(e.target.value)}
+            onInput={(e) =>
+              setEndTime(
+                moment
+                  .tz(e.target.value, "Europe/Berlin")
+                  .format("YYYY-MM-DDTHH:mm")
+              )
+            }
           ></mdui-text-field>
         </div>
       </div>
@@ -183,19 +200,48 @@ export default function NewVote() {
           <p />
         </>
       ))}
-      <mdui-tooltip
-        variant="rich"
-        headline="Extrafeld hinzufügen"
-        content="Fügen Sie zusätzliche Felder hinzu, um weitere Informationen von Ihren Schülern zu erhalten."
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+        }}
       >
-        <mdui-button
-          icon="add"
-          onClick={() => setExtraFields([...extraFields, ""])}
-          variant="text"
+        <mdui-tooltip
+          variant="rich"
+          headline="Extrafeld hinzufügen"
+          content="Fügen Sie zusätzliche Felder hinzu, um weitere Informationen von Ihren Schülern zu erhalten."
         >
-          Extrafeld hinzufügen
+          <mdui-button
+            icon="add"
+            onClick={() => setExtraFields([...extraFields, ""])}
+            variant="text"
+          >
+            Extrafeld hinzufügen
+          </mdui-button>
+        </mdui-tooltip>
+        <mdui-button
+          icon="settings"
+          variant="text"
+          end-icon="expand_more"
+          onClick={() => {
+            prompt({
+              headline: "ID der Wahl",
+              description:
+                "Ändern Sie die ID der Wahl. Diese erscheint in der URL (waldorfwahlen.de/[ID]). Achten Sie darauf, dass die ID eindeutig ist und keine Sonderzeichen enthält.",
+              inputType: "text",
+              textFieldOptions: {
+                value: id,
+                onInput: (e) => setId(e.target.value),
+                placeholder: "spw24",
+                label: "ID",
+              },
+              onConfirm: (value) => setId(value),
+            });
+          }}
+        >
+          Erweitert
         </mdui-button>
-      </mdui-tooltip>
+      </div>
 
       <p />
       <mdui-divider></mdui-divider>

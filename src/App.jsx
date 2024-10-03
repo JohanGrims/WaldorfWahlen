@@ -1,9 +1,9 @@
 import { collection, getDocs } from "firebase/firestore/lite";
+import moment from "moment-timezone";
 import React from "react";
 import { useLoaderData } from "react-router-dom";
 import "./App.css";
 import { db } from "./firebase";
-
 function App() {
   const { activeVotes, expiredVotes, scheduledVotes } = useLoaderData();
 
@@ -26,7 +26,7 @@ function App() {
       <h1>WaldorfWahlen</h1>
       <mdui-list>
         {activeVotes.length < 1 && (
-          <mdui-list-item disabled>Keine aktiven Wahlen</mdui-list-item>
+          <mdui-list-item disabled>Keine Wahlen</mdui-list-item>
         )}
         {activeVotes.map((vote) => (
           <mdui-list-item
@@ -109,8 +109,13 @@ export async function loader() {
   votes.docs.map((e) => {
     let data = e.data();
     console.log(data, e.id);
-    if (Date.now() > data.startTime.seconds * 1000) {
-      if (data.active && Date.now() < data.endTime.seconds * 1000) {
+
+    const now = moment().tz("Europe/Berlin");
+    const startTime = moment.unix(data.startTime.seconds).tz("Europe/Berlin");
+    const endTime = moment.unix(data.endTime.seconds).tz("Europe/Berlin");
+
+    if (now.isAfter(startTime)) {
+      if (data.active && now.isBefore(endTime)) {
         activeVotes.push({ id: e.id, title: data.title });
       } else {
         expiredVotes.push({ id: e.id, title: data.title });
@@ -119,5 +124,6 @@ export async function loader() {
     }
     scheduledVotes.push({ id: e.id, title: data.title });
   });
+
   return { activeVotes, expiredVotes, scheduledVotes };
 }
