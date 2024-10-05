@@ -303,6 +303,7 @@ export default function Assign() {
           variant="filled"
           style={{ width: "100%", padding: "20px" }}
           clickable
+          disabled={vote.selectCount !== "3"}
           onClick={fetchOptimization}
         >
           <div
@@ -319,8 +320,9 @@ export default function Assign() {
               <h2>Automatische Optimierung</h2>
               <mdui-icon name="auto_awesome"></mdui-icon>
             </div>
+            {vote.selectCount !== "3" && <b>Nur bei 3 Wahlen verfügbar — </b>}
             Diese Funktion ordnet die Schüler bestmöglich den Projekten zu. Es
-            ist nicht möglich, erzeugte Ergebnisse zu ändern.
+            ist möglich, erzeugte Ergebnisse zu ändern.
           </div>
         </mdui-card>
         <mdui-card
@@ -404,7 +406,7 @@ export default function Assign() {
         <div>
           <mdui-tooltip content="Regeln anpassen" variant="rich">
             <mdui-button-icon
-              icon="settings"
+              icon="history"
               onClick={() => {
                 confirm({
                   headline: "Zurücksetzen?",

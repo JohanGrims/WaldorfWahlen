@@ -37,7 +37,7 @@ export default function Delete() {
         <mdui-text-field
           value={confirmtion}
           onInput={(e) => setConfirmation(e.target.value)}
-          label="Bestätigen"
+          label="Bestätigung"
           onPaste={(e) => {
             return e.preventDefault();
           }}

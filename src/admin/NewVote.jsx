@@ -50,7 +50,6 @@ export default function NewVote() {
   }
 
   async function publish() {
-    const id = generateRandomHash();
     console.log("Generating new vote with id: " + id);
     const berlinStartTime = moment.tz(startTime, "Europe/Berlin").toDate();
     const berlinEndTime = moment.tz(endTime, "Europe/Berlin").toDate();
@@ -137,14 +136,14 @@ export default function NewVote() {
       <div className="fields-row">
         <mdui-tooltip
           variant="rich"
-          content="Wählen Sie die Anzahl der Wahlen, die Ihre Schüler treffen müssen (1. Wahl, 2. Wahl etc.)."
+          headline="Anzahl der Wahlen"
+          content="Wählen Sie die Anzahl der Wahlen, die Ihre Schüler treffen müssen (1. Wahl, 2. Wahl etc.). Achtung: Die Automatische Zuordnung funktioniert nur mit 3 Wahlen."
         >
           <mdui-text-field
             class="number-input"
             label="Anzahl der Wahlen"
             type="number"
             placeholder="3"
-            disabled
             min={1}
             max={10}
             value={selectCount}
@@ -229,13 +228,14 @@ export default function NewVote() {
               description:
                 "Ändern Sie die ID der Wahl. Diese erscheint in der URL (waldorfwahlen.de/[ID]). Achten Sie darauf, dass die ID eindeutig ist und keine Sonderzeichen enthält.",
               inputType: "text",
+              confirmText: "Schließen",
+              cancelText: "",
               textFieldOptions: {
                 value: id,
                 onInput: (e) => setId(e.target.value),
                 placeholder: "spw24",
                 label: "ID",
               },
-              onConfirm: (value) => setId(value),
             });
           }}
         >

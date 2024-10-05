@@ -80,7 +80,8 @@ def assign():
             print(num_participants, num_courses)
 
             # create scores
-            scores = {"first": 1, "second": 2, "third": 4}
+            # scores = {"first": 1, "second": 2, "third": 4}
+            scores = [1, 2, 4]
 
             # create the LP problem
             problem = pulp.LpProblem("CourseAssignment", pulp.LpMinimize)
@@ -101,15 +102,15 @@ def assign():
             problem += pulp.lpSum(
                 (
                     preferences[list(student_ids.keys())[i]].get(
-                        "points", [scores["first"], scores["second"], scores["third"]]
+                        "points", [scores[0], scores[1], scores[2]]
                     )[0]
                     * x[i, student_preferences[i][0]]
                     + preferences[list(student_ids.keys())[i]].get(
-                        "points", [scores["first"], scores["second"], scores["third"]]
+                        "points", [scores[0], scores[1], scores[2]]
                     )[1]
                     * x[i, student_preferences[i][1]]
                     + preferences[list(student_ids.keys())[i]].get(
-                        "points", [scores["first"], scores["second"], scores["third"]]
+                        "points", [scores[0], scores[1], scores[2]]
                     )[2]
                     * x[i, student_preferences[i][2]]
                 )

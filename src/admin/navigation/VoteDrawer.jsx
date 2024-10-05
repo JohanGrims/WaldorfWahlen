@@ -123,6 +123,12 @@ export default function VoteDrawer({}) {
         <mdui-divider></mdui-divider>
         <br />
         <DrawerItem
+          icon={"fact_check"}
+          title={"Abgleichen"}
+          active={active === "match"}
+          onCLick={() => navigate(`/admin/${id}/match`)}
+        />
+        <DrawerItem
           icon={"auto_awesome"}
           title={"Zuteilen"}
           active={active === "assign" || active === "manually"}
