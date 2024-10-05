@@ -68,7 +68,7 @@ export default function Overview() {
             </mdui-card>
           );
         })}
-        {/* <mdui-card
+        <mdui-card
           variant="outlined"
           style={{ padding: "20px" }}
           clickable
@@ -78,9 +78,9 @@ export default function Overview() {
           <p>
             <mdui-icon name="create" style={{ fontSize: "50px" }}></mdui-icon>
           </p>
-        </mdui-card> */}
+        </mdui-card>
       </div>
-      <mdui-fab
+      {/* <mdui-fab
         icon="add"
         onClick={() => navigate("/admin/new")}
         style={{ position: "fixed", bottom: "20px", right: "20px" }}
@@ -88,7 +88,7 @@ export default function Overview() {
         variant="surface"
       >
         Neue Wahl
-      </mdui-fab>
+      </mdui-fab> */}
     </div>
   );
 }

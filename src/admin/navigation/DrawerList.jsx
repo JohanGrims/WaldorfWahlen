@@ -114,7 +114,7 @@ export default function DrawerList() {
               end-icon="expand_more"
               slot="header"
             >
-              <mdui-list-item-content>Aktive Wahlen</mdui-list-item-content>
+              <mdui-list-item-content>Laufende Wahlen</mdui-list-item-content>
             </mdui-list-item>
             <div style={{ padding: "0 1rem" }}>
               {loading ? (
