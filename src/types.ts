@@ -21,3 +21,14 @@ export type Vote = {
   extraFields: any[];
   active: boolean;
 };
+
+export type Student = {
+  listIndex: string;
+  name: string;
+};
+
+export type Class = {
+  grade: number;
+  students: Student[];
+  id?: string;
+};

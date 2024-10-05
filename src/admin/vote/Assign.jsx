@@ -320,7 +320,7 @@ export default function Assign() {
               <mdui-icon name="auto_awesome"></mdui-icon>
             </div>
             Diese Funktion ordnet die Schüler bestmöglich den Projekten zu. Es
-            ist nicht möglich, erzeugte Ergebnisse zu ändern.
+            ist möglich, erzeugte Ergebnisse zu ändern.
           </div>
         </mdui-card>
         <mdui-card
@@ -404,7 +404,7 @@ export default function Assign() {
         <div>
           <mdui-tooltip content="Regeln anpassen" variant="rich">
             <mdui-button-icon
-              icon="settings"
+              icon="history"
               onClick={() => {
                 confirm({
                   headline: "Zurücksetzen?",

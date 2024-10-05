@@ -4,7 +4,7 @@ import {
   updateEmail,
   updatePassword,
 } from "firebase/auth";
-import { snackbar } from "mdui";
+import { setTheme, snackbar } from "mdui";
 import React from "react";
 import { auth } from "../firebase";
 
@@ -65,6 +65,7 @@ export default function Settings() {
         "theme",
         switchRef.current.checked ? "dark" : "light"
       );
+      setTheme(switchRef.current.checked ? "dark" : "light");
     };
 
     switchRef.current.addEventListener("change", handleToggle);

@@ -10,7 +10,32 @@ export default function Overview() {
   return (
     <div className="mdui-prose">
       <h2>Übersicht</h2>
+      <mdui-card
+        variant="outlined"
+        style={{ width: "100%", padding: "20px" }}
+        clickable
+        onClick={() => navigate("/admin/students")}
+      >
+        <div
+          className="mdui-prose"
+          style={{ width: "100%", userSelect: "none" }}
+        >
+          <div
+            style={{
+              display: "flex",
+              textWrap: "nowrap",
+              gap: "10px",
+            }}
+          >
+            <h2>SchülerInnen</h2>
+            <mdui-icon name="people"></mdui-icon>
+          </div>
+          Verwalten Sie die Datenbank der SchülerInnen, fügen Sie neue
+          SchülerInnen hinzu und bearbeiten Sie bestehende Klassenlisten.
+        </div>
+      </mdui-card>
       <p />
+      <br />
       <div
         style={{
           display: "grid",
@@ -43,7 +68,7 @@ export default function Overview() {
             </mdui-card>
           );
         })}
-        <mdui-card
+        {/* <mdui-card
           variant="outlined"
           style={{ padding: "20px" }}
           clickable
@@ -53,8 +78,17 @@ export default function Overview() {
           <p>
             <mdui-icon name="create" style={{ fontSize: "50px" }}></mdui-icon>
           </p>
-        </mdui-card>
+        </mdui-card> */}
       </div>
+      <mdui-fab
+        icon="add"
+        onClick={() => navigate("/admin/new")}
+        style={{ position: "fixed", bottom: "20px", right: "20px" }}
+        extended
+        variant="surface"
+      >
+        Neue Wahl
+      </mdui-fab>
     </div>
   );
 }

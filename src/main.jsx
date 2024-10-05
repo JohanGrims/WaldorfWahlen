@@ -19,6 +19,7 @@ import Admin from "./admin/index";
 import NewVote from "./admin/NewVote";
 import Overview, { loader as overviewLoader } from "./admin/Overview";
 import Settings from "./admin/Settings";
+import Students, { loader as studentsLoader } from "./admin/Students";
 import Answers, { loader as answersLoader } from "./admin/vote/Answers";
 import Assign, { loader as assignLoader } from "./admin/vote/Assign";
 import Delete from "./admin/vote/Delete";
@@ -81,6 +82,11 @@ const routes = [
             element: <NewVote />,
           },
           {
+            path: "students",
+            element: <Students />,
+            loader: studentsLoader,
+          },
+          {
             path: "settings",
             element: <Settings />,
           },
@@ -114,6 +120,10 @@ const routes = [
                 path: "schedule",
                 element: <Schedule />,
                 loader: adminVoteLoader,
+              },
+              {
+                path: "match",
+                element: <div>Match</div>,
               },
               {
                 path: "assign",

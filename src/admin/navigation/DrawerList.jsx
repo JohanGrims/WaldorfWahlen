@@ -6,7 +6,7 @@ import { db } from "../../firebase";
 import { DrawerItem } from "./components";
 import VoteDrawer from "./VoteDrawer";
 
-let pages = [undefined, "new", "settings"];
+let pages = [undefined, "new", "settings", "students"];
 
 export default function DrawerList() {
   const [activeVotes, setActiveVotes] = React.useState([]);
@@ -110,7 +110,7 @@ export default function DrawerList() {
           <mdui-collapse-item value="active-votes">
             <mdui-list-item
               rounded
-              icon="poll--outlined"
+              icon="check_circle--outlined"
               end-icon="expand_more"
               slot="header"
             >
@@ -213,6 +213,17 @@ export default function DrawerList() {
           </mdui-collapse-item>
         </mdui-collapse>
         <br />
+        <mdui-divider />
+        <br />
+        <DrawerItem
+          active={active === "students"}
+          title={"SchülerInnen"}
+          icon={"people"}
+          onCLick={() => navigate("/admin/students")}
+        />
+
+        <br />
+
         <mdui-divider />
         <br />
 
