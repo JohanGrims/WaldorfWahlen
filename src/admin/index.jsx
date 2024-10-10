@@ -66,6 +66,11 @@ export default function Admin(props) {
           ></mdui-button-icon>
         )}
         <mdui-top-app-bar-title>{authUser.email}</mdui-top-app-bar-title>
+        <mdui-avatar style={{ marginRight: "1rem" }}>
+          {authUser.email.split(".")[0].charAt(0).toUpperCase()}
+          {authUser.email.split(".")[1]?.charAt(0).toUpperCase()}
+        </mdui-avatar>
+
         <mdui-tooltip content="Abmelden" open-delay="0" placement="left">
           <mdui-button-icon
             icon="logout"
