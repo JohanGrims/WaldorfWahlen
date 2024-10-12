@@ -38,21 +38,40 @@
   </head>
   <body>
     <div id="root">
-      <div
-        style="
-          display: flex;
-          justify-content: center;
-          align-items: center;
-          height: 100dvh;
-          width: 100dvw;
-        "
-      >
-        <mdui-circular-progress></mdui-circular-progress>
-      </div>
+      <div class="spinner"></div>
     </div>
     <style>
+      body {
+        padding: 0px;
+        margin: 0px;
+      }
       .firebase-emulator-warning {
         display: none;
+      }
+      .spinner {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        background-color: #1f1b16;
+      }
+      .spinner::before {
+        content: "";
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        border: 5px solid #85735e;
+        border-top: 5px solid #f89e24;
+        animation: spin 1s linear infinite;
+      }
+      /* Add animation (spin) */
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
       }
     </style>
     <script type="module" src="/src/main.jsx"></script>
