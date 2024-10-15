@@ -365,12 +365,6 @@ export default function Vote() {
                 confirmText: "Zurücksetzen",
                 cancelText: "Abbrechen",
               });
-              setSelected(Array.from({ length: selectCount }, () => "null"));
-              setFirstName("");
-              setLastName("");
-              setGrade("");
-              setListIndex("");
-              setExtraFieldsValues([]);
             }}
           >
             Zurücksetzen
