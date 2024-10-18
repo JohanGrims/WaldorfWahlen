@@ -1,6 +1,6 @@
 import { collection, getDocs } from "firebase/firestore/lite";
 import React from "react";
-import { useLoaderData } from "react-router-dom";
+import { Link, useLoaderData } from "react-router-dom";
 import { db } from "../../firebase";
 import { Class } from "../../types";
 
@@ -40,26 +40,36 @@ export default function Match() {
                         <td>{s.name}</td>
                         <td>{s.listIndex}</td>
                         <td>
-                          {
-                            choices.filter(
-                              (choice) =>
-                                choice.listIndex === s.listIndex.toString() &&
-                                choice.grade === c.grade.toString()
-                            )[0]?.name
-                          }
+                          <Link
+                            to={`../answers?search=${
+                              choices.filter(
+                                (choice) =>
+                                  choice.listIndex === s.listIndex.toString() &&
+                                  choice.grade === c.grade.toString()
+                              )[0]?.id
+                            }`}
+                          >
+                            {
+                              choices.filter(
+                                (choice) =>
+                                  choice.listIndex === s.listIndex.toString() &&
+                                  choice.grade === c.grade.toString()
+                              )[0]?.name
+                            }
+                          </Link>
                           {choices.filter(
                             (choice) =>
                               choice.listIndex === s.listIndex.toString() &&
                               choice.grade === c.grade.toString()
                           ).length > 1 &&
-                            "+ " +
+                            " + " +
                               (choices.filter(
                                 (choice) =>
                                   choice.listIndex === s.listIndex.toString() &&
                                   choice.grade === c.grade.toString()
                               ).length -
                                 1) +
-                              " weitere"}
+                              " weitere"}{" "}
                         </td>
                       </tr>
                     ))}

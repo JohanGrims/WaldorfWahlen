@@ -13,9 +13,28 @@ import { db } from "../../firebase";
 export default function Answers() {
   const { vote, options, answers } = useLoaderData();
 
-  const [mode, setMode] = React.useState("by-option");
+  const search = new URLSearchParams(window.location.search).get("search");
+
+  const [mode, setMode] = React.useState(search ? "by-name" : "by-option");
 
   const grades = [...new Set(answers.map((answer) => answer.grade))];
+
+  React.useEffect(() => {
+    if (search) {
+      const query = search.toLowerCase();
+      const elements = document.querySelectorAll("tbody tr");
+      elements.forEach((element) => {
+        if (element.textContent.toLowerCase().includes(query)) {
+          element.style.display = "";
+        } else {
+          element.style.display = "none";
+        }
+      });
+      // write search query to search field
+      const searchField = document.querySelector("mdui-text-field");
+      searchField.value = search;
+    }
+  }, []);
 
   return (
     <div className="mdui-prose">
@@ -192,7 +211,7 @@ export default function Answers() {
             label="Suchen"
             onInput={(e) => {
               const query = e.target.value.toLowerCase();
-              const elements = document.querySelectorAll("tr");
+              const elements = document.querySelectorAll("tbody tr");
               elements.forEach((element) => {
                 if (element.textContent.toLowerCase().includes(query)) {
                   element.style.display = "";
