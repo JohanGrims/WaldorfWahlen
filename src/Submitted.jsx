@@ -10,9 +10,9 @@ export default function Submitted() {
     <mdui-dialog open headline="Vielen Dank!">
       <div className="mdui-prose">
         <p>
-          Deine Wahl wurde erfolgreich abgegeben. Bei Fragen oder Problemen
+          Ihre Wahl wurde erfolgreich abgegeben. Bei Fragen oder Problemen
           melden Sie sich beim betreuenden Lehrer der Wahl oder den
-          SV-Vertretern Deiner Klasse.
+          SV-Vertretern Ihrer Klasse.
         </p>
         <p />
         <div className="button-container">
