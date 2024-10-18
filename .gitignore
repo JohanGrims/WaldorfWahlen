@@ -24,13 +24,11 @@ dist-ssr
 *.sw?
 .d.ts
 
-# lockfiles
-package-lock.json*
 
 # Emulator directory
 emulators
 
 # Firebase
-firebase
+.firebase
 firestore.indexes.json
 firestore.rules
