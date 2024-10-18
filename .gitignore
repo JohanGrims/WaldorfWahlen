@@ -22,9 +22,15 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+.d.ts
 
 # lockfiles
 package-lock.json*
 
 # Emulator directory
 emulators
+
+# Firebase
+firebase
+firestore.indexes.json
+firestore.rules
