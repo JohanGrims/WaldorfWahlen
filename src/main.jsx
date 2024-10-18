@@ -83,7 +83,7 @@ const routes = [
             element: <NewVote />,
           },
           {
-            path: "students/:classId?/:edit?",
+            path: "students/:classId/:edit?",
             element: <Students />,
             loader: studentsLoader,
           },

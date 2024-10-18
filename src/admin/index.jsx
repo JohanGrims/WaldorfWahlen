@@ -13,7 +13,7 @@ export default function Admin(props) {
   const [authUser, setAuthUser] = React.useState(false);
   const [loading, setLoading] = React.useState(true);
 
-  const [open, setOpen] = React.useState(true);
+  const [open, setOpen] = React.useState(window.innerWidth > 1024);
 
   React.useEffect(() => {
     const listen = onAuthStateChanged(auth, (user) => {

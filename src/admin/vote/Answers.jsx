@@ -9,6 +9,7 @@ import { confirm } from "mdui";
 import React from "react";
 import { useLoaderData } from "react-router-dom";
 import { db } from "../../firebase";
+import { useNavigate } from "react-router-dom";
 
 export default function Answers() {
   const { vote, options, answers } = useLoaderData();
@@ -18,6 +19,8 @@ export default function Answers() {
   const [mode, setMode] = React.useState(search ? "by-name" : "by-option");
 
   const grades = [...new Set(answers.map((answer) => answer.grade))];
+
+  const navigate = useNavigate();
 
   React.useEffect(() => {
     if (search) {
@@ -38,7 +41,18 @@ export default function Answers() {
 
   return (
     <div className="mdui-prose">
-      <h2>Antworten</h2>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+        }}
+      >
+        <h2>Antworten</h2>
+        <mdui-chip onClick={() => navigate("../match")}>
+          Mit Klassenlisten abgleichen
+        </mdui-chip>
+      </div>
+      <br />
       <mdui-radio-group value={mode}>
         <mdui-radio value="by-option" onClick={() => setMode("by-option")}>
           Nach Erstwahl
@@ -50,6 +64,8 @@ export default function Answers() {
           Nach Name
         </mdui-radio>
       </mdui-radio-group>
+      <br />
+
       <p />
       {mode === "by-option" && (
         <mdui-tabs

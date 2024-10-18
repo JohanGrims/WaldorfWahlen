@@ -69,11 +69,17 @@ export default function VoteDrawer({}) {
           flexDirection: "column",
         }}
       >
-        <DrawerItem
-          icon={"arrow_back"}
-          title={data?.title}
-          onCLick={() => navigate("/admin")}
-        />
+        <mdui-tooltip
+          variant="rich"
+          headline="Zurück"
+          content="Kehren Sie zur Übersicht zurück."
+        >
+          <DrawerItem
+            icon={"arrow_back"}
+            title={data?.title}
+            onCLick={() => navigate("/admin")}
+          />
+        </mdui-tooltip>
         <mdui-divider></mdui-divider>
         <br />
         <mdui-tooltip

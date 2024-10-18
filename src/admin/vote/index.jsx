@@ -11,27 +11,23 @@ export default function AdminVote() {
     <div className="mdui-prose">
       <div style={{ display: "flex", justifyContent: "space-between" }}>
         <h2>{vote.title}</h2>
-        <mdui-tooltip
-          variant="rich"
-          headline="Status"
-          content={`Diese Wahl ist ${
-            vote.active && vote.endTime.seconds * 1000 > Date.now()
-              ? vote.startTime.seconds * 1000 < Date.now()
-                ? "aktiv"
-                : "geplant"
-              : "beendet"
-          }.`}
-        >
-          <mdui-icon
-            name={
-              vote.active && vote.endTime.seconds * 1000 > Date.now()
-                ? vote.startTime.seconds * 1000 < Date.now()
-                  ? "event_available"
-                  : "event"
-                : "done_all"
-            }
-          ></mdui-icon>
-        </mdui-tooltip>
+        <mdui-chip onClick={() => navigate("./schedule")}>
+          {!vote.active
+            ? "Nicht aktiv"
+            : `${new Date(vote.startTime.seconds * 1000).toLocaleString([], {
+                hour: "2-digit",
+                minute: "2-digit",
+                day: "2-digit",
+                month: "2-digit",
+                year: "numeric",
+              })} - ${new Date(vote.endTime.seconds * 1000).toLocaleString([], {
+                hour: "2-digit",
+                minute: "2-digit",
+                day: "2-digit",
+                month: "2-digit",
+                year: "numeric",
+              })}`}
+        </mdui-chip>
       </div>
       <p />
       <div
@@ -94,26 +90,11 @@ export default function AdminVote() {
           variant="filled"
           style={{ padding: "20px", flex: 1 }}
           clickable
-          onClick={() => navigate(`/admin/${vote.id}/schedule`)}
+          onClick={() => navigate(`/admin/${vote.id}/match`)}
         >
-          <h3>
-            {vote.active && vote.endTime.seconds * 1000 > Date.now()
-              ? vote.startTime.seconds * 1000 < Date.now()
-                ? "Beenden"
-                : "Planen"
-              : "Starten"}
-          </h3>
+          <h3>Abgleichen</h3>
           <p style={{ fontSize: "50px" }}>
-            <mdui-icon
-              name={
-                vote.active && vote.endTime.seconds * 1000 > Date.now()
-                  ? vote.startTime.seconds * 1000 < Date.now()
-                    ? "pause"
-                    : "scheduled"
-                  : "play_arrow"
-              }
-              style={{ fontSize: "50px" }}
-            />
+            <mdui-icon name={"fact_check"} style={{ fontSize: "50px" }} />
           </p>
         </mdui-card>
         <mdui-card

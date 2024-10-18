@@ -281,7 +281,7 @@ export default function Students() {
                 onClick={() => {
                   navigate(`/admin/students/${classId}/true`);
                 }}
-              ></mdui-segmented-button>{" "}
+              ></mdui-segmented-button>
               <mdui-segmented-button
                 icon="delete"
                 onClick={() => classId && removeClass(classId)}
