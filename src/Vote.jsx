@@ -84,26 +84,6 @@ export default function Vote() {
   }
 
   function submit() {
-    if (
-      confirm({
-        headline: "Bestätigen",
-        description: `
-        Name: ${firstName} ${lastName}\n
-        Klasse: ${grade}\n
-        Klassenlistennr.: ${listIndex}\n
-        ${extraFields
-          ?.map((e, i) => `${e}: ${extraFieldsValues[i]}`)
-          .join("\n")}
-
-        Auswahl: ${selected
-          .map((e, i) => `${i + 1}. ${options.find((o) => o.id === e)?.title}`)
-          .join("\n")}
-      `,
-        confirmText: "Absenden",
-        cancelText: "Abbrechen",
-      }) === false
-    )
-      return;
     addDoc(collection(db, `/votes/${id}/choices`), {
       name: `${firstName} ${lastName.charAt(0)}.`,
       grade,

@@ -41,12 +41,25 @@ export default function Match() {
                         <td>{s.listIndex}</td>
                         <td>
                           {
-                            choices.find(
+                            choices.filter(
                               (choice) =>
                                 choice.listIndex === s.listIndex.toString() &&
                                 choice.grade === c.grade.toString()
-                            )?.name
+                            )[0]?.name
                           }
+                          {choices.filter(
+                            (choice) =>
+                              choice.listIndex === s.listIndex.toString() &&
+                              choice.grade === c.grade.toString()
+                          ).length > 1 &&
+                            "+ " +
+                              (choices.filter(
+                                (choice) =>
+                                  choice.listIndex === s.listIndex.toString() &&
+                                  choice.grade === c.grade.toString()
+                              ).length -
+                                1) +
+                              " weitere"}
                         </td>
                       </tr>
                     ))}
