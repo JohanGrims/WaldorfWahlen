@@ -25,7 +25,7 @@ export default function Login() {
   const handlePasswordReset = () => {
     prompt({
       headline: "Passwort zurücksetzen",
-      description: "Bitte gib deine Email-Adresse ein.",
+      description: "Bitte geben Sie Ihre Email-Adresse ein.",
       confirmText: "Senden",
       cancelText: "Abbrechen",
       closeOnOverlayClick: true,
