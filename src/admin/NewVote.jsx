@@ -220,7 +220,7 @@ export default function NewVote() {
             prompt({
               headline: "ID der Wahl",
               description:
-                "Ändern Sie die ID der Wahl. Diese erscheint in der URL (waldorfwahlen.de/[ID]). Achten Sie darauf, dass die ID eindeutig ist und keine Sonderzeichen enthält.",
+                "Ändern Sie die ID der Wahl. Diese erscheint in der URL (waldorfwahlen.web.app/[ID]). Achten Sie darauf, dass die ID eindeutig ist und keine Sonderzeichen enthält.",
               inputType: "text",
               confirmText: "Schließen",
               cancelText: "",
