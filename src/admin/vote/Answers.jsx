@@ -75,7 +75,7 @@ export default function Answers() {
       const searchField = document.querySelector("mdui-text-field");
       searchField.value = search;
     }
-  }, [search, mode]);
+  }, [search, mode, answers]);
 
   return (
     <div className="mdui-prose">
