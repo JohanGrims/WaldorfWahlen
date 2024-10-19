@@ -1,4 +1,4 @@
-import { collection, doc, getDoc, getDocs } from "firebase/firestore/lite";
+import { collection, doc, getDoc, getDocs } from "firebase/firestore";
 import { useLoaderData, useNavigate } from "react-router-dom";
 import { db } from "../../firebase";
 

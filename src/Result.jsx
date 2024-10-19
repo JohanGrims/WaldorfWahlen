@@ -1,4 +1,4 @@
-import { doc, getDoc } from "firebase/firestore/lite";
+import { doc, getDoc } from "firebase/firestore";
 import React from "react";
 import { useLoaderData, useNavigate, useParams } from "react-router-dom";
 import { db } from "./firebase";

@@ -1,10 +1,4 @@
-import {
-  collection,
-  doc,
-  getDoc,
-  getDocs,
-  setDoc,
-} from "firebase/firestore/lite";
+import { collection, doc, getDoc, getDocs, setDoc } from "firebase/firestore";
 import { useLoaderData } from "react-router-dom";
 import { auth, db } from "../../firebase";
 

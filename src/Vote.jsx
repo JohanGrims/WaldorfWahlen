@@ -5,7 +5,7 @@ import {
   getDoc,
   getDocs,
   serverTimestamp,
-} from "firebase/firestore/lite";
+} from "firebase/firestore";
 import React, { useRef } from "react";
 import { useLoaderData, useNavigate, useParams } from "react-router-dom";
 import { db } from "./firebase";

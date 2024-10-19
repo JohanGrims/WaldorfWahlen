@@ -5,7 +5,7 @@ import {
   getDocs,
   setDoc,
   updateDoc,
-} from "firebase/firestore/lite";
+} from "firebase/firestore";
 import { confirm, prompt } from "mdui";
 import React, { useRef } from "react";
 import { useLoaderData, useNavigate, useParams } from "react-router-dom";

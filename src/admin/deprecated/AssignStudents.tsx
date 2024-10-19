@@ -4,7 +4,7 @@ import {
   getDoc,
   getDocs,
   updateDoc,
-} from "firebase/firestore/lite";
+} from "firebase/firestore";
 import { snackbar } from "mdui";
 import React, { useState } from "react";
 import { useLoaderData } from "react-router-dom";

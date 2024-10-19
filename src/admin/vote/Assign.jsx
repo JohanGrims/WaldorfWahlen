@@ -1,10 +1,4 @@
-import {
-  collection,
-  doc,
-  getDoc,
-  getDocs,
-  setDoc,
-} from "firebase/firestore/lite";
+import { collection, doc, getDoc, getDocs, setDoc } from "firebase/firestore";
 import { confirm, snackbar } from "mdui";
 import React from "react";
 import { useLoaderData, useNavigate } from "react-router-dom";

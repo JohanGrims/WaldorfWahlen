@@ -1,4 +1,4 @@
-import { doc, getDoc } from "firebase/firestore/lite";
+import { doc, getDoc } from "firebase/firestore";
 import { snackbar } from "mdui";
 import React from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";

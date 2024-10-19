@@ -5,7 +5,7 @@ import {
   getDoc,
   getDocs,
   updateDoc,
-} from "firebase/firestore/lite";
+} from "firebase/firestore";
 import React, { useEffect, useState } from "react";
 import AceEditor from "react-ace";
 

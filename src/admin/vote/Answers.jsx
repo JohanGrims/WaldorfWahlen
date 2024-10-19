@@ -4,26 +4,64 @@ import {
   doc,
   getDoc,
   getDocs,
-} from "firebase/firestore/lite";
-import { confirm } from "mdui";
+  onSnapshot,
+} from "firebase/firestore";
+import { confirm, snackbar } from "mdui";
 import React from "react";
-import { useLoaderData } from "react-router-dom";
+import { useLoaderData, useNavigate } from "react-router-dom";
 import { db } from "../../firebase";
-import { useNavigate } from "react-router-dom";
 
 export default function Answers() {
-  const { vote, options, answers } = useLoaderData();
+  const { vote, options } = useLoaderData();
 
   const search = new URLSearchParams(window.location.search).get("search");
 
   const [mode, setMode] = React.useState(search ? "by-name" : "by-option");
+  const [answers, setAnswers] = React.useState([]);
 
   const grades = [...new Set(answers.map((answer) => answer.grade))];
 
   const navigate = useNavigate();
 
   React.useEffect(() => {
-    if (search) {
+    let isFirstLoad = true;
+    let answersLoad = [];
+
+    const unsubscribe = onSnapshot(
+      collection(db, `/votes/${vote.id}/choices`),
+      (snapshot) => {
+        const answerData = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+        setAnswers(answerData);
+
+        if (!isFirstLoad) {
+          const newAnswer = answerData.find(
+            (newAns) => !answersLoad.some((oldAns) => oldAns.id === newAns.id)
+          );
+          console.log("New Answer:", newAnswer);
+          snackbar({
+            message: `Neue Antwort von ${newAnswer.name} (${newAnswer.grade})`,
+            timeout: 5000,
+            action: "Anzeigen",
+            onActionClick: () => {
+              setMode("by-name");
+              navigate(`.?search=${newAnswer.id}`);
+            },
+          });
+        }
+        isFirstLoad = false;
+        answersLoad = answerData;
+      }
+    );
+
+    // Cleanup subscription on unmount
+    return () => unsubscribe();
+  }, [vote.id]);
+
+  React.useEffect(() => {
+    if (search && mode === "by-name") {
       const query = search.toLowerCase();
       const elements = document.querySelectorAll("tbody tr");
       elements.forEach((element) => {
@@ -37,7 +75,7 @@ export default function Answers() {
       const searchField = document.querySelector("mdui-text-field");
       searchField.value = search;
     }
-  }, []);
+  }, [search, mode]);
 
   return (
     <div className="mdui-prose">
@@ -47,7 +85,16 @@ export default function Answers() {
           justifyContent: "space-between",
         }}
       >
-        <h2>Antworten</h2>
+        <h2>
+          Antworten ({answers.length}){" "}
+          <mdui-tooltip
+            variant="rich"
+            headline="Automatisches Aktualisieren"
+            content="Neue Antworten werden automatisch angezeigt."
+          >
+            <mdui-icon name="autorenew_outlined" />
+          </mdui-tooltip>
+        </h2>
         <mdui-chip onClick={() => navigate("../match")}>
           Mit Klassenlisten abgleichen
         </mdui-chip>
@@ -114,7 +161,17 @@ export default function Answers() {
                         .sort((a, b) => a.name.localeCompare(b.name))
                         .map((answer, i) => (
                           <tr key={i}>
-                            <td>{answer.name}</td>
+                            <td>
+                              <a
+                                style={{ cursor: "pointer" }}
+                                onClick={() => {
+                                  setMode("by-name");
+                                  navigate(`.?search=${answer.id}`);
+                                }}
+                              >
+                                {answer.name}
+                              </a>
+                            </td>
                             <td>{answer.grade}</td>
                             {vote.extraFields?.map((field, i) => (
                               <td key={i}>{answer.extraFields[i]}</td>
@@ -235,6 +292,8 @@ export default function Answers() {
                   element.style.display = "none";
                 }
               });
+              // append search query to URL
+              navigate(`.?search=${e.target.value}`);
             }}
           ></mdui-text-field>
           <div className="mdui-table" style={{ width: "100%" }}>
@@ -325,11 +384,11 @@ export async function loader({ params }) {
   const voteData = vote.data();
   const options = await getDocs(collection(db, `/votes/${id}/options`));
   const optionData = options.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-  const answers = await getDocs(collection(db, `/votes/${id}/choices`));
-  const answerData = answers.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+  // const answers = await getDocs(collection(db, `/votes/${id}/choices`));
+  // const answerData = answers.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
   return {
     vote: voteData,
     options: optionData,
-    answers: answerData,
+    // answers: answerData,
   };
 }

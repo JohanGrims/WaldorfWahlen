@@ -1,4 +1,4 @@
-import { deleteDoc, doc } from "firebase/firestore/lite";
+import { deleteDoc, doc } from "firebase/firestore";
 import { snackbar } from "mdui";
 import React from "react";
 import { useNavigate, useParams } from "react-router-dom";

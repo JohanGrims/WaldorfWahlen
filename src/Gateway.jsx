@@ -1,4 +1,4 @@
-import { doc, getDoc } from "firebase/firestore/lite";
+import { doc, getDoc } from "firebase/firestore";
 import moment from "moment-timezone";
 import React from "react";
 import { useLoaderData, useNavigate } from "react-router-dom";

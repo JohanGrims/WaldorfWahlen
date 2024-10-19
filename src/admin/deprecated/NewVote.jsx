@@ -1,10 +1,4 @@
-import {
-  addDoc,
-  collection,
-  doc,
-  setDoc,
-  Timestamp,
-} from "firebase/firestore/lite";
+import { addDoc, collection, doc, setDoc, Timestamp } from "firebase/firestore";
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { db } from "../../firebase";

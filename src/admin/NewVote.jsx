@@ -1,10 +1,4 @@
-import {
-  addDoc,
-  collection,
-  doc,
-  setDoc,
-  Timestamp,
-} from "firebase/firestore/lite";
+import { addDoc, collection, doc, setDoc, Timestamp } from "firebase/firestore";
 import { confirm, prompt, snackbar } from "mdui";
 import moment from "moment-timezone";
 import React from "react";
