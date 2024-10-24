@@ -97,7 +97,7 @@ export default function Vote() {
       timestamp: serverTimestamp(),
     })
       .then((e) => {
-        setSending(false);
+
         localStorage.setItem(
           id,
           JSON.stringify({ choiceId: e.id, timestamp: Date.now() })
@@ -210,13 +210,13 @@ export default function Vote() {
           ) : (
             <div className="button-container">
               <mdui-button
-                onClick={() => setConfirmDialog(false)}
+
                 variant="text"
                 disabled
               >
                 Abbrechen
               </mdui-button>
-              <mdui-button onClick={submit} end-icon="send" disabled loading>
+              <mdui-button end-icon="send" disabled loading>
                 Absenden
               </mdui-button>
             </div>
