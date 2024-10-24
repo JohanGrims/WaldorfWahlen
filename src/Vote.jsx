@@ -34,8 +34,7 @@ export default function Vote() {
 
   const [confirmDialog, setConfirmDialog] = React.useState(false);
 
-
-  const [sending, setSending] = React.useState(false)
+  const [sending, setSending] = React.useState(false);
 
   React.useEffect(() => {
     document.title = title;
@@ -87,7 +86,7 @@ export default function Vote() {
   }
 
   function submit() {
-    setSending(true)
+    setSending(true);
     addDoc(collection(db, `/votes/${id}/choices`), {
       name: `${firstName} ${lastName.charAt(0)}.`,
       grade,
@@ -98,7 +97,7 @@ export default function Vote() {
       timestamp: serverTimestamp(),
     })
       .then((e) => {
-        setSending(false)
+        setSending(false);
         localStorage.setItem(
           id,
           JSON.stringify({ choiceId: e.id, timestamp: Date.now() })
@@ -110,7 +109,7 @@ export default function Vote() {
         navigate(`/x/${id}`);
       })
       .catch((error) => {
-        setSending(false)
+        setSending(false);
         console.log(JSON.stringify(error));
         if (error.code === "permission-denied") {
           alert(
@@ -196,19 +195,32 @@ export default function Vote() {
             )
             .join(", ")}
           <p />
-          {
-            sending?(
-              <div/>
-            ):(<div/>)
-          }
-          <div className="button-container">
-            <mdui-button onClick={() => setConfirmDialog(false)} variant="text">
-              Abbrechen
-            </mdui-button>
-            <mdui-button onClick={submit} end-icon="send">
-              Absenden
-            </mdui-button>
-          </div>
+          {!sending ? (
+            <div className="button-container">
+              <mdui-button
+                onClick={() => setConfirmDialog(false)}
+                variant="text"
+              >
+                Abbrechen
+              </mdui-button>
+              <mdui-button onClick={submit} end-icon="send">
+                Absenden
+              </mdui-button>
+            </div>
+          ) : (
+            <div className="button-container">
+              <mdui-button
+                onClick={() => setConfirmDialog(false)}
+                variant="text"
+                disabled
+              >
+                Abbrechen
+              </mdui-button>
+              <mdui-button onClick={submit} end-icon="send" disabled loading>
+                Absenden
+              </mdui-button>
+            </div>
+          )}
         </div>
       </mdui-dialog>
       <mdui-card variant="outlined" class="card">
