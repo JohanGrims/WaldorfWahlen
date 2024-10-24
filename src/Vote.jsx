@@ -34,6 +34,9 @@ export default function Vote() {
 
   const [confirmDialog, setConfirmDialog] = React.useState(false);
 
+
+  const [sending, setSending] = React.useState(false)
+
   React.useEffect(() => {
     document.title = title;
 
@@ -84,6 +87,7 @@ export default function Vote() {
   }
 
   function submit() {
+    setSending(true)
     addDoc(collection(db, `/votes/${id}/choices`), {
       name: `${firstName} ${lastName.charAt(0)}.`,
       grade,
@@ -94,6 +98,7 @@ export default function Vote() {
       timestamp: serverTimestamp(),
     })
       .then((e) => {
+        setSending(false)
         localStorage.setItem(
           id,
           JSON.stringify({ choiceId: e.id, timestamp: Date.now() })
@@ -105,6 +110,7 @@ export default function Vote() {
         navigate(`/x/${id}`);
       })
       .catch((error) => {
+        setSending(false)
         console.log(JSON.stringify(error));
         if (error.code === "permission-denied") {
           alert(
@@ -190,6 +196,11 @@ export default function Vote() {
             )
             .join(", ")}
           <p />
+          {
+            sending?(
+              <div/>
+            ):(<div/>)
+          }
           <div className="button-container">
             <mdui-button onClick={() => setConfirmDialog(false)} variant="text">
               Abbrechen
