@@ -12,7 +12,7 @@ import { db } from "./firebase";
 
 import moment from "moment-timezone";
 
-import { confirm, snackbar } from "mdui";
+import { breakpoint, confirm, snackbar } from "mdui";
 import "./vote.css";
 export default function Vote() {
   const refs = useRef([]);
@@ -21,6 +21,7 @@ export default function Vote() {
   const { vote, options } = useLoaderData();
 
   const navigate = useNavigate();
+  const breakpointCondition = breakpoint();
 
   const { title, active, selectCount, extraFields, endTime, startTime } = vote;
   const [firstName, setFirstName] = React.useState();
@@ -97,7 +98,6 @@ export default function Vote() {
       timestamp: serverTimestamp(),
     })
       .then((e) => {
-
         localStorage.setItem(
           id,
           JSON.stringify({ choiceId: e.id, timestamp: Date.now() })
@@ -209,11 +209,7 @@ export default function Vote() {
             </div>
           ) : (
             <div className="button-container">
-              <mdui-button
-
-                variant="text"
-                disabled
-              >
+              <mdui-button variant="text" disabled>
                 Abbrechen
               </mdui-button>
               <mdui-button end-icon="send" disabled loading>
@@ -223,7 +219,10 @@ export default function Vote() {
           )}
         </div>
       </mdui-dialog>
-      <mdui-card variant="outlined" class="card">
+      <mdui-card
+        variant={breakpointCondition.up("md") ? "outlined" : "elevated"}
+        class="card"
+      >
         <div className="mdui-prose">
           <h1 className="vote-title">{title}</h1>
           <div className="time-label">
