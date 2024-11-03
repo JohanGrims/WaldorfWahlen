@@ -7,11 +7,41 @@ export default function Results() {
 
   function printResults() {
     const printContents = document.querySelector(".print-table").outerHTML;
-    const originalContents = document.body.innerHTML;
-    document.body.innerHTML = printContents;
-    window.print();
-    document.body.innerHTML = originalContents;
-    window.location.reload();
+
+    // Neues iframe erstellen
+    const printFrame = document.createElement("iframe");
+    printFrame.style.position = "absolute";
+    printFrame.style.width = "0";
+    printFrame.style.height = "0";
+    printFrame.style.border = "none";
+    document.body.appendChild(printFrame);
+
+    const frameDoc = printFrame.contentWindow || printFrame.contentDocument;
+    frameDoc.document.open();
+    frameDoc.document.write(`
+      <html>
+        <head>
+          <title>Drucken</title>
+          <style>
+            /* Optional: Stil-Definitionen für den Druck */
+            body { font-family: Arial, sans-serif; }
+            table { width: 100%; border-collapse: collapse; }
+            th, td { border: 1px solid #000; padding: 8px; text-align: left; }
+          </style>
+        </head>
+        <body>${printContents}</body>
+      </html>
+    `);
+    frameDoc.document.close();
+
+    // print()-Funktion des iframe verwenden
+    frameDoc.focus();
+    frameDoc.print();
+
+    // iframe nach dem Drucken entfernen
+    setTimeout(() => {
+      document.body.removeChild(printFrame);
+    }, 1000);
   }
 
   function publishResults() {
