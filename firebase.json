@@ -1,11 +1,7 @@
 {
   "hosting": {
     "public": "dist",
-    "ignore": [
-      "firebase.json",
-      "**/.*",
-      "**/node_modules/**"
-    ],
+    "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
     "rewrites": [
       {
         "source": "**",
@@ -14,23 +10,6 @@
     ]
   },
   "firestore": {
-    "rules": "firestore.rules",
-    "indexes": "firestore.indexes.json"
-  },
-  "emulators": {
-    "firestore": {
-      "port": 8080
-    },
-    "ui": {
-      "enabled": true,
-      "port": 8081
-    },
-    "singleProjectMode": true,
-    "auth": {
-      "port": 9099
-    },
-    "hosting": {
-      "port": 5000
-    }
+    "rules": "firestore.rules"
   }
 }
