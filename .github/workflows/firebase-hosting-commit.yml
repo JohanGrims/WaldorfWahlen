@@ -31,4 +31,4 @@ jobs:
       - name: Deploy Firestore Rules
         env:
           FIREBASE_TOKEN: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_WALDORFWAHLEN }}
-        run: firebase deploy --only firestore:rules
+        run: firebase deploy --only firestore:rules --debug
