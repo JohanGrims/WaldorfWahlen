@@ -43,31 +43,35 @@ export default function Overview() {
           gap: "20px",
         }}
       >
-        {votes.map((vote) => {
-          const now = moment();
-          const startTime = moment.unix(vote.startTime.seconds);
-          const endTime = moment.unix(vote.endTime.seconds);
-          const isActive =
-            vote.active && endTime.isAfter(now) && startTime.isBefore(now);
+        {votes
+          .sort((a, b) => {
+            return b.startTime.seconds - a.startTime.seconds;
+          })
+          .map((vote) => {
+            const now = moment();
+            const startTime = moment.unix(vote.startTime.seconds);
+            const endTime = moment.unix(vote.endTime.seconds);
+            const isActive =
+              vote.active && endTime.isAfter(now) && startTime.isBefore(now);
 
-          return (
-            <mdui-card
-              key={vote.id}
-              variant="filled"
-              style={{ padding: "20px" }}
-              clickable
-              onClick={() => navigate(`/admin/${vote.id}`)}
-            >
-              <h3>{vote.title}</h3>
-              <p>
-                <mdui-icon
-                  style={{ fontSize: "50px" }}
-                  name={isActive ? "event_available" : "done_all"}
-                ></mdui-icon>
-              </p>
-            </mdui-card>
-          );
-        })}
+            return (
+              <mdui-card
+                key={vote.id}
+                variant="filled"
+                style={{ padding: "20px" }}
+                clickable
+                onClick={() => navigate(`/admin/${vote.id}`)}
+              >
+                <h3>{vote.title}</h3>
+                <p>
+                  <mdui-icon
+                    style={{ fontSize: "50px" }}
+                    name={isActive ? "event_available" : "done_all"}
+                  ></mdui-icon>
+                </p>
+              </mdui-card>
+            );
+          })}
         <mdui-card
           variant="outlined"
           style={{ padding: "20px" }}

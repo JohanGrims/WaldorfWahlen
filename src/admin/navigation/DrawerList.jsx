@@ -31,18 +31,36 @@ export default function DrawerList() {
             if (data.startTime.seconds * 1000 > Date.now()) {
               setScheduledVotes((scheduledVotes) => [
                 ...scheduledVotes,
-                { id: e.id, title: data.title, version: data.version },
+                {
+                  id: e.id,
+                  title: data.title,
+                  version: data.version,
+                  startTime: data.startTime,
+                  endTime: data.endTime,
+                },
               ]);
             } else {
               setActiveVotes((activeVotes) => [
                 ...activeVotes,
-                { id: e.id, title: data.title, version: data.version },
+                {
+                  id: e.id,
+                  title: data.title,
+                  version: data.version,
+                  startTime: data.startTime,
+                  endTime: data.endTime,
+                },
               ]);
             }
           } else {
             setExpiredVotes((expiredVotes) => [
               ...expiredVotes,
-              { id: e.id, title: data.title, version: data.version },
+              {
+                id: e.id,
+                title: data.title,
+                version: data.version,
+                startTime: data.startTime,
+                endTime: data.endTime,
+              },
             ]);
           }
         });
@@ -124,19 +142,23 @@ export default function DrawerList() {
                   {activeVotes.length === 0 && (
                     <mdui-list-item disabled>Keine Wahlen</mdui-list-item>
                   )}
-                  {activeVotes.map((e) => (
-                    <mdui-tooltip
-                      variant="rich"
-                      headline="Wahl bearbeiten"
-                      content="Bearbeiten Sie die Wahl, setzen Sie die Einstellungen und weisen Sie Schüler zu."
-                    >
-                      <DrawerItem
-                        active={active === e.id}
-                        title={e.title}
-                        onCLick={() => navigate(`/admin/${e.id}`)}
-                      />
-                    </mdui-tooltip>
-                  ))}
+                  {activeVotes
+                    .sort((a, b) => {
+                      return b.startTime.seconds - a.startTime.seconds;
+                    })
+                    .map((e) => (
+                      <mdui-tooltip
+                        variant="rich"
+                        headline="Wahl bearbeiten"
+                        content="Bearbeiten Sie die Wahl, setzen Sie die Einstellungen und weisen Sie Schüler zu."
+                      >
+                        <DrawerItem
+                          active={active === e.id}
+                          title={e.title}
+                          onCLick={() => navigate(`/admin/${e.id}`)}
+                        />
+                      </mdui-tooltip>
+                    ))}
                 </>
               )}
             </div>
@@ -159,19 +181,23 @@ export default function DrawerList() {
                   {scheduledVotes.length === 0 && (
                     <mdui-list-item disabled>Keine Wahlen</mdui-list-item>
                   )}
-                  {scheduledVotes.map((e) => (
-                    <mdui-tooltip
-                      variant="rich"
-                      headline="Wahl bearbeiten"
-                      content="Bearbeiten Sie die Wahl, setzen Sie die Einstellungen und weisen Sie Schüler zu."
-                    >
-                      <DrawerItem
-                        active={active === e.id}
-                        title={e.title}
-                        onCLick={() => navigate(`/admin/${e.id}`)}
-                      />
-                    </mdui-tooltip>
-                  ))}
+                  {scheduledVotes
+                    .sort((a, b) => {
+                      return b.startTime.seconds - a.startTime.seconds;
+                    })
+                    .map((e) => (
+                      <mdui-tooltip
+                        variant="rich"
+                        headline="Wahl bearbeiten"
+                        content="Bearbeiten Sie die Wahl, setzen Sie die Einstellungen und weisen Sie Schüler zu."
+                      >
+                        <DrawerItem
+                          active={active === e.id}
+                          title={e.title}
+                          onCLick={() => navigate(`/admin/${e.id}`)}
+                        />
+                      </mdui-tooltip>
+                    ))}
                 </>
               )}
             </div>
@@ -194,19 +220,23 @@ export default function DrawerList() {
                   {expiredVotes.length === 0 && (
                     <mdui-list-item disabled>Keine Wahlen</mdui-list-item>
                   )}
-                  {expiredVotes.map((e) => (
-                    <mdui-tooltip
-                      variant="rich"
-                      headline="Wahl bearbeiten"
-                      content="Bearbeiten Sie die Wahl, setzen Sie die Einstellungen und weisen Sie Schüler zu."
-                    >
-                      <DrawerItem
-                        active={active === e.id}
-                        title={e.title}
-                        onCLick={() => navigate(`/admin/${e.id}`)}
-                      />
-                    </mdui-tooltip>
-                  ))}
+                  {expiredVotes
+                    .sort((a, b) => {
+                      return b.startTime.seconds - a.startTime.seconds;
+                    })
+                    .map((e) => (
+                      <mdui-tooltip
+                        variant="rich"
+                        headline="Wahl bearbeiten"
+                        content="Bearbeiten Sie die Wahl, setzen Sie die Einstellungen und weisen Sie Schüler zu."
+                      >
+                        <DrawerItem
+                          active={active === e.id}
+                          title={e.title}
+                          onCLick={() => navigate(`/admin/${e.id}`)}
+                        />
+                      </mdui-tooltip>
+                    ))}
                 </>
               )}
             </div>
