@@ -28,16 +28,20 @@ function App() {
         {activeVotes.length < 1 && (
           <mdui-list-item disabled>Keine Wahlen</mdui-list-item>
         )}
-        {activeVotes.map((vote) => (
-          <mdui-list-item
-            key={vote.id}
-            href={`/${vote.id}`}
-            rounded
-            end-icon="arrow_forward"
-          >
-            {vote.title}
-          </mdui-list-item>
-        ))}
+        {activeVotes
+          .sort((a, b) => {
+            return b.startTime.seconds - a.startTime.seconds;
+          })
+          .map((vote) => (
+            <mdui-list-item
+              key={vote.id}
+              href={`/${vote.id}`}
+              rounded
+              end-icon="arrow_forward"
+            >
+              {vote.title}
+            </mdui-list-item>
+          ))}
         <mdui-collapse>
           <mdui-collapse-item value="scheduled-votes">
             <mdui-list-item
@@ -53,15 +57,19 @@ function App() {
                 {scheduledVotes.length === 0 && (
                   <mdui-list-item disabled>Keine Wahlen</mdui-list-item>
                 )}
-                {scheduledVotes.map((e) => (
-                  <mdui-list-item
-                    rounded
-                    href={`/${e.id}`}
-                    end-icon="arrow_forward"
-                  >
-                    {e.title}
-                  </mdui-list-item>
-                ))}
+                {scheduledVotes
+                  .sort((a, b) => {
+                    return b.startTime.seconds - a.startTime.seconds;
+                  })
+                  .map((e) => (
+                    <mdui-list-item
+                      rounded
+                      href={`/${e.id}`}
+                      end-icon="arrow_forward"
+                    >
+                      {e.title}
+                    </mdui-list-item>
+                  ))}
               </>
             </div>
           </mdui-collapse-item>
@@ -80,15 +88,19 @@ function App() {
                 {expiredVotes.length === 0 && (
                   <mdui-list-item disabled>Keine Wahlen</mdui-list-item>
                 )}
-                {expiredVotes.map((e) => (
-                  <mdui-list-item
-                    rounded
-                    href={`/${e.id}`}
-                    end-icon="arrow_forward"
-                  >
-                    {e.title}
-                  </mdui-list-item>
-                ))}
+                {expiredVotes
+                  .sort((a, b) => {
+                    return b.startTime.seconds - a.startTime.seconds;
+                  })
+                  .map((e) => (
+                    <mdui-list-item
+                      rounded
+                      href={`/${e.id}`}
+                      end-icon="arrow_forward"
+                    >
+                      {e.title}
+                    </mdui-list-item>
+                  ))}
               </>
             </div>
           </mdui-collapse-item>
@@ -116,13 +128,25 @@ export async function loader() {
 
     if (now.isAfter(startTime)) {
       if (data.active && now.isBefore(endTime)) {
-        activeVotes.push({ id: e.id, title: data.title });
+        activeVotes.push({
+          id: e.id,
+          title: data.title,
+          startTime: data.startTime,
+        });
       } else {
-        expiredVotes.push({ id: e.id, title: data.title });
+        expiredVotes.push({
+          id: e.id,
+          title: data.title,
+          startTime: data.startTime,
+        });
       }
       return;
     }
-    scheduledVotes.push({ id: e.id, title: data.title });
+    scheduledVotes.push({
+      id: e.id,
+      title: data.title,
+      startTime: data.startTime,
+    });
   });
 
   return { activeVotes, expiredVotes, scheduledVotes };
