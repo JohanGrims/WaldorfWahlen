@@ -28,6 +28,10 @@
   flex: 1 1 45%;
 }
 
+.option-card.selected {
+  border: 5px solid rgb(var(--mdui-color-primary)) !important;
+}
+
 @media (max-width: 768px) {
   .option-card {
     width: 100%;

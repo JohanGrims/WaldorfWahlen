@@ -23,7 +23,15 @@ export default function Vote() {
   const navigate = useNavigate();
   const breakpointCondition = breakpoint();
 
-  const { title, active, selectCount, extraFields, endTime, startTime } = vote;
+  const {
+    title,
+    active,
+    selectCount,
+    extraFields,
+    endTime,
+    startTime,
+    description,
+  } = vote;
   const [firstName, setFirstName] = React.useState();
   const [lastName, setLastName] = React.useState();
   const [grade, setGrade] = React.useState();
@@ -233,6 +241,12 @@ export default function Vote() {
               .format("dddd, D. MMMM YYYY, HH:mm")}
           </div>
         </div>
+        {vote.description && (
+          <div className="mdui-prose">
+            <p />
+            <p>{description}</p>
+          </div>
+        )}
         <p />
         <div className="flex-row">
           <mdui-text-field

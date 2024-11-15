@@ -7,6 +7,7 @@ import { db } from "../firebase";
 import { generateRandomHash } from "./utils";
 export default function NewVote() {
   const [title, setTitle] = React.useState("");
+  const [description, setDescription] = React.useState("");
   const [selectCount, setSelectCount] = React.useState(3);
   const [startTime, setStartTime] = React.useState();
   const [endTime, setEndTime] = React.useState();
@@ -17,7 +18,7 @@ export default function NewVote() {
 
   const [name, setName] = React.useState("");
   const [teacher, setTeacher] = React.useState("");
-  const [description, setDescription] = React.useState("");
+  const [optionDescription, setOptionDescription] = React.useState("");
   const [max, setMax] = React.useState();
 
   const [id, setId] = React.useState(generateRandomHash());
@@ -27,18 +28,23 @@ export default function NewVote() {
   function addOption() {
     setOptions((options) => [
       ...options,
-      { title: name, max: max, teacher: teacher, description: description },
+      {
+        title: name,
+        max: max,
+        teacher: teacher,
+        description: optionDescription,
+      },
     ]);
     setName("");
     setTeacher("");
-    setDescription("");
+    setOptionDescription("");
     setMax("");
   }
 
   function editOption(index) {
     setName(options[index].title);
     setTeacher(options[index].teacher);
-    setDescription(options[index].description);
+    setOptionDescription(options[index].description);
     setMax(options[index].max);
     setOptions((options) => options.filter((_, i) => i !== index));
   }
@@ -50,6 +56,7 @@ export default function NewVote() {
 
     const vote = await setDoc(doc(db, "/votes", id), {
       title: title,
+      description: description,
       selectCount: selectCount,
       startTime: Timestamp.fromDate(berlinStartTime),
       endTime: Timestamp.fromDate(berlinEndTime),
@@ -127,6 +134,15 @@ export default function NewVote() {
         value={title}
         onInput={(e) => setTitle(e.target.value)}
       />
+      <mdui-text-field
+        label="Beschreibung (optional)"
+        placeholder="In der Schülerprojektwoche vom 12. bis 16. Juli 2024 werden von SchülerInnen organisierte Projekte angeboten. Die Projekte finden täglich von 10:00 bis 15:00 in den angegebenen Räumen statt."
+        rows={3}
+        maxlength={200}
+        counter
+        value={description}
+        onInput={(e) => setDescription(e.target.value)}
+      ></mdui-text-field>
       <div className="fields-row">
         <mdui-tooltip
           variant="rich"
@@ -302,8 +318,8 @@ export default function NewVote() {
             rows={3}
             maxlength={100}
             counter
-            value={description}
-            onInput={(e) => setDescription(e.target.value)}
+            value={optionDescription}
+            onInput={(e) => setOptionDescription(e.target.value)}
           ></mdui-text-field>
           {addOptionDisabled() ? (
             <mdui-button
