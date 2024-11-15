@@ -23,7 +23,19 @@ function App() {
         <img src="/WSP.png" alt="Logo" className="waldorf-logo" />
       </div>
       <p />
-      <h1>WaldorfWahlen</h1>
+      <h1 style={{ marginBottom: "10px" }}>WaldorfWahlen</h1>
+      <div
+        style={{
+          textAlign: "center",
+          gap: "10px",
+          display: "flex",
+          justifyContent: "space-around",
+        }}
+      >
+        <a href="https://waldorfschule-potsdam.de/impressum/">Impressum</a>
+        <a href="https://waldorfschule-potsdam.de/datenschutz/">Datenschutz</a>
+      </div>
+      <p />
       <mdui-list>
         {activeVotes.length < 1 && (
           <mdui-list-item disabled>Keine Wahlen</mdui-list-item>
