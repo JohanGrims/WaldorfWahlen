@@ -1,4 +1,5 @@
 # WaldorfWahlen
+
 WaldorfWahlen ist eine Webanwendung, die es der Waldorfschule Potsdam ermöglicht, Projektwahlen für ihre Schülerinnen und Schüler durchzuführen. Die Anwendung basiert auf dem Vite-Framework in Verbindung mit ReactJS für das Frontend und Firebase für das Backend und die Datenbank.
 
 ---
@@ -44,3 +45,7 @@ WaldorfWahlen ist eine Webanwendung, die es der Waldorfschule Potsdam ermöglich
 ## Autor
 
 WaldorfWahlen wurde von @JohanGrims entwickelt.
+
+## Status
+
+[![Deploy to Firebase Hosting on Commit](https://github.com/JohanGrims/WaldorfWahlen/actions/workflows/firebase-hosting-commit.yml/badge.svg)](https://github.com/JohanGrims/WaldorfWahlen/actions/workflows/firebase-hosting-commit.yml)
