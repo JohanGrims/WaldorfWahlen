@@ -5,17 +5,17 @@ import Markdown from "react-markdown";
 import { useLoaderData } from "react-router-dom";
 import { db } from "../firebase";
 
-export default function CreateReleaseNotes() {
-  const { releaseNotes } = useLoaderData() as {
-    releaseNotes: { content: string };
+export default function CreateHelp() {
+  const { helpContent } = useLoaderData() as {
+    helpContent: { content: string };
   };
-  const [content, setContent] = React.useState(releaseNotes.content);
+  const [content, setContent] = React.useState(helpContent.content);
 
   const [publishing, setPublishing] = React.useState(false);
 
-  async function publishReleaseNotes() {
+  async function publishHelpContent() {
     setPublishing(true);
-    setDoc(doc(db, "docs", "release-notes"), { content })
+    setDoc(doc(db, "docs", "help"), { content })
       .then(() => {
         snackbar({ message: "Veröffentlicht" });
         setPublishing(false);
@@ -54,7 +54,7 @@ export default function CreateReleaseNotes() {
             Veröffentlichen
           </mdui-fab>
         ) : (
-          <mdui-fab icon="public" extended onClick={publishReleaseNotes}>
+          <mdui-fab icon="public" extended onClick={publishHelpContent}>
             Veröffentlichen
           </mdui-fab>
         )}

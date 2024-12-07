@@ -15,6 +15,7 @@ import Scheduled from "./Scheduled";
 import Submitted from "./Submitted";
 import Vote from "./Vote";
 
+import CreateHelp from "./admin/CreateHelp";
 import CreateReleaseNotes from "./admin/CreateReleaseNotes";
 import Help from "./admin/Help";
 import Admin from "./admin/index";
@@ -97,6 +98,11 @@ const routes = [
           {
             path: "help",
             element: <Help />,
+            loader: Help.loader,
+          },
+          {
+            path: "help/edit",
+            element: <CreateHelp />,
             loader: Help.loader,
           },
           {
