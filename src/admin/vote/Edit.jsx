@@ -62,8 +62,7 @@ export default function Edit() {
       doc(db, "/votes", vote.id),
       {
         title,
-        description,
-        selectCount,
+        description: description || "",
       },
       { merge: true }
     );
