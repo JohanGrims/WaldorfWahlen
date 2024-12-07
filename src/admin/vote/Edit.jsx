@@ -78,15 +78,12 @@ export default function Edit() {
       const removedOptions = loadedOptions.filter(
         (loaded) => !options.some((current) => current.id === loaded.id)
       );
-      const deletePromises = removedOptions.map((opt) =>
+      removedOptions.map((opt) =>
         confirm({
           headline: "Option löschen",
           description: `Sind Sie sicher, dass Sie die Option "${opt.title}" löschen möchten? Wenn SchülerInnen diese Option bereits gewählt haben, kann das Dashboard abstürzen.`,
           cancelText: "Abbrechen",
           confirmText: "Trotzdem löschen",
-          onCancel: () => {
-            window.location.reload();
-          },
           onConfirm: async () => {
             await deleteDoc(doc(db, `/votes/${vote.id}/options/${opt.id}`));
             console.log("Option deleted successfully.");
@@ -102,12 +99,12 @@ export default function Edit() {
         });
       });
 
-      await Promise.all([...deletePromises, ...optionsPromises]);
+      await Promise.all([...optionsPromises]);
 
       console.log("Vote created successfully.");
 
       snackbar({
-        message: "Wahl erfolgreich erstellt.",
+        message: "Wahl erfolgreich aktualisiert.",
         timeout: 5000,
       });
 
@@ -127,7 +124,7 @@ export default function Edit() {
       description,
       selectCount,
       version: 3,
-      extraFields: extraFields.length > 0 ? extraFields : undefined,
+      extraFields: extraFields.length > 0 ? extraFields : [],
     };
 
     // check if vote has changed
