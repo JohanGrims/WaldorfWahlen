@@ -81,7 +81,12 @@ export default function Edit() {
       const deletePromises = removedOptions.map((opt) =>
         confirm({
           headline: "Option löschen",
-          text: `Sind Sie sicher, dass Sie die Option "${opt.title}" löschen möchten?`,
+          description: `Sind Sie sicher, dass Sie die Option "${opt.title}" löschen möchten? Wenn SchülerInnen diese Option bereits gewählt haben, kann das Dashboard abstürzen.`,
+          cancelText: "Abbrechen",
+          confirmText: "Trotzdem löschen",
+          onCancel: () => {
+            window.location.reload();
+          },
           onConfirm: async () => {
             await deleteDoc(doc(db, `/votes/${vote.id}/options/${opt.id}`));
             console.log("Option deleted successfully.");
@@ -97,8 +102,7 @@ export default function Edit() {
         });
       });
 
-      await Promise.all(deletePromises);
-      await Promise.all(optionsPromises);
+      await Promise.all([...deletePromises, ...optionsPromises]);
 
       console.log("Vote created successfully.");
 
