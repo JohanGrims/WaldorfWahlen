@@ -235,24 +235,25 @@ export default function Edit() {
       ></mdui-text-field>
       <p />
       {extraFields.map((e, i) => (
-        <>
-          <div className="fields-row">
-            <mdui-text-field
-              label={"Extrafeld #" + (i + 1)}
-              placeholder={"Musikinstrument"}
-              value={e}
-              onInput={(e) => editExtraField(i, e.target.value)}
-            >
-              <mdui-button-icon
-                slot="end-icon"
-                icon="delete"
-                onClick={() => removeExtraField(i)}
-              />
-            </mdui-text-field>
-          </div>
-          <p />
-        </>
-      ))}
+        {extraFields.map((e, i) => (
+          <React.Fragment key={i}>
+            <div className="fields-row">
+              <mdui-text-field
+                label={"Extrafeld #" + (i + 1)}
+                placeholder={"Musikinstrument"}
+                value={e}
+                onInput={(e) => editExtraField(i, e.target.value)}
+              >
+                <mdui-button-icon
+                  slot="end-icon"
+                  icon="delete"
+                  onClick={() => removeExtraField(i)}
+                />
+              </mdui-text-field>
+            </div>
+            <p />
+          </React.Fragment>
+        ))}
       <div
         style={{
           display: "flex",
