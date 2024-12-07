@@ -6,7 +6,7 @@ import { db } from "../../firebase";
 import { DrawerItem } from "./components";
 import VoteDrawer from "./VoteDrawer";
 
-let pages = [undefined, "new", "settings", "students"];
+let pages = [undefined, "new", "settings", "students", "help", "features"];
 
 export default function DrawerList() {
   const [activeVotes, setActiveVotes] = React.useState([]);
@@ -148,6 +148,7 @@ export default function DrawerList() {
                     })
                     .map((e) => (
                       <mdui-tooltip
+                        key={e.id}
                         variant="rich"
                         headline="Wahl bearbeiten"
                         content="Bearbeiten Sie die Wahl, setzen Sie die Einstellungen und weisen Sie Schüler zu."
@@ -187,6 +188,7 @@ export default function DrawerList() {
                     })
                     .map((e) => (
                       <mdui-tooltip
+                        key={e.id}
                         variant="rich"
                         headline="Wahl bearbeiten"
                         content="Bearbeiten Sie die Wahl, setzen Sie die Einstellungen und weisen Sie Schüler zu."
@@ -226,6 +228,7 @@ export default function DrawerList() {
                     })
                     .map((e) => (
                       <mdui-tooltip
+                        key={e.id}
                         variant="rich"
                         headline="Wahl bearbeiten"
                         content="Bearbeiten Sie die Wahl, setzen Sie die Einstellungen und weisen Sie Schüler zu."
@@ -256,6 +259,31 @@ export default function DrawerList() {
 
         <mdui-divider />
         <br />
+        <mdui-tooltip
+          variant="rich"
+          headline="Neue Features"
+          content="Sehen Sie sich die neuesten Funktionen an."
+        >
+          <DrawerItem
+            active={active === "features"}
+            title={"Neue Features"}
+            icon={"tips_and_updates"}
+            onCLick={() => navigate("/admin/features")}
+          />
+        </mdui-tooltip>
+
+        <mdui-tooltip
+          variant="rich"
+          headline="Hilfe & Kontakt"
+          content="Kontaktieren Sie den Entwickler, um Hilfe zu erhalten."
+        >
+          <DrawerItem
+            active={active === "help"}
+            title={"Hilfe & Kontakt"}
+            icon={"support"}
+            onCLick={() => navigate("/admin/help")}
+          />
+        </mdui-tooltip>
 
         <mdui-tooltip
           variant="rich"

@@ -6,6 +6,7 @@ import { auth } from "../firebase";
 import "./index.css";
 
 import { confirm, snackbar } from "mdui";
+import { useNavigate } from "react-router-dom";
 import Login from "./auth/Login";
 import DrawerList from "./navigation/DrawerList";
 
@@ -14,6 +15,8 @@ export default function Admin(props) {
   const [loading, setLoading] = React.useState(true);
 
   const [open, setOpen] = React.useState(window.innerWidth > 1024);
+
+  const navigate = useNavigate();
 
   React.useEffect(() => {
     const listen = onAuthStateChanged(auth, (user) => {
@@ -66,10 +69,30 @@ export default function Admin(props) {
           ></mdui-button-icon>
         )}
         <mdui-top-app-bar-title>{authUser.email}</mdui-top-app-bar-title>
-        <mdui-avatar style={{ marginRight: "1rem" }}>
-          {authUser.email.split(".")[0].charAt(0).toUpperCase()}
-          {authUser.email.split(".")[1]?.charAt(0).toUpperCase()}
-        </mdui-avatar>
+
+        <mdui-dropdown>
+          <mdui-avatar
+            slot="trigger"
+            style={{ marginRight: "1rem", cursor: "pointer" }}
+          >
+            {authUser.email.split(".")[0].charAt(0).toUpperCase()}
+            {authUser.email.split(".")[1]?.charAt(0).toUpperCase()}
+          </mdui-avatar>
+          <mdui-menu>
+            <mdui-menu-item
+              icon="settings"
+              onClick={() => navigate("/admin/settings")}
+            >
+              Einstellungen
+            </mdui-menu-item>
+            <mdui-menu-item
+              icon="support"
+              onClick={() => navigate("/admin/help")}
+            >
+              Hilfe & Kontakt
+            </mdui-menu-item>
+          </mdui-menu>
+        </mdui-dropdown>
 
         <mdui-tooltip content="Abmelden" open-delay="0" placement="left">
           <mdui-button-icon
