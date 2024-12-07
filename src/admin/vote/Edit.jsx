@@ -342,7 +342,7 @@ export default function Edit() {
             placeholder="15"
             min={1}
             value={max}
-            onInput={(e) => setMax(e.target.value)}
+            onInput={(e) => setMax(Number(e.target.value))}
           ></mdui-text-field>
           <p />
           <br />
