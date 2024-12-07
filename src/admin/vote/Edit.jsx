@@ -56,35 +56,43 @@ export default function Edit() {
   }
 
   async function update() {
-    console.log("Publishing vote with id: " + vote.id);
+    try {
+      console.log("Publishing vote with id: " + vote.id);
 
-    const updatedVote = await setDoc(
-      doc(db, "/votes", vote.id),
-      {
-        title,
-        description: description || "",
-      },
-      { merge: true }
-    );
-    const optionsPromises = options.map(async (e) => {
-      return setDoc(doc(db, `/votes/${vote.id}/options/${e.id}`), {
-        title: e.title,
-        max: e.max,
-        teacher: e.teacher,
-        description: e.description,
+      await setDoc(
+        doc(db, "/votes", vote.id),
+        {
+          title,
+          description: description || "",
+        },
+        { merge: true }
+      );
+      const optionsPromises = options.map(async (e) => {
+        return setDoc(doc(db, `/votes/${vote.id}/options/${e.id}`), {
+          title: e.title,
+          max: e.max,
+          teacher: e.teacher,
+          description: e.description,
+        });
       });
-    });
 
-    await Promise.all(optionsPromises);
+      await Promise.all(optionsPromises);
 
-    console.log("Vote created successfully.");
+      console.log("Vote created successfully.");
 
-    snackbar({
-      message: "Wahl erfolgreich erstellt.",
-      timeout: 5000,
-    });
+      snackbar({
+        message: "Wahl erfolgreich erstellt.",
+        timeout: 5000,
+      });
 
-    navigate(`/admin/${vote.id}`);
+      navigate(`/admin/${vote.id}`);
+    } catch (error) {
+      console.error("Failed to update vote:", error);
+      snackbar({
+        message: "Fehler beim Aktualisieren der Wahl.",
+        timeout: 5000,
+      });
+    }
   }
 
   const isVoteUnchanged = () => {
