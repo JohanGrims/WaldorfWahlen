@@ -1,10 +1,17 @@
-import { collection, doc, getDoc, getDocs, setDoc } from "firebase/firestore";
+import {
+  collection,
+  deleteDoc,
+  doc,
+  getDoc,
+  getDocs,
+  setDoc,
+} from "firebase/firestore";
 import { useLoaderData } from "react-router-dom";
 import { db } from "../../firebase";
 
 import _ from "lodash";
 
-import { snackbar } from "mdui";
+import { confirm, snackbar } from "mdui";
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { generateRandomHash } from "../utils";
@@ -68,6 +75,19 @@ export default function Edit() {
         },
         { merge: true }
       );
+      const removedOptions = loadedOptions.filter(
+        (loaded) => !options.some((current) => current.id === loaded.id)
+      );
+      const deletePromises = removedOptions.map((opt) =>
+        confirm({
+          headline: "Option löschen",
+          text: `Sind Sie sicher, dass Sie die Option "${opt.title}" löschen möchten?`,
+          onConfirm: async () => {
+            await deleteDoc(doc(db, `/votes/${vote.id}/options/${opt.id}`));
+            console.log("Option deleted successfully.");
+          },
+        })
+      );
       const optionsPromises = options.map(async (e) => {
         return setDoc(doc(db, `/votes/${vote.id}/options/${e.id}`), {
           title: e.title,
@@ -77,6 +97,7 @@ export default function Edit() {
         });
       });
 
+      await Promise.all(deletePromises);
       await Promise.all(optionsPromises);
 
       console.log("Vote created successfully.");
