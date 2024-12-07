@@ -11,10 +11,19 @@ export default function CreateReleaseNotes() {
   };
   const [content, setContent] = React.useState(releaseNotes.content);
 
+  const [publishing, setPublishing] = React.useState(false);
+
   async function publishReleaseNotes() {
-    setDoc(doc(db, "docs", "release-notes"), { content }).then(() => {
-      snackbar({ message: "Gespeichert!" });
-    });
+    setPublishing(true);
+    setDoc(doc(db, "docs", "release-notes"), { content })
+      .then(() => {
+        snackbar({ message: "Gespeichert!" });
+        setPublishing(false);
+      })
+      .catch(() => {
+        snackbar({ message: "Fehler beim Speichern" });
+        setPublishing(false);
+      });
   }
   return (
     <div className="mdui-prose">
@@ -40,9 +49,15 @@ export default function CreateReleaseNotes() {
       </mdui-tabs>
 
       <div style={{ position: "fixed", bottom: "1rem", right: "1rem" }}>
-        <mdui-fab icon="public" extended onClick={publishReleaseNotes}>
-          Veröffentlichen
-        </mdui-fab>
+        {publishing ? (
+          <mdui-fab icon="public" loading extended>
+            Veröffentlichen
+          </mdui-fab>
+        ) : (
+          <mdui-fab icon="public" extended onClick={publishReleaseNotes}>
+            Veröffentlichen
+          </mdui-fab>
+        )}
       </div>
     </div>
   );
