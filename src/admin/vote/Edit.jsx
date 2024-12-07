@@ -56,9 +56,10 @@ export default function Edit() {
   }
 
   async function update() {
-    console.log("Publishing vote with id: " + vote.id);
+    try {
+      console.log("Publishing vote with id: " + vote.id);
 
-    const updatedVote = await setDoc(
+    await setDoc(
       doc(db, "/votes", vote.id),
       {
         title,
@@ -76,16 +77,23 @@ export default function Edit() {
       });
     });
 
-    await Promise.all(optionsPromises);
+      await Promise.all(optionsPromises);
 
-    console.log("Vote created successfully.");
+      console.log("Vote created successfully.");
 
-    snackbar({
-      message: "Wahl erfolgreich erstellt.",
-      timeout: 5000,
-    });
+      snackbar({
+        message: "Wahl erfolgreich erstellt.",
+        timeout: 5000,
+      });
 
-    navigate(`/admin/${vote.id}`);
+      navigate(`/admin/${vote.id}`);
+    } catch (error) {
+      console.error("Failed to update vote:", error);
+      snackbar({
+        message: "Fehler beim Aktualisieren der Wahl.",
+        timeout: 5000,
+      });
+    }
   }
 
   const isVoteUnchanged = () => {
@@ -236,24 +244,25 @@ export default function Edit() {
       ></mdui-text-field>
       <p />
       {extraFields.map((e, i) => (
-        <>
-          <div className="fields-row">
-            <mdui-text-field
-              label={"Extrafeld #" + (i + 1)}
-              placeholder={"Musikinstrument"}
-              value={e}
-              onInput={(e) => editExtraField(i, e.target.value)}
-            >
-              <mdui-button-icon
-                slot="end-icon"
-                icon="delete"
-                onClick={() => removeExtraField(i)}
-              />
-            </mdui-text-field>
-          </div>
-          <p />
-        </>
-      ))}
+        {extraFields.map((e, i) => (
+          <React.Fragment key={i}>
+            <div className="fields-row">
+              <mdui-text-field
+                label={"Extrafeld #" + (i + 1)}
+                placeholder={"Musikinstrument"}
+                value={e}
+                onInput={(e) => editExtraField(i, e.target.value)}
+              >
+                <mdui-button-icon
+                  slot="end-icon"
+                  icon="delete"
+                  onClick={() => removeExtraField(i)}
+                />
+              </mdui-text-field>
+            </div>
+            <p />
+          </React.Fragment>
+        ))}
       <div
         style={{
           display: "flex",
@@ -342,7 +351,7 @@ export default function Edit() {
             placeholder="15"
             min={1}
             value={max}
-            onInput={(e) => setMax(e.target.value)}
+            onInput={(e) => setMax(Number(e.target.value))}
           ></mdui-text-field>
           <p />
           <br />
@@ -391,13 +400,24 @@ export default function Edit() {
 }
 
 Edit.loader = async function loader({ params }) {
-  const { id } = params;
-  const vote = await getDoc(doc(db, `/votes/${id}`));
-  const voteData = { id, ...vote.data() };
-  const options = await getDocs(collection(db, `/votes/${id}/options`));
-  const optionData = options.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-  return {
-    vote: voteData,
-    options: optionData,
-  };
+  try {
+    const { id } = params;
+    const vote = await getDoc(doc(db, `/votes/${id}`));
+    
+    if (!vote.exists()) {
+      throw new Error(`Vote with id ${id} not found`);
+    }
+    
+    const voteData = { id, ...vote.data() };
+    const options = await getDocs(collection(db, `/votes/${id}/options`));
+    const optionData = options.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+    
+    return {
+      vote: voteData,
+      options: optionData,
+    };
+  } catch (error) {
+    console.error("Failed to load vote:", error);
+    throw error;
+  }
 };
