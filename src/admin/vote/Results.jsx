@@ -482,7 +482,7 @@ export default function Results() {
   );
 }
 
-export async function loader({ params }) {
+Results.loader =  async function loader({ params }) {
   const { id } = params;
   const vote = (await getDoc(doc(db, `/votes/${id}`))).data();
   const options = (

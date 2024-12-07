@@ -97,11 +97,11 @@ export default function Overview() {
   );
 }
 
-export async function loader() {
+Overview.loader = async function loader() {
   const votes = await getDocs(collection(db, "votes"));
   return {
     votes: votes.docs.map((e) => {
       return { id: e.id, ...e.data() };
     }),
   };
-}
+};

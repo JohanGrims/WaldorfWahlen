@@ -81,7 +81,7 @@ export default function Schedule() {
         )}
         <p />
         <div className="button-container">
-          <mdui-button variant="text" onClick={() => navigate(`/admin/${id}`)}>
+          <mdui-button variant="text" onClick={() => navigate(-1)}>
             Abbrechen
           </mdui-button>
           <mdui-button onClick={save}>Speichern</mdui-button>

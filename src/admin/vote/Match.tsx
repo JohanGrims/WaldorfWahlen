@@ -150,7 +150,7 @@ export default function Match() {
   );
 }
 
-export async function loader({ params }) {
+Match.loader =  async function loader({ params }) {
   const { id } = params;
   const choices = await getDocs(collection(db, `/votes/${id}/choices`));
   const choiceData = choices.docs.map((doc) => ({ id: doc.id, ...doc.data() }));

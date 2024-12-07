@@ -411,7 +411,7 @@ export default function Vote() {
   );
 }
 
-export async function loader({ params }) {
+Vote.loader = async function loader({ params }) {
   const vote = await getDoc(doc(db, `/votes/${params.id}`));
   if (!vote.exists()) {
     throw new Response("Document not found.", {
@@ -424,4 +424,4 @@ export async function loader({ params }) {
   const optionsData = options.docs.map((e) => ({ id: e.id, ...e.data() }));
 
   return { vote: voteData, options: optionsData };
-}
+};

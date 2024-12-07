@@ -36,7 +36,7 @@ export default function Gateway() {
   return null;
 }
 
-export async function loader({ params }) {
+Gateway.loader = async function loader({ params }) {
   const vote = await getDoc(doc(db, `/votes/${params.id}`));
   if (!vote.exists()) {
     new Response("Not Found", {
@@ -47,4 +47,4 @@ export async function loader({ params }) {
   const voteData = { id: vote.id, ...vote.data() };
 
   return { voteData };
-}
+};

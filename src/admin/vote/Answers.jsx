@@ -378,7 +378,7 @@ export default function Answers() {
   );
 }
 
-export async function loader({ params }) {
+Answers.loader = async function loader({ params }) {
   const { id } = params;
   const vote = await getDoc(doc(db, `/votes/${id}`));
   const voteData = vote.data();
