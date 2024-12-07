@@ -436,6 +436,7 @@ Edit.loader = async function loader({ params }) {
       id: doc.id,
       ...doc.data(),
     }));
+    console.log("Loaded options:", optionData);
 
     return {
       vote: voteData,

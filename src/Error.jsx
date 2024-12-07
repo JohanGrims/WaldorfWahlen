@@ -8,7 +8,7 @@ export default function ErrorPage() {
   return (
     <mdui-dialog open headline={`Fehler ${error?.status || "400"}`}>
       <div className="mdui-prose">
-        <p>{error?.statusText || "Unknown Error Message"}</p>
+        <p>{error?.statusText || error?.data || "Unknown Error Message"}</p>
         <p>
           {error.status >= 400 && error.status < 500
             ? "Es scheint, dass der Fehler auf Ihrer Seite liegt."

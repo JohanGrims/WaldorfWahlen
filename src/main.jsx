@@ -15,9 +15,12 @@ import Scheduled from "./Scheduled";
 import Submitted from "./Submitted";
 import Vote from "./Vote";
 
+import CreateReleaseNotes from "./admin/CreateReleaseNotes";
+import Help from "./admin/Help";
 import Admin from "./admin/index";
 import NewVote from "./admin/NewVote";
 import Overview from "./admin/Overview";
+import ReleaseNotes from "./admin/ReleaseNotes";
 import Settings from "./admin/Settings";
 import Students from "./admin/Students";
 import Answers from "./admin/vote/Answers";
@@ -90,6 +93,21 @@ const routes = [
           {
             path: "settings",
             element: <Settings />,
+          },
+          {
+            path: "help",
+            element: <Help />,
+            loader: Help.loader,
+          },
+          {
+            path: "changelog",
+            element: <ReleaseNotes />,
+            loader: ReleaseNotes.loader,
+          },
+          {
+            path: "changelog/edit",
+            element: <CreateReleaseNotes />,
+            loader: ReleaseNotes.loader,
           },
           {
             path: ":id/*",
