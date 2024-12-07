@@ -78,8 +78,8 @@ export default function Admin(props) {
             {authUser.email
               .split(/[@.]/)
               .slice(0, 2)
-              .map(part => part.charAt(0).toUpperCase())
-              .join('')}
+              .map((part) => part.charAt(0).toUpperCase())
+              .join("")}
           </mdui-avatar>
           <mdui-menu>
             <mdui-menu-item
@@ -87,6 +87,12 @@ export default function Admin(props) {
               onClick={() => navigate("/admin/settings")}
             >
               Einstellungen
+            </mdui-menu-item>
+            <mdui-menu-item
+              icon="tips_and_updates"
+              onClick={() => navigate("/admin/changelog")}
+            >
+              Neue Features
             </mdui-menu-item>
             <mdui-menu-item
               icon="support"
