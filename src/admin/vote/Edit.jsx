@@ -63,6 +63,7 @@ export default function Edit() {
       {
         title,
         description: description || "",
+        extraFields: extraFields.length > 0 ? extraFields : [],
       },
       { merge: true }
     );
