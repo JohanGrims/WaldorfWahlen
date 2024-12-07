@@ -281,10 +281,6 @@ export default function Students() {
           ) : (
             <mdui-segmented-button-group disabled>
               <mdui-segmented-button
-                icon="delete"
-                onClick={() => removeClass(classId)}
-              ></mdui-segmented-button>
-              <mdui-segmented-button
                 icon="edit"
                 onClick={() => {
                   const newGrade = prompt({
@@ -302,6 +298,10 @@ export default function Students() {
                     updateClass(classId, { grade: Number(newGrade) });
                   }
                 }}
+              ></mdui-segmented-button>
+              <mdui-segmented-button
+                icon="delete"
+                onClick={() => removeClass(classId)}
               ></mdui-segmented-button>
             </mdui-segmented-button-group>
           )}
