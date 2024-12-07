@@ -37,7 +37,7 @@ export default function Match() {
           <p />
           {sortedClasses.map((c) => (
             <mdui-tab-panel slot="panel" value={c.id}>
-              <div style={{ padding: "10px" }}>
+              <div className="p-10">
                 <div className="mdui-table">
                   <table>
                     <thead>

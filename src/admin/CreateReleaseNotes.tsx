@@ -48,7 +48,7 @@ export default function CreateReleaseNotes() {
         </mdui-tab-panel>
       </mdui-tabs>
 
-      <div style={{ position: "fixed", bottom: "1rem", right: "1rem" }}>
+      <div className="fixed-action">
         {publishing ? (
           <mdui-fab icon="public" loading extended>
             Veröffentlichen

@@ -32,7 +32,13 @@ export default function Gateway() {
       navigate(`/x/${voteData.id}`);
     }
     navigate(`/v/${voteData.id}`);
-  }, []);
+  }, [
+    navigate,
+    voteData.active,
+    voteData.endTime.seconds,
+    voteData.id,
+    voteData.startTime.seconds,
+  ]);
   return null;
 }
 

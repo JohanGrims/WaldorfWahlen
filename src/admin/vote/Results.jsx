@@ -280,7 +280,12 @@ export default function Results() {
               </mdui-tab>
             ))}
             {options.map((option) => (
-              <mdui-tab-panel id={option.id} slot="panel" value={option.id}>
+              <mdui-tab-panel
+                key={option.id}
+                id={option.id}
+                slot="panel"
+                value={option.id}
+              >
                 <>
                   <p />
                   <div style={{ padding: "10px" }}>
@@ -390,7 +395,12 @@ export default function Results() {
             {grades
               .sort((a, b) => parseInt(a) - parseInt(b))
               .map((grade) => (
-                <mdui-tab-panel id={grade} slot="panel" value={grade}>
+                <mdui-tab-panel
+                  key={grade}
+                  id={grade}
+                  slot="panel"
+                  value={grade}
+                >
                   <>
                     <p />
                     <div style={{ padding: "10px" }}>

@@ -250,6 +250,7 @@ button:not(:disabled):hover {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  -webkit-user-select: none;
   user-select: none;
   gap: 3px;
 }
@@ -311,6 +312,7 @@ button:not(:disabled):hover {
   font-style: italic;
   cursor: pointer;
   color: #1b4485;
+  -webkit-user-select: none;
   user-select: none;
   background-color: #e0e0e0;
 }
@@ -359,6 +361,49 @@ input::-webkit-inner-spin-button {
 
 .help > h2{
   margin-bottom: 10px !important;
+}
+
+.fixed-action{
+  position: fixed; 
+  bottom: 1rem; 
+  right: 1rem;
+}
+
+.flex-gap {
+  display: flex;
+  gap: 10px;
+}
+
+.justify-between {
+  justify-content: space-between;
+  align-items: center;
+
+}
+
+.align-center{
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.justify-end{
+  flex:1;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+
+}
+
+.p-10{
+  padding: 10px;
+}
+
+.w-100{
+  width: 100%;
+}
+
+.no-display{
+  display: none;
 }
 
 @media only screen and (max-width: 600px) {

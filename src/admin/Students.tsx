@@ -10,7 +10,7 @@ import { confirm, prompt } from "mdui";
 import React, { useRef } from "react";
 import { useLoaderData, useNavigate, useParams } from "react-router-dom";
 import { db } from "../firebase";
-import { Class } from "../types";
+import { Class, Student } from "../types";
 
 import * as XLSX from "xlsx";
 
@@ -39,11 +39,12 @@ export default function Students() {
     const file = event.target.files[0];
     const reader = new FileReader();
     reader.onload = async (e) => {
+      if (!e.target) return;
       const data = new Uint8Array(e.target.result as ArrayBuffer);
       const workbook = XLSX.read(data, { type: "array" });
       const sheet = workbook.Sheets[workbook.SheetNames[0]];
       const students = XLSX.utils.sheet_to_json(sheet);
-      setNewClass((cl) => ({ ...cl, students }));
+      setNewClass((cl) => ({ ...cl, students: students as Student[] }));
     };
     reader.readAsArrayBuffer(file);
   }
@@ -53,13 +54,14 @@ export default function Students() {
     const file = event.target.files[0];
     const reader = new FileReader();
     reader.onload = async (e) => {
+      if (!e.target) return;
       const data = new Uint8Array(e.target.result as ArrayBuffer);
       const workbook = XLSX.read(data, { type: "array" });
       const sheet = workbook.Sheets[workbook.SheetNames[0]];
       const students = XLSX.utils.sheet_to_json(sheet);
       setUpdatedStudents(JSON.stringify(students, null, 2));
       if (classId) {
-        updateClass(classId, { students }, true);
+        updateClass(classId, { students: students as Student[] }, true);
       }
     };
     reader.readAsArrayBuffer(file);
@@ -177,10 +179,12 @@ export default function Students() {
               rows={15}
               label="JSON-Daten"
               value={updatedStudents}
-              onInput={(e) => setUpdatedStudents(e.target.value)}
+              onInput={(e) =>
+                setUpdatedStudents((e.target as HTMLTextAreaElement).value)
+              }
             />
             <p />
-            <div style={{ display: "flex", gap: "10px" }}>
+            <div className="flex-gap">
               <mdui-button
                 variant="tonal"
                 onClick={() => navigate(`/admin/students/${classId}`)}
@@ -194,11 +198,12 @@ export default function Students() {
         {updateMethod === "by-file" && (
           <div>
             <input
+              aria-label="Datei auswählen"
               type="file"
               ref={fileInputRef}
-              style={{ display: "none" }}
               onChange={updateStudents}
               accept=".xlsx"
+              className="no-display"
             />
             <mdui-tooltip
               content="Bitte stellen Sie sicher, dass die Datei im .xlsx-Format vorliegt und das Format wie folgt ist: 1. Zeile — name | listIndex als Überschrift, danach für jede Zeile die individuellen Daten. Die Reihenfolge der Spalten ist nicht relevant. Es wird immer nur das erste Tabellenblatt gelesen."
@@ -221,14 +226,7 @@ export default function Students() {
 
   return (
     <div className="mdui-prose">
-      <div
-        style={{
-          display: "flex",
-          gap: "10px",
-          justifyContent: "space-between",
-          alignItems: "start",
-        }}
-      >
+      <div className="flex-gap justify-between">
         <h2>SchülerInnen</h2>
         <mdui-tooltip
           content="Alle Klassen werden um ein Schuljahr erhöht. Diese Aktion kann nicht rückgängig gemacht werden. Ausgelaufene Klassen werden nicht gelöscht."
@@ -266,14 +264,7 @@ export default function Students() {
         >
           Hinzufügen
         </mdui-tab>
-        <div
-          style={{
-            flex: "1",
-            display: "flex",
-            justifyContent: "flex-end",
-            alignItems: "center",
-          }}
-        >
+        <div className="justify-end">
           {classId !== "add" ? (
             <mdui-segmented-button-group>
               <mdui-segmented-button
@@ -317,8 +308,8 @@ export default function Students() {
         </div>
         {sortedClasses.map((c) => (
           <mdui-tab-panel slot="panel" value={c.id}>
-            <div style={{ padding: "10px" }}>
-              <div className="mdui-table" style={{ width: "100%" }}>
+            <div className="p-10">
+              <div className="mdui-table w-100">
                 <table>
                   <thead>
                     <tr>
@@ -346,22 +337,26 @@ export default function Students() {
           </mdui-tab-panel>
         ))}
         <mdui-tab-panel slot="panel" value="add">
-          <div style={{ padding: "10px" }}>
-            <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
+          <div className="p-10">
+            <div className="align-center">
               <mdui-text-field
                 label="Klasse"
                 placeholder="7"
                 value={newClass.grade.toString()}
                 onInput={(e) =>
-                  setNewClass((cl) => ({ ...cl, grade: e.target.value }))
+                  setNewClass((cl) => ({
+                    ...cl,
+                    grade: Number((e.target as HTMLInputElement).value),
+                  }))
                 }
               />
               <input
+                aria-label="Datei auswählen"
                 type="file"
                 ref={fileInputRef}
-                style={{ display: "none" }}
                 onChange={uploadStudents}
                 accept=".xlsx"
+                className="no-display"
               />
               <mdui-tooltip
                 content="Bitte stellen Sie sicher, dass die Datei im .xlsx-Format vorliegt und das Format wie folgt ist: 1. Zeile — name | listIndex als Überschrift, danach für jede Zeile die individuellen Daten. Die Reihenfolge der Spalten ist nicht relevant. Es wird immer nur das erste Tabellenblatt gelesen."
@@ -379,7 +374,7 @@ export default function Students() {
             </div>
             <p />
             {newClass.students.length > 0 && (
-              <div className="mdui-table" style={{ width: "100%" }}>
+              <div className="mdui-table w-100">
                 <table>
                   <thead>
                     <tr>

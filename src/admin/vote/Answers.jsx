@@ -58,7 +58,7 @@ export default function Answers() {
 
     // Cleanup subscription on unmount
     return () => unsubscribe();
-  }, [vote.id]);
+  }, [vote.id, navigate]);
 
   React.useEffect(() => {
     if (search && mode === "by-name") {

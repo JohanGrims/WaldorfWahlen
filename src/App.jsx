@@ -1,6 +1,5 @@
 import { collection, getDocs } from "firebase/firestore";
 import moment from "moment-timezone";
-import React from "react";
 import { useLoaderData } from "react-router-dom";
 import "./App.css";
 import { db } from "./firebase";
@@ -75,6 +74,7 @@ function App() {
                   })
                   .map((e) => (
                     <mdui-list-item
+                      key={e.id}
                       rounded
                       href={`/${e.id}`}
                       end-icon="arrow_forward"
@@ -106,6 +106,7 @@ function App() {
                   })
                   .map((e) => (
                     <mdui-list-item
+                      key={e.id}
                       rounded
                       href={`/${e.id}`}
                       end-icon="arrow_forward"

@@ -1,7 +1,7 @@
 import { collection, doc, getDoc, getDocs, setDoc } from "firebase/firestore";
 import { confirm, snackbar } from "mdui";
 import React from "react";
-import { useLoaderData, useNavigate } from "react-router-dom";
+import { useLoaderData } from "react-router-dom";
 import { auth, db } from "../../firebase";
 
 export default function Assign() {
@@ -18,8 +18,6 @@ export default function Assign() {
     },
   ]);
   const [editRules, setEditRules] = React.useState(false);
-
-  const navigate = useNavigate();
 
   function assignToFirstChoice() {
     const results = {};
@@ -380,7 +378,7 @@ export default function Assign() {
 
   function saveResults() {
     sortedResults.forEach(([key, value]) => {
-      const document = setDoc(doc(db, `/votes/${vote.id}/results/${key}`), {
+      setDoc(doc(db, `/votes/${vote.id}/results/${key}`), {
         result: value,
         comments: [],
       });
@@ -458,14 +456,11 @@ export default function Assign() {
               value={option.id}
             >
               {option.max <
-                sortedResults.filter(([key, value]) => value === option.id)
+                sortedResults.filter(([, value]) => value === option.id)
                   .length && "! "}
               {option.title} (
-              {
-                sortedResults.filter(([key, value]) => value === option.id)
-                  .length
-              }
-              /{option.max})
+              {sortedResults.filter(([, value]) => value === option.id).length}/
+              {option.max})
             </mdui-tab>
           ))}
           {options.map((option, i) => (
@@ -494,7 +489,7 @@ export default function Assign() {
                     </thead>
                     <tbody>
                       {sortedResults
-                        .filter(([key, value]) => value === option.id)
+                        .filter(([, value]) => value === option.id)
                         .map(([key, value]) => (
                           <tr key={key}>
                             <td>
@@ -540,7 +535,7 @@ export default function Assign() {
                                         ).title
                                       } (${
                                         sortedResults.filter(
-                                          ([key, value]) => value === selected
+                                          ([, value]) => value === selected
                                         ).length
                                       }/${
                                         options.find(
@@ -627,7 +622,7 @@ export default function Assign() {
                                 {results[choice.id] === selected &&
                                   ` (${
                                     sortedResults.filter(
-                                      ([key, value]) => value === selected
+                                      ([, value]) => value === selected
                                     ).length
                                   }/${
                                     options.find(
