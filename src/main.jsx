@@ -100,12 +100,12 @@ const routes = [
             loader: Help.loader,
           },
           {
-            path: "features",
+            path: "changelog",
             element: <ReleaseNotes />,
             loader: ReleaseNotes.loader,
           },
           {
-            path: "features/edit",
+            path: "changelog/edit",
             element: <CreateReleaseNotes />,
             loader: ReleaseNotes.loader,
           },

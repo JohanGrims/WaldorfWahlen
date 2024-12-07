@@ -6,7 +6,7 @@ import { db } from "../../firebase";
 import { DrawerItem } from "./components";
 import VoteDrawer from "./VoteDrawer";
 
-let pages = [undefined, "new", "settings", "students", "help", "features"];
+let pages = [undefined, "new", "settings", "students", "help", "changelog"];
 
 export default function DrawerList() {
   const [activeVotes, setActiveVotes] = React.useState([]);
@@ -265,10 +265,10 @@ export default function DrawerList() {
           content="Sehen Sie sich die neuesten Funktionen an."
         >
           <DrawerItem
-            active={active === "features"}
+            active={active === "changelog"}
             title={"Neue Features"}
             icon={"tips_and_updates"}
-            onCLick={() => navigate("/admin/features")}
+            onCLick={() => navigate("/admin/changelog")}
           />
         </mdui-tooltip>
 
