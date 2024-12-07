@@ -800,7 +800,7 @@ export default function Assign() {
   );
 }
 
-export async function loader({ params }) {
+Assign.loader =  async function loader({ params }) {
   const { id } = params;
 
   const vote = await getDoc(doc(db, `/votes/${id}`));

@@ -141,7 +141,7 @@ export default function AdminVote() {
   );
 }
 
-export async function loader({ params }) {
+AdminVote.loader = async function loader({ params }) {
   const { id } = params;
   const vote = await getDoc(doc(db, `/votes/${id}`));
   if (!vote.exists()) {
@@ -163,4 +163,4 @@ export async function loader({ params }) {
     options: optionData,
     results: resultData,
   };
-}
+};

@@ -413,7 +413,7 @@ export default function Students() {
   );
 }
 
-export async function loader() {
+Students.loader = async function loader() {
   const classes = await getDocs(collection(db, "class"));
   return {
     classes: classes.docs.map((e) => {
@@ -423,4 +423,4 @@ export async function loader() {
       };
     }),
   };
-}
+};

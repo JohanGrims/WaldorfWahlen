@@ -54,6 +54,8 @@ export default function Overview() {
             const isActive =
               vote.active && endTime.isAfter(now) && startTime.isBefore(now);
 
+            const isPlanned = startTime.isAfter(now);
+
             return (
               <mdui-card
                 key={vote.id}
@@ -66,7 +68,13 @@ export default function Overview() {
                 <p>
                   <mdui-icon
                     style={{ fontSize: "50px" }}
-                    name={isActive ? "event_available" : "done_all"}
+                    name={
+                      isActive
+                        ? "event_available"
+                        : isPlanned
+                        ? "schedule"
+                        : "done_all"
+                    }
                   ></mdui-icon>
                 </p>
               </mdui-card>
@@ -84,24 +92,15 @@ export default function Overview() {
           </p>
         </mdui-card>
       </div>
-      {/* <mdui-fab
-        icon="add"
-        onClick={() => navigate("/admin/new")}
-        style={{ position: "fixed", bottom: "20px", right: "20px" }}
-        extended
-        variant="surface"
-      >
-        Neue Wahl
-      </mdui-fab> */}
     </div>
   );
 }
 
-export async function loader() {
+Overview.loader = async function loader() {
   const votes = await getDocs(collection(db, "votes"));
   return {
     votes: votes.docs.map((e) => {
       return { id: e.id, ...e.data() };
     }),
   };
-}
+};

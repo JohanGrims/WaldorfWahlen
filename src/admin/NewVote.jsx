@@ -54,34 +54,43 @@ export default function NewVote() {
     const berlinStartTime = moment.tz(startTime, "Europe/Berlin").toDate();
     const berlinEndTime = moment.tz(endTime, "Europe/Berlin").toDate();
 
-    const vote = await setDoc(doc(db, "/votes", id), {
-      title: title,
-      description: description,
-      selectCount: selectCount,
-      startTime: Timestamp.fromDate(berlinStartTime),
-      endTime: Timestamp.fromDate(berlinEndTime),
-      active: true,
-      version: 3,
-    });
-    const option = options.map(async (e, index) => {
-      return addDoc(collection(db, `/votes/${id}/options`), {
-        title: e.title,
-        max: e.max,
-        teacher: e.teacher,
-        description: e.description,
+    try {
+      await setDoc(doc(db, "/votes", id), {
+        title: title,
+        description: description,
+        selectCount: selectCount,
+        startTime: Timestamp.fromDate(berlinStartTime),
+        endTime: Timestamp.fromDate(berlinEndTime),
+        active: true,
+        version: 3,
+        extraFields: extraFields,
       });
-    });
+      const option = options.map(async (e) => {
+        return addDoc(collection(db, `/votes/${id}/options`), {
+          title: e.title,
+          max: e.max,
+          teacher: e.teacher,
+          description: e.description,
+        });
+      });
 
-    await Promise.all(option);
+      await Promise.all(option);
 
-    console.log("Vote created successfully.");
+      console.log("Vote created successfully.");
 
-    snackbar({
-      message: "Wahl erfolgreich erstellt.",
-      timeout: 5000,
-    });
+      snackbar({
+        message: "Wahl erfolgreich erstellt.",
+        timeout: 5000,
+      });
 
-    navigate(`/admin/${id}`);
+      navigate(`/admin/${id}`);
+    } catch (e) {
+      console.error(e);
+      snackbar({
+        message: "Fehler beim Erstellen der Wahl.",
+        timeout: 5000,
+      });
+    }
   }
 
   const submitDisabled = () => {
@@ -268,6 +277,7 @@ export default function NewVote() {
           )}
           {options.map((e, i) => (
             <mdui-card
+              key={i}
               class="option-preview"
               clickable
               style={{

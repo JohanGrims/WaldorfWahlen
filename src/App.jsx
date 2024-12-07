@@ -124,7 +124,7 @@ function App() {
 
 export default App;
 
-export async function loader() {
+App.loader = async function loader() {
   const votes = await getDocs(collection(db, "/votes"));
   const activeVotes = [];
   const expiredVotes = [];
@@ -162,4 +162,4 @@ export async function loader() {
   });
 
   return { activeVotes, expiredVotes, scheduledVotes };
-}
+};
