@@ -75,8 +75,11 @@ export default function Admin(props) {
             slot="trigger"
             style={{ marginRight: "1rem", cursor: "pointer" }}
           >
-            {authUser.email.split(".")[0].charAt(0).toUpperCase()}
-            {authUser.email.split(".")[1]?.charAt(0).toUpperCase()}
+            {authUser.email
+              .split(/[@.]/)
+              .slice(0, 2)
+              .map(part => part.charAt(0).toUpperCase())
+              .join('')}
           </mdui-avatar>
           <mdui-menu>
             <mdui-menu-item
