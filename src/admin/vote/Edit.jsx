@@ -399,13 +399,24 @@ export default function Edit() {
 }
 
 Edit.loader = async function loader({ params }) {
-  const { id } = params;
-  const vote = await getDoc(doc(db, `/votes/${id}`));
-  const voteData = { id, ...vote.data() };
-  const options = await getDocs(collection(db, `/votes/${id}/options`));
-  const optionData = options.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-  return {
-    vote: voteData,
-    options: optionData,
-  };
+  try {
+    const { id } = params;
+    const vote = await getDoc(doc(db, `/votes/${id}`));
+    
+    if (!vote.exists()) {
+      throw new Error(`Vote with id ${id} not found`);
+    }
+    
+    const voteData = { id, ...vote.data() };
+    const options = await getDocs(collection(db, `/votes/${id}/options`));
+    const optionData = options.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+    
+    return {
+      vote: voteData,
+      options: optionData,
+    };
+  } catch (error) {
+    console.error("Failed to load vote:", error);
+    throw error;
+  }
 };
