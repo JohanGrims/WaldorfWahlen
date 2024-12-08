@@ -38,7 +38,6 @@ export default function AnswerList() {
     try {
       getDoc(doc(db, `/votes/${id}`)).then((e) => {
         let data = e.data();
-        console.log(data);
         if (data === undefined) {
           alert("Document not found");
           navigate("/admin");
@@ -119,17 +118,13 @@ for (const student of sortedStudentIds) {
 }
 
 setResult(options)
-console.log(options)
     `);
-          console.log(optionsLet);
-          console.log(choicesLet);
           setLoading(false);
         });
       });
     } catch (error) {
       alert(error);
       AES("");
-      console.log(enc);
     }
   }, [id]);
 

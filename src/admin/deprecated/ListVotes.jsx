@@ -11,7 +11,6 @@ export default function ListVotes() {
     getDocs(collection(db, "/votes")).then((data) => {
       data.docs.map((e) => {
         let data = e.data();
-        console.log(data.version > 1);
         if (data.active) {
           setActiveVotes((activeVotes) => [
             ...activeVotes,

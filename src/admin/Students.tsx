@@ -35,7 +35,6 @@ export default function Students() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   function uploadStudents(event) {
-    console.log(event.target.files);
     const file = event.target.files[0];
     const reader = new FileReader();
     reader.onload = async (e) => {
@@ -50,7 +49,6 @@ export default function Students() {
   }
 
   function updateStudents(event) {
-    console.log(event.target.files);
     const file = event.target.files[0];
     const reader = new FileReader();
     reader.onload = async (e) => {
@@ -168,7 +166,6 @@ export default function Students() {
             onSubmit={(e) => {
               e.preventDefault();
               if (classId) {
-                console.log(updatedStudents);
                 updateClass(classId, {
                   students: JSON.parse(updatedStudents),
                 }).then(() => navigate(`/admin/students/${classId}`));

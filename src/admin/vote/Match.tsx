@@ -86,6 +86,18 @@ export default function Match() {
                                 ).length -
                                   1) +
                                 " weitere"}{" "}
+                            {choices.filter(
+                              (choice) =>
+                                choice.listIndex === s.listIndex.toString() &&
+                                choice.grade === c.grade.toString()
+                            ).length < 1 && (
+                              <Link
+                                to={`../add?name=${s.name}&grade=${c.grade}&listIndex=${s.listIndex}`}
+                                style={{ color: "rgb(255, 100, 100)" }}
+                              >
+                                (Erstellen)
+                              </Link>
+                            )}
                           </td>
                         </tr>
                       ))}

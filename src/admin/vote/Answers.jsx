@@ -40,7 +40,6 @@ export default function Answers() {
           const newAnswer = answerData.find(
             (newAns) => !answersLoad.some((oldAns) => oldAns.id === newAns.id)
           );
-          console.log("New Answer:", newAnswer);
           snackbar({
             message: `Neue Antwort von ${newAnswer.name} (${newAnswer.grade})`,
             timeout: 5000,

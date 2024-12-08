@@ -73,13 +73,11 @@ export default function Assign() {
           }
         }
 
-        console.log(points);
         preferences[choice.id] = {
           selected: choice.selected,
           points: points,
         };
       }
-      console.log(preferences);
 
       const requestObject = {
         token: authToken,
@@ -99,11 +97,9 @@ export default function Assign() {
 
       const data = await response.json();
 
-      console.log(data);
 
       setResults(data);
       if (window.location.hostname === "localhost") {
-        console.log("Running on localhost");
         setLoading(false);
       }
       setTimeout(() => setLoading(false), 5000);

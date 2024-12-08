@@ -24,6 +24,7 @@ import Overview from "./admin/Overview";
 import ReleaseNotes from "./admin/ReleaseNotes";
 import Settings from "./admin/Settings";
 import Students from "./admin/Students";
+import Add from "./admin/vote/Add";
 import Answers from "./admin/vote/Answers";
 import Assign from "./admin/vote/Assign";
 import Delete from "./admin/vote/Delete";
@@ -166,6 +167,11 @@ const routes = [
                 path: "results",
                 element: <Results />,
                 loader: Results.loader,
+              },
+              {
+                path: "add",
+                element: <Add />,
+                loader: Add.loader,
               },
             ],
           },

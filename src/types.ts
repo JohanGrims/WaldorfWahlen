@@ -12,6 +12,7 @@ export type Choice = {
   grade: number;
   selected: string[];
   extraFields: any[];
+  listIndex: string;
 };
 
 export type Vote = {
