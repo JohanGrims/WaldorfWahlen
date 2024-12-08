@@ -245,7 +245,7 @@ export default function DrawerList() {
           active={active === "students"}
           title={"SchülerInnen"}
           icon={"people"}
-          onCLick={() => navigate("/admin/students/add")}
+          onCLick={() => navigate("/admin/students/new-class")}
         />
 
         <br />

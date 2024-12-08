@@ -14,7 +14,7 @@ export default function Overview() {
         variant="outlined"
         style={{ width: "100%", padding: "20px" }}
         clickable
-        onClick={() => navigate("/admin/students/add")}
+        onClick={() => navigate("/admin/students/new-class")}
       >
         <div
           className="mdui-prose"

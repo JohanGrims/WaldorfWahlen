@@ -237,7 +237,7 @@ export default function Students() {
       </div>
       <mdui-tabs
         value={
-          classId || (sortedClasses.length < 1 ? "add" : sortedClasses[0].id)
+          classId || (sortedClasses.length < 1 ? "new-class" : sortedClasses[0].id)
         }
       >
         {sortedClasses.map((c) => (
@@ -252,17 +252,17 @@ export default function Students() {
           </mdui-tab>
         ))}
         <mdui-tab
-          value="add"
+          value="new-class"
           icon="add"
           inline
           onClick={() => {
-            navigate(`/admin/students/add`);
+            navigate(`/admin/students/new-class`);
           }}
         >
           Hinzufügen
         </mdui-tab>
         <div className="justify-end">
-          {classId !== "add" ? (
+          {classId !== "new-class" ? (
             <mdui-segmented-button-group>
               <mdui-segmented-button
                 icon="edit"
@@ -333,7 +333,7 @@ export default function Students() {
             </div>
           </mdui-tab-panel>
         ))}
-        <mdui-tab-panel slot="panel" value="add">
+        <mdui-tab-panel slot="panel" value="new-class">
           <div className="p-10">
             <div className="align-center">
               <mdui-text-field
