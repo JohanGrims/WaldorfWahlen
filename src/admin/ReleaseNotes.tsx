@@ -3,16 +3,37 @@ import { db } from "../firebase";
 
 import React from "react";
 import Markdown from "react-markdown";
-import { useLoaderData } from "react-router-dom";
+import { Link, useLoaderData, useNavigate } from "react-router-dom";
 
 export default function ReleaseNotes() {
   const { releaseNotes } = useLoaderData() as {
     releaseNotes: { content: string };
   };
+
+  const navigate = useNavigate();
+
   return (
     <div className="mdui-prose">
-      <h1>Neuigkeiten 🎉</h1>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "start",
+        }}
+      >
+        <div />
+        <h1>Neuigkeiten 🎉</h1>
+        <mdui-button-icon onClick={() => navigate("edit")} icon="edit" />
+      </div>
       <Markdown className="help">{releaseNotes.content}</Markdown>
+      <p />
+      <mdui-divider />
+      <p />
+      <div style={{ display: "flex", justifyContent: "center" }}>
+        <Link style={{ color: "white", fontSize: "12px" }} to="edit">
+          Bearbeiten
+        </Link>
+      </div>
     </div>
   );
 }

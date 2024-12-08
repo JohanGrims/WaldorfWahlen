@@ -2,7 +2,7 @@ import { doc, setDoc } from "firebase/firestore";
 import { snackbar } from "mdui";
 import React from "react";
 import Markdown from "react-markdown";
-import { useLoaderData } from "react-router-dom";
+import { useLoaderData, useNavigate } from "react-router-dom";
 import { db } from "../firebase";
 
 export default function CreateHelp() {
@@ -12,6 +12,8 @@ export default function CreateHelp() {
   const [content, setContent] = React.useState(helpContent.content);
 
   const [publishing, setPublishing] = React.useState(false);
+
+  const navigate = useNavigate();
 
   async function publishHelpContent() {
     setPublishing(true);
@@ -28,6 +30,13 @@ export default function CreateHelp() {
   return (
     <div className="mdui-prose">
       <mdui-tabs value="edit">
+        <mdui-tab
+          onClick={() => {
+            navigate(-1);
+          }}
+        >
+          Zurück
+        </mdui-tab>
         <mdui-tab value="edit">Bearbeiten</mdui-tab>
         <mdui-tab value="preview">Vorschau</mdui-tab>
 
