@@ -192,7 +192,7 @@ export default function Add() {
                 {classes
                   .sort((a, b) => a.grade - b.grade)
                   .map((c) => (
-                    <mdui-tab-panel slot="panel" value={c.id}>
+                    <mdui-tab-panel slot="panel" value={c.id} key={c.id}>
                       <div
                         style={{
                           display: "flex",
