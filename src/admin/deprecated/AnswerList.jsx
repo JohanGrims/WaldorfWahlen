@@ -31,7 +31,7 @@ export default function AnswerList() {
   const [loading, setLoading] = useState(true);
   const [active, setActive] = React.useState();
   const [results, setResults] = React.useState();
-  const [notAssigned] = React.useState([]);
+  const [notAssigned, setNotAssigned] = React.useState([]);
   const [extraFields, setExtraFields] = React.useState([]);
 
   useEffect(() => {
