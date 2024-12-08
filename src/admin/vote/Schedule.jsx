@@ -44,7 +44,6 @@ export default function Schedule() {
       endTime: Timestamp.fromDate(moment.tz(endTime, "Europe/Berlin").toDate()),
     })
       .then(() => {
-        console.log("Saved");
         snackbar({ message: "Einstellungen gespeichert." });
         navigate(`/admin/${id}`);
       })

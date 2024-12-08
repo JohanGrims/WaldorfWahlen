@@ -32,6 +32,8 @@ export default function Vote() {
     startTime,
     description,
   } = vote;
+
+  
   const [firstName, setFirstName] = React.useState();
   const [lastName, setLastName] = React.useState();
   const [grade, setGrade] = React.useState();
@@ -118,7 +120,6 @@ export default function Vote() {
       })
       .catch((error) => {
         setSending(false);
-        console.log(JSON.stringify(error));
         if (error.code === "permission-denied") {
           alert(
             "Da hat etwas nicht geklappt. Sie sind nicht (mehr) berechtigt, Ihre Daten abzugeben. Bitte wenden Sie sich an den zuständigen Lehrer."

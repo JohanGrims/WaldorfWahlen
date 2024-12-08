@@ -10,7 +10,6 @@ import React, { useState } from "react";
 import { useLoaderData } from "react-router-dom";
 import { db } from "../../firebase";
 import { Choice, Option, Vote } from "../../types";
-import CSVFileUpload from "./FileUpload";
 
 export default function AssignStudents() {
   const { vote, choices, options } = useLoaderData() as {
@@ -39,8 +38,6 @@ export default function AssignStudents() {
     }
     setAssignments(newAssignments);
   }, []);
-
-  console.log(assignments);
 
   function deactivate() {
     if (prompt("Möchten Sie wirklich die Wahl beenden?") !== "Ja") return;
@@ -131,7 +128,6 @@ export default function AssignStudents() {
           <div className="assign-title">{vote.title}</div>
           <br />
           <p />
-          <CSVFileUpload upload={(e) => console.log(e)} />
 
           <div className="actions">
             <div

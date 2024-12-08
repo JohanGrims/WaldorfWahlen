@@ -50,7 +50,6 @@ export default function NewVote() {
   }
 
   async function publish() {
-    console.log("Generating new vote with id: " + id);
     const berlinStartTime = moment.tz(startTime, "Europe/Berlin").toDate();
     const berlinEndTime = moment.tz(endTime, "Europe/Berlin").toDate();
 
@@ -75,8 +74,6 @@ export default function NewVote() {
       });
 
       await Promise.all(option);
-
-      console.log("Vote created successfully.");
 
       snackbar({
         message: "Wahl erfolgreich erstellt.",

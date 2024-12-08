@@ -34,7 +34,6 @@ export default function Export() {
   ) => {
     const workbook = XLSX.utils.book_new();
     if (exportMeta) {
-      console.log(vote);
       const meta = XLSX.utils.json_to_sheet([
         {
           title: vote.title,

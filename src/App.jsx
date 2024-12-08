@@ -133,7 +133,6 @@ App.loader = async function loader() {
 
   votes.docs.map((e) => {
     let data = e.data();
-    console.log(data, e.id);
 
     const now = moment().tz("Europe/Berlin");
     const startTime = moment.unix(data.startTime.seconds).tz("Europe/Berlin");

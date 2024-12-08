@@ -26,7 +26,6 @@ export default function DrawerList() {
       .then((data) => {
         data.docs.map((e) => {
           let data = e.data();
-          console.log(data.version > 1);
           if (data.active && data.endTime.seconds * 1000 > Date.now()) {
             if (data.startTime.seconds * 1000 > Date.now()) {
               setScheduledVotes((scheduledVotes) => [
@@ -80,8 +79,6 @@ export default function DrawerList() {
     setActive(location.pathname.split("/")[2]);
   }, [location]);
 
-  console.log(active, pages.includes(active));
-
   if (!pages.includes(active)) {
     return <VoteDrawer />;
   }
@@ -120,11 +117,7 @@ export default function DrawerList() {
           onCLick={() => navigate("/admin")}
         />
 
-        <mdui-collapse
-          accordion
-          onChange={(e) => console.log(e)}
-          value="active-votes"
-        >
+        <mdui-collapse accordion value="active-votes">
           <mdui-collapse-item value="active-votes">
             <mdui-list-item
               rounded

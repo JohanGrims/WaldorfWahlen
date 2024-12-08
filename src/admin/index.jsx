@@ -22,7 +22,6 @@ export default function Admin(props) {
     const listen = onAuthStateChanged(auth, (user) => {
       if (user) {
         setAuthUser(user);
-        console.log(user);
         setLoading(false);
       } else {
         setAuthUser(false);

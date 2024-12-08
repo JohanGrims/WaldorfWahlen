@@ -12,9 +12,7 @@ export default function Login() {
 
   const handleLogin = () => {
     signInWithEmailAndPassword(auth, email, password)
-      .then((userCredential) => {
-        console.log(userCredential);
-      })
+      .then((userCredential) => {})
       .catch((error) => {
         snackbar({
           message: error.message,

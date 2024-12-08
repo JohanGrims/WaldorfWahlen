@@ -64,8 +64,6 @@ export default function Edit() {
 
   async function update() {
     try {
-      console.log("Publishing vote with id: " + vote.id);
-
       await setDoc(
         doc(db, "/votes", vote.id),
         {
@@ -86,7 +84,6 @@ export default function Edit() {
           confirmText: "Trotzdem löschen",
           onConfirm: async () => {
             await deleteDoc(doc(db, `/votes/${vote.id}/options/${opt.id}`));
-            console.log("Option deleted successfully.");
           },
         })
       );
@@ -100,8 +97,6 @@ export default function Edit() {
       });
 
       await Promise.all([...optionsPromises]);
-
-      console.log("Vote created successfully.");
 
       snackbar({
         message: "Wahl erfolgreich aktualisiert.",
@@ -141,8 +136,7 @@ export default function Edit() {
 
     if (!_.isEmpty(changes)) {
       // log the changes
-      console.log("Vote has changed", changes);
-
+      console.info("Vote has changed", changes);
       return false;
     }
 
@@ -168,7 +162,7 @@ export default function Edit() {
 
       if (!_.isEmpty(changes)) {
         // log the changes
-        console.log("Option has changed", changes);
+        console.info("Option has changed", changes);
 
         return false;
       }
@@ -430,13 +424,11 @@ Edit.loader = async function loader({ params }) {
     }
 
     const voteData = { id, ...vote.data() };
-    console.log("Loaded vote:", voteData);
     const options = await getDocs(collection(db, `/votes/${id}/options`));
     const optionData = options.docs.map((doc) => ({
       id: doc.id,
       ...doc.data(),
     }));
-    console.log("Loaded options:", optionData);
 
     return {
       vote: voteData,
