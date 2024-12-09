@@ -5,7 +5,7 @@ import { useLoaderData } from "react-router-dom";
 import { auth, db } from "../../firebase";
 
 export default function Assign() {
-  const { vote, choices, options } = useLoaderData();
+  const { vote, choices, options, results: cloudResults } = useLoaderData();
 
   const [results, setResults] = React.useState(null);
   const [loading, setLoading] = React.useState(false);
@@ -18,6 +18,16 @@ export default function Assign() {
     },
   ]);
   const [editRules, setEditRules] = React.useState(false);
+
+  function setCloudResults() {
+    let newResults = {};
+
+    cloudResults.forEach((result) => {
+      newResults[result.id] = result.result;
+    });
+
+    setResults(newResults);
+  }
 
   function assignToFirstChoice() {
     const results = {};
@@ -96,7 +106,6 @@ export default function Assign() {
       });
 
       const data = await response.json();
-
 
       setResults(data);
       if (window.location.hostname === "localhost") {
@@ -287,6 +296,27 @@ export default function Assign() {
           </mdui-button>
         </div>
         <p />
+        {cloudResults.length > 0 && (
+          <mdui-card
+            variant="outlined"
+            style={{ width: "100%", padding: "20px" }}
+            clickable
+            onClick={setCloudResults}
+          >
+            <div className="mdui-prose" style={{ width: "100%" }}>
+              <div
+                style={{
+                  display: "flex",
+                  textWrap: "nowrap",
+                  gap: "10px",
+                }}
+              >
+                <h2 style={{ marginBottom: "0px" }}>Letzte Ergebnisse laden</h2>
+                <mdui-icon name="cloud"></mdui-icon>
+              </div>
+            </div>
+          </mdui-card>
+        )}
         <mdui-card
           variant="filled"
           style={{ width: "100%", padding: "20px" }}
@@ -791,7 +821,7 @@ export default function Assign() {
   );
 }
 
-Assign.loader =  async function loader({ params }) {
+Assign.loader = async function loader({ params }) {
   const { id } = params;
 
   const vote = await getDoc(doc(db, `/votes/${id}`));
@@ -803,9 +833,16 @@ Assign.loader =  async function loader({ params }) {
   const options = await getDocs(collection(db, `/votes/${id}/options`));
   const optionData = options.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
 
+  const results = await getDocs(collection(db, `/votes/${id}/results`));
+  const resultsData = results.docs.map((doc) => ({
+    id: doc.id,
+    ...doc.data(),
+  }));
+
   return {
     vote: voteData,
     choices: choiceData,
     options: optionData,
+    results: resultsData,
   };
-}
+};
