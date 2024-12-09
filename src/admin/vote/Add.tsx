@@ -179,7 +179,7 @@ export default function Add() {
                 {classes
                   .sort((a, b) => a.grade - b.grade)
                   .map((c) => (
-                    <mdui-tab value={c.id}>
+                    <mdui-tab value={c.id} style={{ whiteSpace: "nowrap" }}>
                       Klasse {c.grade}
                       <mdui-badge>
                         {
