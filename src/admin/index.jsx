@@ -45,7 +45,7 @@ export default function Admin(props) {
   return (
     <mdui-layout style={{ width: "100vw", height: "100vh" }}>
       {open && <DrawerList />}
-      {open && window.innerWidth < 1024 && (
+      {open && window.innerWidth < 840 && (
         <div
           style={{
             position: "absolute",
