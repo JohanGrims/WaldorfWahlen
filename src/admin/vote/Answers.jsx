@@ -14,6 +14,8 @@ import { db } from "../../firebase";
 export default function Answers() {
   const { vote, options } = useLoaderData();
 
+  const [loading, setLoading] = React.useState(true);
+
   const search = new URLSearchParams(window.location.search).get("search");
 
   const [mode, setMode] = React.useState(search ? "by-name" : "by-option");
@@ -35,6 +37,7 @@ export default function Answers() {
           ...doc.data(),
         }));
         setAnswers(answerData);
+        setLoading(false);
 
         if (!isFirstLoad) {
           const newAnswer = answerData.find(
@@ -75,6 +78,10 @@ export default function Answers() {
       searchField.value = search;
     }
   }, [search, mode, answers]);
+
+  if (loading) {
+    return <mdui-linear-progress />;
+  }
 
   return (
     <div className="mdui-prose">
