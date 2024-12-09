@@ -18,184 +18,272 @@ const routes = [
     children: [
       {
         path: "/",
-        lazy: async () => ({
-          loader: (await import("./App")).default.loader,
-          Component: (await import("./App")).default,
-        }),
+        lazy: async () => {
+          const module = await import("./App");
+          return {
+            loader: module.default.loader,
+            Component: module.default,
+          };
+        },
       },
       {
         path: "/:id",
-        lazy: async () => ({
-          loader: (await import("./Gateway")).default.loader,
-          Component: (await import("./Gateway")).default,
-        }),
+        lazy: async () => {
+          const module = await import("./Gateway");
+          return {
+            loader: module.default.loader,
+            Component: module.default,
+          };
+        },
       },
       {
         path: "/v/:id",
-        lazy: async () => ({
-          loader: (await import("./Vote")).default.loader,
-          Component: (await import("./Vote")).default,
-        }),
+        lazy: async () => {
+          const module = await import("./Vote");
+          return {
+            loader: module.default.loader,
+            Component: module.default,
+          };
+        },
       },
       {
         path: "/r/:id",
-        lazy: async () => ({
-          loader: (await import("./Vote")).default.loader,
-          Component: (await import("./Result")).default,
-        }),
+        lazy: async () => {
+          const loaderModule = await import("./Vote");
+          const componentModule = await import("./Result");
+          return {
+            loader: loaderModule.default.loader,
+            Component: componentModule.default,
+          };
+        },
       },
       {
         path: "/x/:id",
-        lazy: async () => ({
-          loader: (await import("./Vote")).default.loader,
-          Component: (await import("./Submitted")).default,
-        }),
+        lazy: async () => {
+          const loaderModule = await import("./Vote");
+          const componentModule = await import("./Submitted");
+          return {
+            loader: loaderModule.default.loader,
+            Component: componentModule.default,
+          };
+        },
       },
       {
         path: "/s/:id",
-        lazy: async () => ({
-          loader: (await import("./Vote")).default.loader,
-          Component: (await import("./Scheduled")).default,
-        }),
+        lazy: async () => {
+          const loaderModule = await import("./Vote");
+          const componentModule = await import("./Scheduled");
+          return {
+            loader: loaderModule.default.loader,
+            Component: componentModule.default,
+          };
+        },
       },
       {
         path: "/admin/*",
-        lazy: async () => ({
-          Component: (await import("./admin/index")).default,
-        }),
+        lazy: async () => {
+          const module = await import("./admin/index");
+          return {
+            Component: module.default,
+          };
+        },
         children: [
           {
             path: "",
-            lazy: async () => ({
-              loader: (await import("./admin/Overview")).default.loader,
-              Component: (await import("./admin/Overview")).default,
-            }),
+            lazy: async () => {
+              const module = await import("./admin/Overview");
+              return {
+                loader: module.default.loader,
+                Component: module.default,
+              };
+            },
           },
           {
             path: "new",
-            lazy: async () => ({
-              Component: (await import("./admin/NewVote")).default,
-            }),
+            lazy: async () => {
+              const module = await import("./admin/NewVote");
+              return {
+                Component: module.default,
+              };
+            },
           },
           {
             path: "students/:classId/:edit?",
-            lazy: async () => ({
-              loader: (await import("./admin/Students")).default.loader,
-              Component: (await import("./admin/Students")).default,
-            }),
+            lazy: async () => {
+              const module = await import("./admin/Students");
+              return {
+                loader: module.default.loader,
+                Component: module.default,
+              };
+            },
           },
           {
             path: "settings",
-            lazy: async () => ({
-              Component: (await import("./admin/Settings")).default,
-            }),
+            lazy: async () => {
+              const module = await import("./admin/Settings");
+              return {
+                Component: module.default,
+              };
+            },
           },
           {
             path: "help",
-            lazy: async () => ({
-              loader: (await import("./admin/Help")).default.loader,
-              Component: (await import("./admin/Help")).default,
-            }),
+            lazy: async () => {
+              const module = await import("./admin/Help");
+              return {
+                loader: module.default.loader,
+                Component: module.default,
+              };
+            },
           },
           {
             path: "help/edit",
-            lazy: async () => ({
-              loader: (await import("./admin/Help")).default.loader,
-              Component: (await import("./admin/CreateHelp")).default,
-            }),
+            lazy: async () => {
+              const loaderModule = await import("./admin/Help");
+              const componentModule = await import("./admin/CreateHelp");
+              return {
+                loader: loaderModule.default.loader,
+                Component: componentModule.default,
+              };
+            },
           },
           {
             path: "changelog",
-            lazy: async () => ({
-              loader: (await import("./admin/ReleaseNotes")).default.loader,
-              Component: (await import("./admin/ReleaseNotes")).default,
-            }),
+            lazy: async () => {
+              const module = await import("./admin/ReleaseNotes");
+              return {
+                loader: module.default.loader,
+                Component: module.default,
+              };
+            },
           },
           {
             path: "changelog/edit",
-            lazy: async () => ({
-              loader: (await import("./admin/ReleaseNotes")).default.loader,
-              Component: (await import("./admin/CreateReleaseNotes")).default,
-            }),
+            lazy: async () => {
+              const loaderModule = await import("./admin/ReleaseNotes");
+              const componentModule = await import(
+                "./admin/CreateReleaseNotes"
+              );
+              return {
+                loader: loaderModule.default.loader,
+                Component: componentModule.default,
+              };
+            },
           },
           {
             path: ":id/*",
             children: [
               {
                 path: "",
-                lazy: async () => ({
-                  loader: (await import("./admin/vote/index")).default.loader,
-                  Component: (await import("./admin/vote/index")).default,
-                }),
+                lazy: async () => {
+                  const module = await import("./admin/vote/index");
+                  return {
+                    loader: module.default.loader,
+                    Component: module.default,
+                  };
+                },
               },
               {
                 path: "edit",
-                lazy: async () => ({
-                  loader: (await import("./admin/vote/Edit")).default.loader,
-                  Component: (await import("./admin/vote/Edit")).default,
-                }),
+                lazy: async () => {
+                  const module = await import("./admin/vote/Edit");
+                  return {
+                    loader: module.default.loader,
+                    Component: module.default,
+                  };
+                },
               },
               {
                 path: "answers",
-                lazy: async () => ({
-                  loader: (await import("./admin/vote/Answers")).default.loader,
-                  Component: (await import("./admin/vote/Answers")).default,
-                }),
+                lazy: async () => {
+                  const module = await import("./admin/vote/Answers");
+                  return {
+                    loader: module.default.loader,
+                    Component: module.default,
+                  };
+                },
               },
               {
                 path: "share",
-                lazy: async () => ({
-                  Component: (await import("./admin/vote/Share")).default,
-                }),
+                lazy: async () => {
+                  const module = await import("./admin/vote/Share");
+                  return {
+                    Component: module.default,
+                  };
+                },
               },
               {
                 path: "delete",
-                lazy: async () => ({
-                  loader: (await import("./admin/vote/index")).default.loader,
-                  Component: (await import("./admin/vote/Delete")).default,
-                }),
+                lazy: async () => {
+                  const loaderModule = await import("./admin/vote/index");
+                  const componentModule = await import("./admin/vote/Delete");
+                  return {
+                    loader: loaderModule.default.loader,
+                    Component: componentModule.default,
+                  };
+                },
               },
               {
                 path: "schedule",
-                lazy: async () => ({
-                  loader: (await import("./admin/vote/index")).default.loader,
-                  Component: (await import("./admin/vote/Schedule")).default,
-                }),
+                lazy: async () => {
+                  const loaderModule = await import("./admin/vote/index");
+                  const componentModule = await import("./admin/vote/Schedule");
+                  return {
+                    loader: loaderModule.default.loader,
+                    Component: componentModule.default,
+                  };
+                },
               },
               {
                 path: "match",
-                lazy: async () => ({
-                  loader: (await import("./admin/vote/Match")).default.loader,
-                  Component: (await import("./admin/vote/Match")).default,
-                }),
+                lazy: async () => {
+                  const module = await import("./admin/vote/Match");
+                  return {
+                    loader: module.default.loader,
+                    Component: module.default,
+                  };
+                },
               },
               {
                 path: "assign",
-                lazy: async () => ({
-                  loader: (await import("./admin/vote/Assign")).default.loader,
-                  Component: (await import("./admin/vote/Assign")).default,
-                }),
+                lazy: async () => {
+                  const module = await import("./admin/vote/Assign");
+                  return {
+                    loader: module.default.loader,
+                    Component: module.default,
+                  };
+                },
               },
               {
                 path: "export",
-                lazy: async () => ({
-                  loader: (await import("./admin/vote/index")).default.loader,
-                  Component: (await import("./admin/vote/Export")).default,
-                }),
+                lazy: async () => {
+                  const loaderModule = await import("./admin/vote/index");
+                  const componentModule = await import("./admin/vote/Export");
+                  return {
+                    loader: loaderModule.default.loader,
+                    Component: componentModule.default,
+                  };
+                },
               },
               {
                 path: "results",
-                lazy: async () => ({
-                  loader: (await import("./admin/vote/Results")).default.loader,
-                  Component: (await import("./admin/vote/Results")).default,
-                }),
+                lazy: async () => {
+                  const module = await import("./admin/vote/Results");
+                  return {
+                    loader: module.default.loader,
+                    Component: module.default,
+                  };
+                },
               },
               {
                 path: "add",
-                lazy: async () => ({
-                  loader: (await import("./admin/vote/Add")).default.loader,
-                  Component: (await import("./admin/vote/Add")).default,
-                }),
+                lazy: async () => {
+                  const module = await import("./admin/vote/Add");
+                  return {
+                    loader: module.default.loader,
+                    Component: module.default,
+                  };
+                },
               },
             ],
           },
