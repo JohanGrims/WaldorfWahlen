@@ -239,10 +239,12 @@ export default function Students() {
         value={
           classId || (sortedClasses.length < 1 ? "new-class" : sortedClasses[0].id)
         }
+        style={{ width: "100%", overflowX: "auto" }}
       >
         {sortedClasses.map((c) => (
           <mdui-tab
             value={c.id}
+            style={{ whiteSpace: "nowrap" }}
             onClick={() => {
               navigate(`/admin/students/${c.id}`);
             }}
@@ -253,6 +255,7 @@ export default function Students() {
         ))}
         <mdui-tab
           value="new-class"
+          style={{ whiteSpace: "nowrap" }}
           icon="add"
           inline
           onClick={() => {
