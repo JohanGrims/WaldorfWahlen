@@ -2,7 +2,7 @@ import { collection, doc, getDoc, getDocs, setDoc } from "firebase/firestore";
 import { useLoaderData } from "react-router-dom";
 import { auth, db } from "../../firebase";
 
-import { snackbar } from "mdui";
+import { confirm, snackbar } from "mdui";
 import React from "react";
 
 export default function Results() {
@@ -52,18 +52,27 @@ export default function Results() {
   }
 
   function publishResults() {
-    setDoc(
-      doc(db, `votes/${vote.id}`),
-      {
-        result: true,
+    confirm({
+      headline: "Ergebnisse veröffentlichen",
+      description:
+        "Sind Sie sicher, dass Sie die Ergebnisse veröffentlichen möchten? Dies kann nicht rückgängig gemacht werden.",
+      confirmText: "Ja, veröffentlichen",
+      cancelText: "Abbrechen",
+      onConfirm: () => {
+        setDoc(
+          doc(db, `votes/${vote.id}`),
+          {
+            result: true,
+          },
+          { merge: true }
+        ).then(() => {
+          snackbar({
+            message: "Ergebnisse veröffentlicht.",
+            action: "Seite neuladen",
+            onActionClick: () => window.location.reload(),
+          });
+        });
       },
-      { merge: true }
-    ).then(() => {
-      snackbar({
-        message: "Ergebnisse veröffentlicht.",
-        action: "Seite neuladen",
-        onActionClick: () => window.location.reload(),
-      });
     });
   }
 
@@ -113,7 +122,7 @@ export default function Results() {
         variant="outlined"
         style={{ width: "100%", padding: "20px" }}
         clickable
-        disabled={vote.result}
+        disabled={vote.result || !results.length}
         onClick={publishResults}
       >
         <div
