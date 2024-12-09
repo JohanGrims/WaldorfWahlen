@@ -61,7 +61,7 @@ export default function Admin(props) {
       )}
 
       <mdui-top-app-bar variant="center-aligned" scroll-behavior="elevate">
-        {window.innerWidth < 1024 && (
+        {window.innerWidth < 840 && (
           <mdui-button-icon
             icon="menu"
             onClick={() => setOpen(!open)}
