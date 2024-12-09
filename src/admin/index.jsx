@@ -14,7 +14,7 @@ export default function Admin(props) {
   const [authUser, setAuthUser] = React.useState(false);
   const [loading, setLoading] = React.useState(true);
 
-  const [open, setOpen] = React.useState(window.innerWidth > 1024);
+  const [open, setOpen] = React.useState(window.innerWidth > 840);
 
   const navigate = useNavigate();
 
