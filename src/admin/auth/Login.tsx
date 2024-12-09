@@ -7,16 +7,40 @@ import React from "react";
 import { auth } from "../../firebase";
 
 export default function Login() {
-  const [email, setEmail] = React.useState("");
-  const [password, setPassword] = React.useState("");
+  const [loading, setLoading] = React.useState(false);
+  interface LoginFormElements extends HTMLFormControlsCollection {
+    email: HTMLInputElement;
+    password: HTMLInputElement;
+  }
 
-  const handleLogin = () => {
+  interface LoginForm extends HTMLFormElement {
+    readonly elements: LoginFormElements;
+  }
+
+  const handleLogin = (e: React.FormEvent<LoginForm>) => {
+    e.preventDefault();
+
+    const formData = new FormData(e.currentTarget);
+    const email = formData.get("email") as string;
+    const password = formData.get("password") as string;
+
+    setLoading(true);
+
     signInWithEmailAndPassword(auth, email, password)
-      .then((userCredential) => {})
+      .then((userCredential) => {
+        const user = userCredential.user;
+        snackbar({
+          message: `Willkommen, ${user.email}`,
+          closeable: true,
+        });
+        setLoading(false);
+      })
       .catch((error) => {
+        console.error(error);
         snackbar({
           message: error.message,
         });
+        setLoading(false);
       });
   };
 
@@ -33,47 +57,80 @@ export default function Login() {
         label: "Email",
       },
       onConfirm: (email) => {
+        setLoading(true);
         sendPasswordResetEmail(auth, email)
           .then(() => {
             alert({
               headline: "Email gesendet",
               description: "Bitte überprüfen Sie Ihren Posteingang.",
             });
+            setLoading(false);
           })
           .catch((error) => {
             console.error(error);
+            alert({
+              headline: "Fehler",
+              description: error.message,
+            });
+            setLoading(false);
           });
       },
     });
   };
 
   return (
-    <mdui-card variant="filled" class="card">
+    <mdui-card variant="filled" class="card" style={{ position: "absolute" }}>
+      {loading && (
+        <mdui-linear-progress
+          style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            right: 0,
+            zIndex: 100,
+          }}
+        />
+      )}
       <div className="mdui-prose">
         <h1>Administratoren-Bereich</h1>
-        <mdui-text-field
-          value={email}
-          onInput={(e) => setEmail(e.target.value)}
-          type="email"
-          placeholder="user@example.com"
-          label="Email"
-        ></mdui-text-field>
-        <p />
-        <mdui-text-field
-          value={password}
-          onInput={(e) => setPassword(e.target.value)}
-          type="password"
-          label="Passwort"
-          toggle-password
-        />
-        <p />
-        <br />
-        <div className="button-container">
-          <mdui-button variant="text" onClick={handlePasswordReset}>
-            Passwort zurücksetzen
-          </mdui-button>
-          <mdui-button onClick={handleLogin}>Login</mdui-button>
-        </div>
+        <form onSubmit={handleLogin}>
+          <mdui-text-field
+            type="email"
+            placeholder="user@example.com"
+            label="Email"
+            name="email"
+            required
+          ></mdui-text-field>
+          <p />
+          <mdui-text-field
+            type="password"
+            label="Passwort"
+            toggle-password
+            name="password"
+            required
+          />
+          <p />
+          <br />
+          <div className="button-container">
+            {loading ? (
+              <>
+                <mdui-button variant="text" disabled>
+                  Passwort zurücksetzen
+                </mdui-button>
+
+                <mdui-button disabled>Login</mdui-button>
+              </>
+            ) : (
+              <>
+                <mdui-button variant="text" onClick={handlePasswordReset}>
+                  Passwort zurücksetzen
+                </mdui-button>
+
+                <mdui-button type="submit">Login</mdui-button>
+              </>
+            )}
+          </div>
+        </form>
       </div>
     </mdui-card>
   );

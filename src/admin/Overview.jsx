@@ -28,7 +28,7 @@ export default function Overview() {
             }}
           >
             <h2>SchülerInnen</h2>
-            <mdui-icon name="people"></mdui-icon>
+            <mdui-icon name="groups"></mdui-icon>
           </div>
           Verwalten Sie die Datenbank der SchülerInnen, fügen Sie neue
           SchülerInnen hinzu und bearbeiten Sie bestehende Klassenlisten.

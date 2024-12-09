@@ -244,7 +244,7 @@ export default function DrawerList() {
         <DrawerItem
           active={active === "students"}
           title={"SchülerInnen"}
-          icon={"people"}
+          icon={"groups"}
           onCLick={() => navigate("/admin/students/new-class")}
         />
 

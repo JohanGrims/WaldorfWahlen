@@ -113,7 +113,10 @@ export default function Admin(props) {
                 confirmText: "Abmelden",
                 onConfirm: () => {
                   auth.signOut();
-                  snackbar({ message: "Sie sind jetzt abgemeldet." });
+                  snackbar({
+                    message: "Sie sind jetzt abgemeldet.",
+                    closeable: true,
+                  });
                 },
               });
             }}

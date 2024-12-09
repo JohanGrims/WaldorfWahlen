@@ -121,17 +121,41 @@ export default function Vote() {
       .catch((error) => {
         setSending(false);
         if (error.code === "permission-denied") {
-          alert(
-            "Da hat etwas nicht geklappt. Sie sind nicht (mehr) berechtigt, Ihre Daten abzugeben. Bitte wenden Sie sich an den zuständigen Lehrer."
-          );
+          snackbar({
+            message:
+              "Es ist ein Berechtigungsfehler aufgetreten.",
+              action:"Details",
+              onActionClick: () => {
+                console.error(error);
+                alert(
+                  "Es scheint, als sei die Wahl nicht mehr verfügbar. Bitte versuchen Sie es später erneut.\n"+error
+                )
+              }
+          });
         } else if (error.message === "Network Error") {
-          alert(
-            "Netzwerkprobleme. Bitte überprüfen Sie Ihre Internetverbindung und versuchen Sie es erneut."
-          );
+            snackbar({
+              message:
+                "Es ist ein Netzwerkfehler aufgetreten.",
+              action:"Details",
+              onActionClick: () => {
+                console.error(error);
+                alert(
+                  "Es scheint, als gäbe es ein Problem mit Ihrer Internetverbindung. Bitte überprüfen Sie diese und versuchen Sie es erneut.\n"+error
+                )
+              }
+          });
         } else {
-          alert(
-            "Ein unbekannter Fehler ist aufgetreten. Bitte versuchen Sie es später erneut."
-          );
+          snackbar({
+            message:
+              "Es ist ein Fehler aufgetreten.",
+            action:"Details",
+            onActionClick: () => {
+              console.error(error);
+              alert(
+                "Es ist ein Fehler aufgetreten. Bitte versuchen Sie es später erneut.\n"+error
+              )
+            }
+          });
         }
       });
   }
