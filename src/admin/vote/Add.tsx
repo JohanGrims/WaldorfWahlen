@@ -174,6 +174,7 @@ export default function Add() {
             {showSuggestions && (
               <mdui-tabs
                 value={classes.sort((a, b) => a.grade - b.grade)[0].id}
+                style={{ width: "100%", overflowX: "auto" }}
               >
                 {classes
                   .sort((a, b) => a.grade - b.grade)
