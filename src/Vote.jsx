@@ -50,6 +50,9 @@ export default function Vote() {
     document.title = title;
   }, [title]);
 
+  const preview = urlParams.get("preview");
+
+
   if (localStorage.getItem(id) && !urlParams.get("preview")) {
     if (urlParams.get("allowResubmission")) {
       navigate(`/x/${id}?allowResubmission=true`);
@@ -73,7 +76,6 @@ export default function Vote() {
     navigate("/");
   }
 
-  const preview = urlParams.get("preview");
 
   const submitDisabled = () => {
     if (
