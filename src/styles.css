@@ -18,6 +18,13 @@
   scroll-padding-top: 10px;
 }
 
+body {
+  font-family: Arial, sans-serif;
+  min-height: 100dvh;
+  margin: 0;
+  padding: 0;
+}
+
 .wrapper {
   max-width: 100%;
   display: flex;
@@ -40,14 +47,12 @@ a:hover {
   color: #f89e24;
 }
 
-h3 {
-  font-weight: 100;
+h1 {
+  text-align: center;
 }
 
-.two-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 20px;
+h3 {
+  font-weight: 100;
 }
 
 input {
@@ -58,19 +63,35 @@ input {
   font-size: 20px;
 }
 
-h1 {
-  text-align: center;
-}
-.vote {
-  width: 100%;
-  max-width: 500px;
+input:hover {
+  border-color: #1b4485;
 }
 
-body {
-  font-family: Arial, sans-serif;
-  min-height: 100dvh;
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
   margin: 0;
-  padding: 0;
+}
+
+button {
+  width: 100%;
+  padding: 10px;
+  background-color: #1b4485;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+  font-size: 20px;
+}
+
+button:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+button:not(:disabled):hover {
+  background-color: #f89e24;
 }
 
 .vote {
@@ -94,16 +115,6 @@ body {
   margin-bottom: 5px;
 }
 
-input {
-  width: calc(100% - 20px);
-  padding: 10px;
-  /* margin-bottom: 15px; */
-  border: 1px solid #ccc;
-  border-radius: 4px;
-}
-input:hover {
-  border-color: #1b4485;
-}
 .options {
   display: flex;
   flex-wrap: wrap;
@@ -111,7 +122,7 @@ input:hover {
 }
 
 .option {
-  flex: 1 1 45%; /* Nimmt 45% der Breite des Containers, sodass zwei in eine Zeile passen */
+  flex: 1 1 45%;
   background-color: #f9f9f9;
   border: 2px solid #e0e0e0;
   border-radius: 4px;
@@ -141,12 +152,12 @@ input:hover {
   font-weight: bold;
 }
 
-.option .teacher {
+.option .teacher,
+.option .description {
   font-size: 14px;
 }
 
 .option .description {
-  font-size: 14px;
   margin-top: 10px;
 }
 
@@ -155,25 +166,13 @@ input:hover {
   font-style: italic;
 }
 
-button {
-  width: 100%;
-  padding: 10px;
-  background-color: #1b4485;
-  color: #fff;
+.option.nohover {
   border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: background-color 0.3s;
-  font-size: 20px;
+  cursor: default;
 }
 
-button:disabled {
-  background-color: #ccc;
-  cursor: not-allowed;
-}
-
-button:not(:disabled):hover {
-  background-color: #f89e24;
+.option.nohover:hover {
+  border: none;
 }
 
 .credits {
@@ -186,8 +185,8 @@ button:not(:disabled):hover {
 
 .delete-button {
   width: 30px;
-  margin: 0px;
-  padding: 0px;
+  margin: 0;
+  padding: 0;
   height: 100%;
   background-color: transparent;
   color: black;
@@ -203,15 +202,7 @@ button:not(:disabled):hover {
 }
 
 .extrafield input {
-  margin: 0px;
-}
-
-.option.nohover {
-  border: none;
-  cursor: default;
-}
-.option.nohover:hover {
-  border: none;
+  margin: 0;
 }
 
 .admin {
@@ -239,13 +230,16 @@ button:not(:disabled):hover {
   margin: 20px;
   cursor: pointer;
 }
+
 .assignments-option:hover {
   background-color: #e0e0e0;
 }
+
 .assignments-title {
   font-size: 20px;
   font-weight: bold;
 }
+
 .assignments-info {
   display: flex;
   justify-content: space-between;
@@ -254,6 +248,7 @@ button:not(:disabled):hover {
   user-select: none;
   gap: 3px;
 }
+
 .attention .assignments-numbers {
   color: red;
 }
@@ -269,9 +264,11 @@ button:not(:disabled):hover {
   width: 65vw;
   overflow: auto;
 }
+
 .left.small {
   width: max-content;
 }
+
 .right {
   width: 65vw;
   overflow: auto;
@@ -316,6 +313,7 @@ button:not(:disabled):hover {
   user-select: none;
   background-color: #e0e0e0;
 }
+
 .action:hover {
   background-color: #e4e4e4;
 }
@@ -325,6 +323,7 @@ button:not(:disabled):hover {
   color: #1b4485;
   outline: 1px solid black;
 }
+
 .project-link:hover {
   color: #f89e24;
 }
@@ -344,7 +343,15 @@ button:not(:disabled):hover {
 .flex-row {
   display: flex;
   justify-content: space-between;
+  gap: 20px;
 }
+
+.flex-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
 .column {
   display: block;
 }
@@ -353,19 +360,13 @@ button:not(:disabled):hover {
   width: 400%;
 }
 
-input::-webkit-outer-spin-button,
-input::-webkit-inner-spin-button {
-  -webkit-appearance: none;
-  margin: 0;
-}
-
-.help > h2{
+.help > h2 {
   margin-bottom: 10px !important;
 }
 
-.fixed-action{
-  position: fixed; 
-  bottom: 1rem; 
+.fixed-action {
+  position: fixed;
+  bottom: 1rem;
   right: 1rem;
 }
 
@@ -377,54 +378,31 @@ input::-webkit-inner-spin-button {
 .justify-between {
   justify-content: space-between;
   align-items: center;
-
 }
 
-.align-center{
+.align-center {
   display: flex;
   gap: 10px;
   align-items: center;
 }
 
-.justify-end{
-  flex:1;
+.justify-end {
+  flex: 1;
   display: flex;
   justify-content: flex-end;
   align-items: center;
-
 }
 
-.p-10{
+.p-10 {
   padding: 10px;
 }
 
-.w-100{
+.w-100 {
   width: 100%;
 }
 
-.no-display{
+.no-display {
   display: none;
-}
-
-@media only screen and (max-width: 600px) {
-  .vote {
-    width: 100%;
-    margin: 0px;
-  }
-  .option {
-    flex: 1 1 100%;
-  }
-  .flex-row {
-    flex-direction: column;
-  }
-  .column {
-    display: flex;
-    flex-direction: column;
-    margin-bottom: 10px;
-  }
-  .grade {
-    width: calc(100% - 20px);
-  }
 }
 
 .time-label {
@@ -434,4 +412,86 @@ input::-webkit-inner-spin-button {
   width: 100%;
   margin-top: -40px;
   margin-bottom: 50px;
+}
+
+.container {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+.card {
+  width: 60vw;
+  padding: 50px !important;
+  margin: 50px;
+}
+
+.option-card {
+  width: 50%;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 20px;
+  flex: 1 1 45%;
+}
+
+.option-card.selected {
+  border: 5px solid rgb(var(--mdui-color-primary)) !important;
+}
+
+.button-container {
+  display: flex;
+  justify-content: space-between;
+}
+
+@media (max-width: 800px) {
+  .card {
+    width: 100%;
+    padding: 15px !important;
+    margin: 0;
+    min-height: 100vh;
+  }
+
+  .option-card {
+    width: 100%;
+    flex: 1 1 100%;
+  }
+
+  .flex-row {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .button-container {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .vote-title {
+    font-size: 30px !important;
+  }
+
+    .vote {
+    width: 100%;
+    margin: 0;
+  }
+
+  .option {
+    flex: 1 1 100%;
+  }
+
+  .flex-row {
+    flex-direction: column;
+  }
+
+  .column {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 10px;
+  }
+
+  .grade {
+    width: calc(100% - 20px);
+  }
+
 }

@@ -5,7 +5,6 @@ import {
 import { alert, prompt, snackbar } from "mdui";
 import React from "react";
 import { auth } from "../../firebase";
-import "../../vote.css";
 
 export default function Login() {
   const [loading, setLoading] = React.useState(false);

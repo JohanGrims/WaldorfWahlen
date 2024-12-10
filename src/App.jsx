@@ -1,7 +1,6 @@
 import { collection, getDocs } from "firebase/firestore";
 import moment from "moment-timezone";
 import { useLoaderData } from "react-router-dom";
-import "./App.css";
 import { db } from "./firebase";
 function App() {
   const { activeVotes, expiredVotes, scheduledVotes } = useLoaderData();

@@ -126,6 +126,7 @@ export default function Edit() {
         result[key] = [vote[key], newVote[key]];
       }
       return result;
+
     }, {});
 
     if (Object.keys(changes).length > 0) {
