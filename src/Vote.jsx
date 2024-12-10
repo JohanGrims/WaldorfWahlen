@@ -53,28 +53,30 @@ export default function Vote() {
   const preview = urlParams.get("preview");
 
 
-  if (localStorage.getItem(id) && !urlParams.get("preview")) {
-    if (urlParams.get("allowResubmission")) {
-      navigate(`/x/${id}?allowResubmission=true`);
-      return;
+  React.useEffect(() => {
+    if (localStorage.getItem(id) && !urlParams.get("preview")) {
+      if (urlParams.get("allowResubmission")) {
+        navigate(`/x/${id}?allowResubmission=true`);
+        return;
+      }
+      navigate(`/x/${id}`);
     }
-    navigate(`/x/${id}`);
-  }
 
-  if ((active === false || Date.now() > endTime.seconds * 1000) && !preview) {
-    snackbar({ message: "Die Wahl ist bereits beendet." });
-    navigate(`/r/${id}`);
-  }
-  if (Date.now() < startTime.seconds * 1000 && !preview) {
-    snackbar({
-      message:
-        "Die Wahl startet erst am " +
-        moment
-          .tz(startTime.seconds * 1000, "Europe/Berlin")
-          .format("dddd, D. MMMM YYYY, HH:mm"),
-    });
-    navigate("/");
-  }
+    if ((active === false || Date.now() > endTime.seconds * 1000) && !preview) {
+      snackbar({ message: "Die Wahl ist bereits beendet." });
+      navigate(`/r/${id}`);
+    }
+    if (Date.now() < startTime.seconds * 1000 && !preview) {
+      snackbar({
+        message:
+          "Die Wahl startet erst am " +
+          moment
+            .tz(startTime.seconds * 1000, "Europe/Berlin")
+            .format("dddd, D. MMMM YYYY, HH:mm"),
+      });
+      navigate("/");
+    }
+  }, [active, endTime, id, navigate, preview, startTime, urlParams]);
 
 
   const submitDisabled = () => {
