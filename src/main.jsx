@@ -1,4 +1,3 @@
-import React from "react";
 import ReactDOM from "react-dom/client";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import ErrorPage from "./Error";
@@ -19,7 +18,10 @@ const routes = [
       {
         path: "/",
         lazy: async () => {
-          const module = await import("./App");
+          const module = await import(
+            /* webpackChunkName: "App" */
+            "./App"
+          );
           return {
             loader: module.default.loader,
             Component: module.default,
@@ -29,7 +31,10 @@ const routes = [
       {
         path: "/:id",
         lazy: async () => {
-          const module = await import("./Gateway");
+          const module = await import(
+            /* webpackChunkName: "Gateway" */
+            "./Gateway"
+          );
           return {
             loader: module.default.loader,
             Component: module.default,
@@ -39,7 +44,10 @@ const routes = [
       {
         path: "/v/:id",
         lazy: async () => {
-          const module = await import("./Vote");
+          const module = await import(
+            /* webpackChunkName: "Vote" */
+            "./Vote"
+          );
           return {
             loader: module.default.loader,
             Component: module.default,
@@ -49,8 +57,14 @@ const routes = [
       {
         path: "/r/:id",
         lazy: async () => {
-          const loaderModule = await import("./Vote");
-          const componentModule = await import("./Result");
+          const loaderModule = await import(
+            /* webpackChunkName: "Vote" */
+            "./Vote"
+          );
+          const componentModule = await import(
+            /* webpackChunkName: "Result" */
+            "./Result"
+          );
           return {
             loader: loaderModule.default.loader,
             Component: componentModule.default,
@@ -60,8 +74,14 @@ const routes = [
       {
         path: "/x/:id",
         lazy: async () => {
-          const loaderModule = await import("./Vote");
-          const componentModule = await import("./Submitted");
+          const loaderModule = await import(
+            /* webpackChunkName: "Vote" */
+            "./Vote"
+          );
+          const componentModule = await import(
+            /* webpackChunkName: "Submitted" */
+            "./Submitted"
+          );
           return {
             loader: loaderModule.default.loader,
             Component: componentModule.default,
@@ -71,8 +91,14 @@ const routes = [
       {
         path: "/s/:id",
         lazy: async () => {
-          const loaderModule = await import("./Vote");
-          const componentModule = await import("./Scheduled");
+          const loaderModule = await import(
+            /* webpackChunkName: "Vote" */
+            "./Vote"
+          );
+          const componentModule = await import(
+            /* webpackChunkName: "Scheduled" */
+            "./Scheduled"
+          );
           return {
             loader: loaderModule.default.loader,
             Component: componentModule.default,
@@ -82,7 +108,10 @@ const routes = [
       {
         path: "/admin/*",
         lazy: async () => {
-          const module = await import("./admin/index");
+          const module = await import(
+            /* webpackChunkName: "Admin" */
+            "./admin/index"
+          );
           return {
             Component: module.default,
           };
@@ -91,7 +120,10 @@ const routes = [
           {
             path: "",
             lazy: async () => {
-              const module = await import("./admin/Overview");
+              const module = await import(
+                /* webpackChunkName: "Overview" */
+                "./admin/Overview"
+              );
               return {
                 loader: module.default.loader,
                 Component: module.default,
@@ -101,7 +133,10 @@ const routes = [
           {
             path: "new",
             lazy: async () => {
-              const module = await import("./admin/NewVote");
+              const module = await import(
+                /* webpackChunkName: "NewVote" */
+                "./admin/NewVote"
+              );
               return {
                 Component: module.default,
               };
@@ -110,7 +145,10 @@ const routes = [
           {
             path: "students/:classId/:edit?",
             lazy: async () => {
-              const module = await import("./admin/Students");
+              const module = await import(
+                /* webpackChunkName: "Students" */
+                "./admin/Students"
+              );
               return {
                 loader: module.default.loader,
                 Component: module.default,
@@ -120,7 +158,10 @@ const routes = [
           {
             path: "settings",
             lazy: async () => {
-              const module = await import("./admin/Settings");
+              const module = await import(
+                /* webpackChunkName: "Settings" */
+                "./admin/Settings"
+              );
               return {
                 Component: module.default,
               };
@@ -129,7 +170,10 @@ const routes = [
           {
             path: "help",
             lazy: async () => {
-              const module = await import("./admin/Help");
+              const module = await import(
+                /* webpackChunkName: "Help" */
+                "./admin/Help"
+              );
               return {
                 loader: module.default.loader,
                 Component: module.default,
@@ -139,8 +183,14 @@ const routes = [
           {
             path: "help/edit",
             lazy: async () => {
-              const loaderModule = await import("./admin/Help");
-              const componentModule = await import("./admin/CreateHelp");
+              const loaderModule = await import(
+                /* webpackChunkName: "Help" */
+                "./admin/Help"
+              );
+              const componentModule = await import(
+                /* webpackChunkName: "CreateHelp" */
+                "./admin/CreateHelp"
+              );
               return {
                 loader: loaderModule.default.loader,
                 Component: componentModule.default,
@@ -150,7 +200,10 @@ const routes = [
           {
             path: "changelog",
             lazy: async () => {
-              const module = await import("./admin/ReleaseNotes");
+              const module = await import(
+                /* webpackChunkName: "ReleaseNotes" */
+                "./admin/ReleaseNotes"
+              );
               return {
                 loader: module.default.loader,
                 Component: module.default,
@@ -160,8 +213,12 @@ const routes = [
           {
             path: "changelog/edit",
             lazy: async () => {
-              const loaderModule = await import("./admin/ReleaseNotes");
+              const loaderModule = await import(
+                /* webpackChunkName: "ReleaseNotes" */
+                "./admin/ReleaseNotes"
+              );
               const componentModule = await import(
+                /* webpackChunkName: "CreateReleaseNotes" */
                 "./admin/CreateReleaseNotes"
               );
               return {
@@ -176,7 +233,10 @@ const routes = [
               {
                 path: "",
                 lazy: async () => {
-                  const module = await import("./admin/vote/index");
+                  const module = await import(
+                    /* webpackChunkName: "VoteAdmin" */
+                    "./admin/vote/index"
+                  );
                   return {
                     loader: module.default.loader,
                     Component: module.default,
@@ -186,7 +246,10 @@ const routes = [
               {
                 path: "edit",
                 lazy: async () => {
-                  const module = await import("./admin/vote/Edit");
+                  const module = await import(
+                    /* webpackChunkName: "EditVote" */
+                    "./admin/vote/Edit"
+                  );
                   return {
                     loader: module.default.loader,
                     Component: module.default,
@@ -196,7 +259,10 @@ const routes = [
               {
                 path: "answers",
                 lazy: async () => {
-                  const module = await import("./admin/vote/Answers");
+                  const module = await import(
+                    /* webpackChunkName: "Answers" */
+                    "./admin/vote/Answers"
+                  );
                   return {
                     loader: module.default.loader,
                     Component: module.default,
@@ -206,7 +272,10 @@ const routes = [
               {
                 path: "share",
                 lazy: async () => {
-                  const module = await import("./admin/vote/Share");
+                  const module = await import(
+                    /* webpackChunkName: "Share" */
+                    "./admin/vote/Share"
+                  );
                   return {
                     Component: module.default,
                   };
@@ -215,8 +284,14 @@ const routes = [
               {
                 path: "delete",
                 lazy: async () => {
-                  const loaderModule = await import("./admin/vote/index");
-                  const componentModule = await import("./admin/vote/Delete");
+                  const loaderModule = await import(
+                    /* webpackChunkName: "VoteAdmin" */
+                    "./admin/vote/index"
+                  );
+                  const componentModule = await import(
+                    /* webpackChunkName: "Delete" */
+                    "./admin/vote/Delete"
+                  );
                   return {
                     loader: loaderModule.default.loader,
                     Component: componentModule.default,
@@ -226,8 +301,14 @@ const routes = [
               {
                 path: "schedule",
                 lazy: async () => {
-                  const loaderModule = await import("./admin/vote/index");
-                  const componentModule = await import("./admin/vote/Schedule");
+                  const loaderModule = await import(
+                    /* webpackChunkName: "VoteAdmin" */
+                    "./admin/vote/index"
+                  );
+                  const componentModule = await import(
+                    /* webpackChunkName: "Schedule" */
+                    "./admin/vote/Schedule"
+                  );
                   return {
                     loader: loaderModule.default.loader,
                     Component: componentModule.default,
@@ -237,7 +318,10 @@ const routes = [
               {
                 path: "match",
                 lazy: async () => {
-                  const module = await import("./admin/vote/Match");
+                  const module = await import(
+                    /* webpackChunkName: "Match" */
+                    "./admin/vote/Match"
+                  );
                   return {
                     loader: module.default.loader,
                     Component: module.default,
@@ -247,7 +331,10 @@ const routes = [
               {
                 path: "assign",
                 lazy: async () => {
-                  const module = await import("./admin/vote/Assign");
+                  const module = await import(
+                    /* webpackChunkName: "Assign" */
+                    "./admin/vote/Assign"
+                  );
                   return {
                     loader: module.default.loader,
                     Component: module.default,
@@ -257,8 +344,14 @@ const routes = [
               {
                 path: "export",
                 lazy: async () => {
-                  const loaderModule = await import("./admin/vote/index");
-                  const componentModule = await import("./admin/vote/Export");
+                  const loaderModule = await import(
+                    /* webpackChunkName: "VoteAdmin" */
+                    "./admin/vote/index"
+                  );
+                  const componentModule = await import(
+                    /* webpackChunkName: "Export" */
+                    "./admin/vote/Export"
+                  );
                   return {
                     loader: loaderModule.default.loader,
                     Component: componentModule.default,
@@ -268,7 +361,10 @@ const routes = [
               {
                 path: "results",
                 lazy: async () => {
-                  const module = await import("./admin/vote/Results");
+                  const module = await import(
+                    /* webpackChunkName: "Results" */
+                    "./admin/vote/Results"
+                  );
                   return {
                     loader: module.default.loader,
                     Component: module.default,
@@ -278,7 +374,10 @@ const routes = [
               {
                 path: "add",
                 lazy: async () => {
-                  const module = await import("./admin/vote/Add");
+                  const module = await import(
+                    /* webpackChunkName: "Add" */
+                    "./admin/vote/Add"
+                  );
                   return {
                     loader: module.default.loader,
                     Component: module.default,
