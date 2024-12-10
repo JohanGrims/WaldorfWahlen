@@ -121,18 +121,6 @@ export default function Edit() {
       extraFields: extraFields.length > 0 ? extraFields : [],
     };
 
-    // check if vote has changed
-    // const changes = _.reduce(
-    //   newVote,
-    //   function (result, value, key) {
-    //     if (!_.isEqual(value, vote[key])) {
-    //       result[key] = [vote[key], value];
-    //     }
-    //     return result;
-    //   },
-    //   {}
-    // );
-
     const changes = Object.keys(newVote).reduce((result, key) => {
       if (!deepEqual(newVote[key], vote[key])) {
         result[key] = [vote[key], newVote[key]];
@@ -152,20 +140,6 @@ export default function Edit() {
     }
 
     for (let i = 0; i < options.length; i++) {
-      // const changes = _.reduce(
-      //   options[i],
-      //   function (result, value, key) {
-      //     const loadedOption = loadedOptions.find(
-      //       (opt) => opt.id === options[i].id
-      //     );
-      //     if (!_.isEqual(value, loadedOption[key])) {
-      //       result[key] = [loadedOption[key], value];
-      //     }
-      //     return result;
-      //   },
-      //   {}
-      // );
-
       const changes = Object.keys(options[i]).reduce((result, key) => {
         const loadedOption = loadedOptions.find(
           (opt) => opt.id === options[i].id
@@ -176,12 +150,6 @@ export default function Edit() {
         return result;
       }, {});
 
-      // if (!_.isEmpty(changes)) {
-      //   // log the changes
-      //   console.info("Option has changed", changes);
-
-      //   return false;
-      // }
       if (Object.keys(changes).length > 0) {
         console.info("Option has changed", changes);
         return false;
