@@ -249,7 +249,7 @@ export default function Answers() {
                     <tbody>
                       {answers
                         .filter((answer) => answer.grade === grade)
-                        .sort((a, b) => a.name.localeCompare(b.name))
+                        .sort((a, b) => a.listIndex - b.listIndex)
                         .map((answer, i) => (
                           <tr key={i}>
                             <td>{answer.name}</td>

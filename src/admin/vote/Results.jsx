@@ -91,14 +91,14 @@ export default function Results() {
         name: choice.name,
       });
     });
-    // then sort by name
+
+    //  then sort by listIndex
     Object.keys(resultsByGrade).forEach((grade) => {
       resultsByGrade[grade].sort((a, b) => {
-        return choices
-          .find((choice) => choice.id === a.id)
-          .name.localeCompare(
-            choices.find((choice) => choice.id === b.id).name
-          );
+        return (
+          choices.find((choice) => choice.id === a.id).listIndex -
+          choices.find((choice) => choice.id === b.id).listIndex
+        );
       });
     });
 
