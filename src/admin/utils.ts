@@ -8,9 +8,10 @@ export function generateRandomHash(length = 4) {
   let hash = "";
   const characters =
     "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-
+  const array = new Uint32Array(length);
+  crypto.getRandomValues(array);
   for (let i = 0; i < length; i++) {
-    hash += characters.charAt(Math.floor(Math.random() * characters.length));
+    hash += characters.charAt(array[i] % characters.length);
   }
 
   return hash;
