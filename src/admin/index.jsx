@@ -3,14 +3,14 @@ import React from "react";
 import { Outlet } from "react-router-dom";
 import { auth } from "../firebase";
 
-import "./index.css";
+import "./admin.css";
 
 import { confirm, snackbar } from "mdui";
 import { useNavigate } from "react-router-dom";
 import Login from "./auth/Login";
 import DrawerList from "./navigation/DrawerList";
 
-export default function Admin(props) {
+export default function Admin() {
   const [authUser, setAuthUser] = React.useState(false);
   const [loading, setLoading] = React.useState(true);
 

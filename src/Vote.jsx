@@ -13,7 +13,7 @@ import { db } from "./firebase";
 import moment from "moment-timezone";
 
 import { breakpoint, confirm, snackbar } from "mdui";
-import "./vote.css";
+import { capitalizeWords } from "./admin/utils";
 export default function Vote() {
   const refs = useRef([]);
   const urlParams = new URLSearchParams(window.location.search);
@@ -33,7 +33,6 @@ export default function Vote() {
     description,
   } = vote;
 
-  
   const [firstName, setFirstName] = React.useState();
   const [lastName, setLastName] = React.useState();
   const [grade, setGrade] = React.useState();
@@ -49,19 +48,34 @@ export default function Vote() {
 
   React.useEffect(() => {
     document.title = title;
-
-    if (localStorage.getItem(id) && !urlParams.get("preview")) {
-      if (urlParams.get("allowResubmission")) {
-        navigate(`/x/${id}?allowResubmission=true`);
-        window.location.href = `/x/${id}?allowResubmission=true`;
-        return;
-      }
-      navigate(`/x/${id}`);
-      window.location.href = `/x/${id}`;
-    }
-  }, []);
+  }, [title]);
 
   const preview = urlParams.get("preview");
+
+
+  if (localStorage.getItem(id) && !urlParams.get("preview")) {
+    if (urlParams.get("allowResubmission")) {
+      navigate(`/x/${id}?allowResubmission=true`);
+      return;
+    }
+    navigate(`/x/${id}`);
+  }
+
+  if ((active === false || Date.now() > endTime.seconds * 1000) && !preview) {
+    snackbar({ message: "Die Wahl ist bereits beendet." });
+    navigate(`/r/${id}`);
+  }
+  if (Date.now() < startTime.seconds * 1000 && !preview) {
+    snackbar({
+      message:
+        "Die Wahl startet erst am " +
+        moment
+          .tz(startTime.seconds * 1000, "Europe/Berlin")
+          .format("dddd, D. MMMM YYYY, HH:mm"),
+    });
+    navigate("/");
+  }
+
 
   const submitDisabled = () => {
     if (
@@ -122,39 +136,39 @@ export default function Vote() {
         setSending(false);
         if (error.code === "permission-denied") {
           snackbar({
-            message:
-              "Es ist ein Berechtigungsfehler aufgetreten.",
-              action:"Details",
-              onActionClick: () => {
-                console.error(error);
-                alert(
-                  "Es scheint, als sei die Wahl nicht mehr verfügbar. Bitte versuchen Sie es später erneut.\n"+error
-                )
-              }
-          });
-        } else if (error.message === "Network Error") {
-            snackbar({
-              message:
-                "Es ist ein Netzwerkfehler aufgetreten.",
-              action:"Details",
-              onActionClick: () => {
-                console.error(error);
-                alert(
-                  "Es scheint, als gäbe es ein Problem mit Ihrer Internetverbindung. Bitte überprüfen Sie diese und versuchen Sie es erneut.\n"+error
-                )
-              }
-          });
-        } else {
-          snackbar({
-            message:
-              "Es ist ein Fehler aufgetreten.",
-            action:"Details",
+            message: "Es ist ein Berechtigungsfehler aufgetreten.",
+            action: "Details",
             onActionClick: () => {
               console.error(error);
               alert(
-                "Es ist ein Fehler aufgetreten. Bitte versuchen Sie es später erneut.\n"+error
-              )
-            }
+                "Es scheint, als sei die Wahl nicht mehr verfügbar. Bitte versuchen Sie es später erneut.\n" +
+                  error
+              );
+            },
+          });
+        } else if (error.message === "Network Error") {
+          snackbar({
+            message: "Es ist ein Netzwerkfehler aufgetreten.",
+            action: "Details",
+            onActionClick: () => {
+              console.error(error);
+              alert(
+                "Es scheint, als gäbe es ein Problem mit Ihrer Internetverbindung. Bitte überprüfen Sie diese und versuchen Sie es erneut.\n" +
+                  error
+              );
+            },
+          });
+        } else {
+          snackbar({
+            message: "Es ist ein Fehler aufgetreten.",
+            action: "Details",
+            onActionClick: () => {
+              console.error(error);
+              alert(
+                "Es ist ein Fehler aufgetreten. Bitte versuchen Sie es später erneut.\n" +
+                  error
+              );
+            },
           });
         }
       });
@@ -164,36 +178,6 @@ export default function Vote() {
     const newValues = [...extraFieldsValues];
     newValues[index] = value;
     setExtraFieldsValues(newValues);
-  };
-
-  React.useEffect(() => {
-    if ((active === false || Date.now() > endTime.seconds * 1000) && !preview) {
-      snackbar({ message: "Die Wahl ist bereits beendet." });
-      navigate(`/r/${id}`);
-    }
-    if (Date.now() < startTime.seconds * 1000 && !preview) {
-      snackbar({
-        message:
-          "Die Wahl startet erst am " +
-          moment
-            .tz(startTime.seconds * 1000, "Europe/Berlin")
-            .format("dddd, D. MMMM YYYY, HH:mm"),
-      });
-      navigate("/");
-    }
-  }, []);
-
-  const capitalizeWords = (str) => {
-    return str
-      .replace(/[^a-zA-ZäöüÄÖÜß\s-]/g, "") // Remove non-alphabetic characters except hyphens and umlauts
-      .replace(/\b\w/g, (char, index) => {
-        if (index === 0 || str[index - 1].match(/\s/)) {
-          return char.toUpperCase();
-        } else if (str[index - 1] === "-") {
-          return char.toUpperCase();
-        }
-        return char;
-      }); // Capitalize words correctly
   };
 
   return (
@@ -339,6 +323,7 @@ export default function Vote() {
             <div className="flex-wrap">
               {options.map((e) => (
                 <mdui-card
+                  key={e.id}
                   clickable={
                     selected[index] !== e.id && !selected.includes(e.id)
                   }
