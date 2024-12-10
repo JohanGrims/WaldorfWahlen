@@ -57,9 +57,11 @@ export default function Vote() {
     if (localStorage.getItem(id) && !urlParams.get("preview")) {
       if (urlParams.get("allowResubmission")) {
         navigate(`/x/${id}?allowResubmission=true`);
+        window.location.href = `/x/${id}?allowResubmission=true`;
         return;
       }
       navigate(`/x/${id}`);
+      window.location.href = `/x/${id}`;
     }
 
     if ((active === false || Date.now() > endTime.seconds * 1000) && !preview) {
