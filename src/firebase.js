@@ -2,6 +2,8 @@
 import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
+
+
 const firebaseConfig = {
   apiKey: "AIzaSyDfrC6kukq1s9OifxVJpI72G08KO-hkiEA",
   authDomain: "waldorfwahlen.firebaseapp.com",
@@ -18,3 +20,4 @@ const db = getFirestore(app);
 const auth = getAuth(app);
 
 export { auth, db };
+
