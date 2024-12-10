@@ -449,7 +449,7 @@ button:not(:disabled):hover {
     width: 100%;
     padding: 15px !important;
     margin: 0;
-    min-height: 100vh;
+    min-height: 100dvh;
   }
 
   .option-card {
@@ -478,10 +478,6 @@ button:not(:disabled):hover {
 
   .option {
     flex: 1 1 100%;
-  }
-
-  .flex-row {
-    flex-direction: column;
   }
 
   .column {
