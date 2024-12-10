@@ -7,6 +7,7 @@ import { manualChunksPlugin } from "vite-plugin-webpackchunkname";
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [
+    react(),
     manualChunksPlugin(),
     momentTimezonePlugin({
       zones: ["Europe/Berlin"],
@@ -14,7 +15,6 @@ export default defineConfig({
       endYear: 2050,
     }),
     visualizer({ filename: "dist/stats.html" }),
-    react(),
   ],
   esbuild: { legalComments: "external" },
   server: { watch: { usePolling: true } },
