@@ -264,7 +264,6 @@ export default function Vote() {
           <mdui-text-field
             type="number"
             label="Nummer"
-            prefix="#"
             placeholder="17"
             value={listIndex}
             onInput={(e) => setListIndex(e.target.value)}
@@ -316,7 +315,7 @@ export default function Vote() {
                     backgroundColor:
                       selected[index] !== e.id &&
                       selected.includes(e.id) &&
-                      "rgba(0, 0, 0, 0.5)",
+                      "rgba(0, 0, 0, 0.1)",
                   }}
                   class={`option-card ${
                     selected[index] === e.id ? "selected" : ""
