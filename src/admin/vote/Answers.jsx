@@ -75,9 +75,12 @@ export default function Answers() {
       });
       // write search query to search field
       const searchField = document.querySelector("mdui-text-field");
-      searchField.value = search;
+
+      if (searchField) {
+        searchField.value = search;
+      }
     }
-  }, [search, mode, answers]);
+  }, [search, mode, answers, loading]);
 
   if (loading) {
     return <mdui-linear-progress />;
