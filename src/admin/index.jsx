@@ -1,10 +1,7 @@
-import { onAuthStateChanged } from "firebase/auth";
 import React from "react";
 import { Outlet } from "react-router-dom";
+import { onAuthStateChanged } from "firebase/auth";
 import { auth } from "../firebase";
-
-import "./admin.css";
-
 import { confirm, snackbar } from "mdui";
 import { useNavigate } from "react-router-dom";
 import Login from "./auth/Login";
@@ -13,10 +10,9 @@ import DrawerList from "./navigation/DrawerList";
 export default function Admin() {
   const [authUser, setAuthUser] = React.useState(false);
   const [loading, setLoading] = React.useState(true);
-
   const [open, setOpen] = React.useState(window.innerWidth > 840);
-
   const navigate = useNavigate();
+  const drawerRef = React.useRef(null);
 
   React.useEffect(() => {
     const listen = onAuthStateChanged(auth, (user) => {
@@ -34,6 +30,22 @@ export default function Admin() {
     };
   }, []);
 
+  React.useEffect(() => {
+    const handleOutsideClick = (event) => {
+      if (drawerRef.current && !drawerRef.current.contains(event.target)) {
+        setOpen(false);
+      }
+    };
+
+    if (open && window.innerWidth < 840) {
+      document.addEventListener("mousedown", handleOutsideClick);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleOutsideClick);
+    };
+  }, [open]);
+
   if (loading) {
     return <div />;
   }
@@ -44,7 +56,11 @@ export default function Admin() {
 
   return (
     <mdui-layout style={{ width: "100vw", height: "100vh" }}>
-      {open && <DrawerList />}
+      {open && (
+        <div ref={drawerRef}>
+          <DrawerList />
+        </div>
+      )}
       {open && window.innerWidth < 840 && (
         <div
           style={{
