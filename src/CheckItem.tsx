@@ -6,7 +6,6 @@ import React from "react";
     * @param {string} label - The label of the checkbox
     * @param {boolean} checked - The state of the checkbox
     */
-*/
 export default function CheckItem({
   label,
   checked,
