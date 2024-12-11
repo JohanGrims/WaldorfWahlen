@@ -13,6 +13,7 @@ import { db } from "./firebase";
 import moment from "moment-timezone";
 
 import { breakpoint, confirm, snackbar } from "mdui";
+import { redirect } from "react-router-dom";
 import { capitalizeWords } from "./admin/utils";
 export default function Vote() {
   const refs = useRef([]);
@@ -51,35 +52,6 @@ export default function Vote() {
   }, [title]);
 
   const preview = urlParams.get("preview");
-
-
-  React.useEffect(() => {
-    if (localStorage.getItem(id) && !urlParams.get("preview")) {
-      if (urlParams.get("allowResubmission")) {
-        navigate(`/x/${id}?allowResubmission=true`);
-        window.location.href = `/x/${id}?allowResubmission=true`;
-        return;
-      }
-      navigate(`/x/${id}`);
-      window.location.href = `/x/${id}`;
-    }
-
-    if ((active === false || Date.now() > endTime.seconds * 1000) && !preview) {
-      snackbar({ message: "Die Wahl ist bereits beendet." });
-      navigate(`/r/${id}`);
-    }
-    if (Date.now() < startTime.seconds * 1000 && !preview) {
-      snackbar({
-        message:
-          "Die Wahl startet erst am " +
-          moment
-            .tz(startTime.seconds * 1000, "Europe/Berlin")
-            .format("dddd, D. MMMM YYYY, HH:mm"),
-      });
-      navigate("/");
-    }
-  }, [active, endTime, id, navigate, preview, startTime, urlParams]);
-
 
   const submitDisabled = () => {
     if (
@@ -425,10 +397,10 @@ export default function Vote() {
   );
 }
 
-Vote.loader = async function loader({ params }) {
+Vote.loader = async function loader({ params, request }) {
   const vote = await getDoc(doc(db, `/votes/${params.id}`));
   if (!vote.exists()) {
-    throw new Response("Document not found.", {
+    throw new Response("Wahl nicht gefunden.", {
       status: 404,
       statusText: "Nicht gefunden",
     });
@@ -436,6 +408,43 @@ Vote.loader = async function loader({ params }) {
   const options = await getDocs(collection(db, `/votes/${params.id}/options`));
   const voteData = vote.data();
   const optionsData = options.docs.map((e) => ({ id: e.id, ...e.data() }));
+
+  console.log(request.url.split("/")[3]);
+
+  const type = request.url.split("/")[3];
+
+  if (type === "v") {
+    const preview = new URL(request.url).searchParams.get("preview");
+
+    if (
+      localStorage.getItem(params.id) &&
+      !new URL(request.url).searchParams.get("preview")
+    ) {
+      if (new URL(request.url).searchParams.get("allowResubmission")) {
+        return redirect(`/x/${params.id}?allowResubmission=true`);
+      }
+      return redirect(`/x/${params.id}`);
+    }
+
+    if (
+      (voteData.active === false ||
+        Date.now() > voteData.endTime.seconds * 1000) &&
+      !preview
+    ) {
+      snackbar({ message: "Die Wahl ist bereits beendet." });
+      return redirect(`/r/${params.id}`);
+    }
+    if (Date.now() < voteData.startTime.seconds * 1000 && !preview) {
+      snackbar({
+        message:
+          "Die Wahl startet erst am " +
+          moment
+            .tz(voteData.startTime.seconds * 1000, "Europe/Berlin")
+            .format("dddd, D. MMMM YYYY, HH:mm"),
+      });
+      return redirect(`/s/${params.id}`);
+    }
+  }
 
   return { vote: voteData, options: optionsData };
 };

@@ -1,4 +1,4 @@
-import { doc, getDoc } from "firebase/firestore";
+import { collection, doc, getDoc, getDocs } from "firebase/firestore";
 import React from "react";
 import { useLoaderData, useNavigate, useParams } from "react-router-dom";
 import { db } from "./firebase";
@@ -18,7 +18,7 @@ export default function Result() {
         setVoteResult(doc.data());
       });
     }
-  }, []);
+  }, [id, vote.result]);
 
   if (!result) {
     return (
@@ -32,9 +32,7 @@ export default function Result() {
         </div>
         <p />
         <div className="button-container">
-          <mdui-button onClick={() => navigate("/")} variant="text" icon="home">
-            Startseite
-          </mdui-button>
+          <mdui-button onClick={() => navigate("/")}>Startseite</mdui-button>
           <mdui-button disabled variant="text">
             {JSON.parse(localStorage.getItem(id))?.choiceId}
           </mdui-button>
@@ -55,9 +53,7 @@ export default function Result() {
         </div>
         <p />
         <div className="button-container">
-          <mdui-button onClick={() => navigate("/")} variant="text" icon="home">
-            Startseite
-          </mdui-button>
+          <mdui-button onClick={() => navigate("/")}>Startseite</mdui-button>
         </div>
       </mdui-dialog>
     );
@@ -74,9 +70,7 @@ export default function Result() {
       </div>
       <p />
       <div className="button-container">
-        <mdui-button onClick={() => navigate("/")} variant="text" icon="home">
-          Startseite
-        </mdui-button>
+        <mdui-button onClick={() => navigate("/")}>Startseite</mdui-button>
       </div>
     </mdui-dialog>
   );

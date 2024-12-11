@@ -1,44 +1,8 @@
 import { doc, getDoc } from "firebase/firestore";
 import moment from "moment-timezone";
-import React from "react";
-import { useLoaderData, useNavigate } from "react-router-dom";
+import { redirect } from "react-router-dom";
 import { db } from "./firebase";
 export default function Gateway() {
-  const { voteData } = useLoaderData();
-
-  const navigate = useNavigate();
-
-  React.useEffect(() => {
-    const berlinTime = moment.tz(Date.now(), "Europe/Berlin");
-
-    if (
-      !voteData.active ||
-      berlinTime.isAfter(
-        moment.unix(voteData.endTime.seconds).tz("Europe/Berlin")
-      )
-    ) {
-      navigate(`/r/${voteData.id}`);
-      return;
-    }
-    if (
-      berlinTime.isBefore(
-        moment.unix(voteData.startTime.seconds).tz("Europe/Berlin")
-      )
-    ) {
-      navigate(`/s/${voteData.id}`);
-      return;
-    }
-    if (localStorage.getItem(voteData.id)) {
-      navigate(`/x/${voteData.id}`);
-    }
-    navigate(`/v/${voteData.id}`);
-  }, [
-    navigate,
-    voteData.active,
-    voteData.endTime.seconds,
-    voteData.id,
-    voteData.startTime.seconds,
-  ]);
   return null;
 }
 
@@ -50,7 +14,28 @@ Gateway.loader = async function loader({ params }) {
       statusText: "Wahl nicht gefunden",
     });
   }
+
   const voteData = { id: vote.id, ...vote.data() };
 
-  return { voteData };
+  const berlinTime = moment.tz(Date.now(), "Europe/Berlin");
+
+  if (
+    !voteData.active ||
+    berlinTime.isAfter(
+      moment.unix(voteData.endTime.seconds).tz("Europe/Berlin")
+    )
+  ) {
+    return redirect(`/r/${voteData.id}`);
+  }
+  if (
+    berlinTime.isBefore(
+      moment.unix(voteData.startTime.seconds).tz("Europe/Berlin")
+    )
+  ) {
+    return redirect(`/s/${voteData.id}`);
+  }
+  if (localStorage.getItem(voteData.id)) {
+    return redirect(`/x/${voteData.id}`);
+  }
+  return redirect(`/v/${voteData.id}`);
 };
