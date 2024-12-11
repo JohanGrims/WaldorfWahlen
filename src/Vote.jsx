@@ -234,36 +234,41 @@ export default function Vote() {
           </div>
         )}
         <p />
+        <br />
         <div className="flex-row">
           <mdui-text-field
             label="Vorname(n)"
             placeholder="Max Erika"
             value={firstName}
             onInput={(e) => setFirstName(capitalizeWords(e.target.value))}
+            icon="person"
           ></mdui-text-field>
           <mdui-text-field
             label="Nachname"
             placeholder="Mustermann"
             value={lastName}
             onInput={(e) => setLastName(capitalizeWords(e.target.value))}
+            icon="badge"
           ></mdui-text-field>
         </div>
         <p />
-        <div className="flex-row">
+        <div style={{ display: "flex", gap: "20px" }}>
           <mdui-text-field
             type="number"
             label="Klasse"
             placeholder="11"
             value={grade}
             onInput={(e) => setGrade(e.target.value)}
+            icon="school"
           ></mdui-text-field>
           <mdui-text-field
             type="number"
-            label="Klassenlistennr."
+            label="Nummer"
             prefix="#"
             placeholder="17"
             value={listIndex}
             onInput={(e) => setListIndex(e.target.value)}
+            icon="format_list_numbered"
           ></mdui-text-field>
         </div>
         <p />
@@ -275,6 +280,7 @@ export default function Vote() {
               onInput={(e) =>
                 handleInputChange(i, capitalizeWords(e.target.value))
               }
+              icon="edit"
             ></mdui-text-field>
             <p />
           </div>
