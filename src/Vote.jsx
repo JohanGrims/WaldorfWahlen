@@ -15,6 +15,7 @@ import moment from "moment-timezone";
 import { breakpoint, confirm, snackbar } from "mdui";
 import { redirect } from "react-router-dom";
 import { capitalizeWords } from "./admin/utils";
+import CheckItem from "./CheckItem";
 export default function Vote() {
   const refs = useRef([]);
   const urlParams = new URLSearchParams(window.location.search);
@@ -233,52 +234,53 @@ export default function Vote() {
           </div>
         )}
         <p />
+        <br />
         <div className="flex-row">
           <mdui-text-field
-            required
             label="Vorname(n)"
             placeholder="Max Erika"
             value={firstName}
             onInput={(e) => setFirstName(capitalizeWords(e.target.value))}
+            icon="person"
           ></mdui-text-field>
           <mdui-text-field
-            required
             label="Nachname"
             placeholder="Mustermann"
             value={lastName}
             onInput={(e) => setLastName(capitalizeWords(e.target.value))}
+            icon="badge"
           ></mdui-text-field>
         </div>
         <p />
-        <div className="flex-row">
+        <div style={{ display: "flex", gap: "20px" }}>
           <mdui-text-field
-            required
             type="number"
             label="Klasse"
             placeholder="11"
             value={grade}
             onInput={(e) => setGrade(e.target.value)}
+            icon="school"
           ></mdui-text-field>
           <mdui-text-field
-            required
             type="number"
-            label="Klassenlistennr."
+            label="Nummer"
             prefix="#"
             placeholder="17"
             value={listIndex}
             onInput={(e) => setListIndex(e.target.value)}
+            icon="format_list_numbered"
           ></mdui-text-field>
         </div>
         <p />
         {extraFields?.map((e, i) => (
           <div key={i}>
             <mdui-text-field
-              required
               label={e}
               value={extraFieldsValues[i]}
               onInput={(e) =>
                 handleInputChange(i, capitalizeWords(e.target.value))
               }
+              icon="edit"
             ></mdui-text-field>
             <p />
           </div>
@@ -291,7 +293,10 @@ export default function Vote() {
           <div key={index}>
             <div className="mdui-prosa">
               {selectCount > 1 && (
-                <h2 ref={(el) => (refs.current[index] = el)}>
+                <h2
+                  style={{ textAlign: "center" }}
+                  ref={(el) => (refs.current[index] = el)}
+                >
                   {index + 1}. Wahl
                 </h2>
               )}
@@ -306,8 +311,12 @@ export default function Vote() {
                   style={{
                     cursor:
                       selected[index] !== e.id && selected.includes(e.id)
-                        ? "default"
+                        ? "not-allowed"
                         : "pointer",
+                    backgroundColor:
+                      selected[index] !== e.id &&
+                      selected.includes(e.id) &&
+                      "rgba(0, 0, 0, 0.5)",
                   }}
                   class={`option-card ${
                     selected[index] === e.id ? "selected" : ""
@@ -329,20 +338,37 @@ export default function Vote() {
                       : !selected.includes(e.id) && select(index, e.id);
                   }}
                 >
-                  <b>{e.title}</b>
-                  <div className="teacher">{e.teacher}</div>
-                  <div className="description">{e.description}</div>
-                  <div className="max">max. {e.max} SchülerInnen</div>
+                  <b className="title">
+                    {e.title}
+                    <mdui-badge
+                      style={{
+                        backgroundColor: "transparent",
+                        color: "white",
+                      }}
+                    >
+                      <mdui-icon name="group"></mdui-icon>
+                      {e.max}
+                    </mdui-badge>
+                  </b>
+                  {e.teacher && (
+                    <div className="teacher">
+                      <mdui-icon name="person"></mdui-icon>
+                      {e.teacher}
+                    </div>
+                  )}
+                  {e.description && (
+                    <div className="description">{e.description}</div>
+                  )}
                 </mdui-card>
               ))}
             </div>
+            <p />
+            <mdui-divider></mdui-divider>
           </div>
         ))}
         <p />
         <br />
-        <mdui-divider></mdui-divider>
-        <p />
-        <br />
+
         <div
           className="button-container"
           ref={(el) => (refs.current[selectCount] = el)}
@@ -384,13 +410,52 @@ export default function Vote() {
           )}
           {submitDisabled() ? (
             <mdui-button disabled end-icon="arrow_forward">
-              Weiter
+              Überprüfen
             </mdui-button>
           ) : (
             <mdui-button onClick={confirmSubmit} end-icon="arrow_forward">
-              Weiter
+              Überprüfen
             </mdui-button>
           )}
+        </div>
+        <p />
+        <div
+          className="checks"
+          style={{
+            display: "flex",
+            flexWrap: "wrap",
+            justifyContent: "center",
+          }}
+        >
+          <CheckItem
+            label={"Vorname(n)"}
+            checked={firstName?.trim() && firstName.length >= 2}
+          />
+          <CheckItem
+            label={"Nachname"}
+            checked={lastName?.trim() && lastName.length >= 2}
+          />
+          <div className="break" />
+          <CheckItem label={"Klasse"} checked={grade} />
+          <CheckItem label={"Klassenlistennr."} checked={listIndex} />
+          <div className="break" />
+          {extraFields?.map((e, i) => (
+            <>
+              <CheckItem
+                key={i}
+                label={e}
+                checked={extraFieldsValues[i]?.trim()}
+              />
+              <div className="break" />
+            </>
+          ))}
+          {Array.from({ length: selectCount }).map((e, index) => (
+            <CheckItem
+              key={index}
+              label={`${index + 1}. Wahl`}
+              checked={selected[index] !== "null"}
+            />
+          ))}
         </div>
       </mdui-card>
     </div>
