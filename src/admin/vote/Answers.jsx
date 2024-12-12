@@ -103,19 +103,26 @@ export default function Answers() {
   }, [search, mode, answers, loading, grade, listIndex]);
 
   async function updateAnswer({ id, data }) {
-    await setDoc(doc(db, `/votes/${vote.id}/choices/${id}`), data, {
-      merge: true,
-    }).then(() => {
+    try {
+      await setDoc(doc(db, `/votes/${vote.id}/choices/${id}`), data, {
+        merge: true,
+      });
       snackbar({
         message: "Antwort erfolgreich aktualisiert.",
         timeout: 5000,
       });
       // update the answers
       const newAnswers = answers.map((answer) =>
-        answer.id === id ? { id, ...data } : answer
+        answer.id === id ? { ...answer, ...data } : answer
       );
       setAnswers(newAnswers);
-    });
+    } catch (error) {
+      snackbar({
+        message: "Fehler beim Aktualisieren der Antwort.",
+        timeout: 5000,
+      });
+      console.error(error);
+    }
   }
 
   if (loading) {
