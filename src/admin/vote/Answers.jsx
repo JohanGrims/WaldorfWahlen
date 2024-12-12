@@ -5,8 +5,9 @@ import {
   getDoc,
   getDocs,
   onSnapshot,
+  setDoc,
 } from "firebase/firestore";
-import { confirm, snackbar } from "mdui";
+import { confirm, prompt, snackbar } from "mdui";
 import React from "react";
 import { useLoaderData, useNavigate } from "react-router-dom";
 import { db } from "../../firebase";
@@ -16,9 +17,14 @@ export default function Answers() {
 
   const [loading, setLoading] = React.useState(true);
 
-  const search = new URLSearchParams(window.location.search).get("search");
+  const searchParams = new URLSearchParams(window.location.search);
+  const search = searchParams.get("search");
+  const grade = searchParams.get("grade");
+  const listIndex = searchParams.get("listIndex");
 
-  const [mode, setMode] = React.useState(search ? "by-name" : "by-option");
+  const [mode, setMode] = React.useState(
+    search || grade || listIndex ? "by-name" : "by-option"
+  );
   const [answers, setAnswers] = React.useState([]);
 
   const grades = [...new Set(answers.map((answer) => answer.grade))];
@@ -80,7 +86,43 @@ export default function Answers() {
         searchField.value = search;
       }
     }
-  }, [search, mode, answers, loading]);
+    if (grade && listIndex && mode === "by-name") {
+      const elements = document.querySelectorAll("tbody tr");
+      elements.forEach((element) => {
+        const gradeCell = element.querySelector("td:nth-child(2)").textContent;
+        const listIndexCell =
+          element.querySelector("td:nth-child(3)").textContent;
+        if (gradeCell == grade && listIndexCell == listIndex) {
+          element.style.display = "";
+        } else {
+          element.style.display = "none";
+        }
+      });
+    }
+  }, [search, mode, answers, loading, grade, listIndex]);
+
+  async function updateAnswer({ id, data }) {
+    try {
+      await setDoc(doc(db, `/votes/${vote.id}/choices/${id}`), data, {
+        merge: true,
+      });
+      snackbar({
+        message: "Antwort erfolgreich aktualisiert.",
+        timeout: 5000,
+      });
+      // update the answers
+      const newAnswers = answers.map((answer) =>
+        answer.id === id ? { ...answer, ...data } : answer
+      );
+      setAnswers(newAnswers);
+    } catch (error) {
+      snackbar({
+        message: "Fehler beim Aktualisieren der Antwort.",
+        timeout: 5000,
+      });
+      console.error(error);
+    }
+  }
 
   if (loading) {
     return <mdui-linear-progress />;
@@ -118,6 +160,9 @@ export default function Answers() {
         </mdui-radio>
         <mdui-radio value="by-name" onClick={() => setMode("by-name")}>
           Nach Name
+        </mdui-radio>
+        <mdui-radio value="by-date" onClick={() => setMode("by-date")}>
+          Nach Datum
         </mdui-radio>
       </mdui-radio-group>
       <br />
@@ -255,7 +300,17 @@ export default function Answers() {
                         .sort((a, b) => a.listIndex - b.listIndex)
                         .map((answer, i) => (
                           <tr key={i}>
-                            <td>{answer.name}</td>
+                            <td>
+                              <a
+                                style={{ cursor: "pointer" }}
+                                onClick={() => {
+                                  setMode("by-name");
+                                  navigate(`.?search=${answer.id}`);
+                                }}
+                              >
+                                {answer.name}
+                              </a>
+                            </td>
                             <td>{answer.listIndex}</td>
                             {answer.selected.map((selected, i) => (
                               <td key={i}>
@@ -305,6 +360,14 @@ export default function Answers() {
               navigate(`.?search=${e.target.value}`);
             }}
           ></mdui-text-field>
+          {grade && listIndex && (
+            <>
+              <p />
+              <mdui-chip selectable selected disabled>
+                {`Klasse ${grade}, #${listIndex}`}
+              </mdui-chip>
+            </>
+          )}
           <div className="mdui-table" style={{ width: "100%" }}>
             <table style={{ overflowX: "hidden" }}>
               <thead>
@@ -329,7 +392,7 @@ export default function Answers() {
                     </th>
                   ))}
                   <th>
-                    <b>ID</b>
+                    <b>Antwort-Id</b>
                   </th>
                   <th></th>
                 </tr>
@@ -357,24 +420,140 @@ export default function Answers() {
                       <td
                         style={{
                           cursor: "pointer",
-                          color: "rgb(255, 100, 100)",
+                          color: "rgb(var(--mdui-color-tertiary-dark))",
+                        }}
+                        onClick={() => {
+                          let data = JSON.stringify(answer, null, 2);
+                          prompt({
+                            placeholder: "JSON-2Daten",
+                            confirmText: "Speichern",
+                            cancelText: "Abbrechen",
+                            headline: "Antwort bearbeiten",
+                            description:
+                              "Beachten Sie: bei fehlerhaften Daten kann diese Antwort unbrauchbar werden. Stellen Sie vor dem Speichern sicher, dass die Daten korrekt sind.",
+                            onConfirm: (value) => {
+                              try {
+                                const data = JSON.parse(value);
+                                console.log(data);
+                                updateAnswer({ id: answer.id, data });
+                              } catch (error) {
+                                snackbar("Ungültige JSON-Daten.");
+                              }
+                            },
+                            textFieldOptions: {
+                              value: data,
+                              oninput: (e) => {
+                                data = e.target.value;
+                              },
+                              autosize: true,
+                              rows: 5,
+                            },
+                            validator: (value) => {
+                              try {
+                                JSON.parse(value);
+                                return true;
+                              } catch (error) {
+                                return false;
+                              }
+                            },
+                          });
+                        }}
+                      >
+                        Bearbeiten
+                      </td>
+                      <td
+                        style={{
+                          cursor: "pointer",
+                          color: "rgb(var(--mdui-color-primary-dark))",
                         }}
                         onClick={() => {
                           confirm({
                             headline: "Löschen",
                             description:
                               "Sind Sie sicher, dass Sie diese Antwort löschen möchten?",
-                          }).then(() => {
-                            // Löschen
-                            deleteDoc(
-                              doc(db, `/votes/${vote.id}/choices/${answer.id}`)
-                            ).then(() => {
-                              window.location.reload();
-                            });
+                            confirmText: "Löschen",
+                            cancelText: "Abbrechen",
+                            onConfirm: () => {
+                              deleteDoc(
+                                doc(
+                                  db,
+                                  `/votes/${vote.id}/choices/${answer.id}`
+                                )
+                              ).then(() => {
+                                snackbar({
+                                  message: "Antwort erfolgreich gelöscht.",
+                                  timeout: 5000,
+                                });
+                                window.location.reload();
+                              });
+                            },
                           });
                         }}
                       >
                         Löschen
+                      </td>
+                    </tr>
+                  ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {mode === "by-date" && (
+        <div style={{ padding: "10px" }}>
+          <div className="mdui-prose">
+            Hinweis: Als Datenschutzmaßnahme wird die Uhrzeit vorerst nicht
+            angezeigt. Die Antworten sind nach der Uhrzeit sortiert. Erst beim
+            Klicken auf das Datum wird die Uhrzeit sichtbar. Diese Ansicht kann
+            Ihnen helfen, sich einen Überblick über die letzten Antworten zu
+            verschaffen.
+          </div>
+          <div className="mdui-table" style={{ width: "100%" }}>
+            <table>
+              <thead>
+                <tr>
+                  <th>
+                    <b>Name</b>
+                  </th>
+                  <th>
+                    <b>Klasse</b>
+                  </th>
+                  <th>
+                    <b>Datum</b>
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {answers
+                  .sort((a, b) => b.timestamp.seconds - a.timestamp.seconds)
+                  .map((answer, i) => (
+                    <tr key={answer.id}>
+                      <td>
+                        <a
+                          style={{ cursor: "pointer" }}
+                          onClick={() => {
+                            setMode("by-name");
+                            navigate(`.?search=${answer.id}`);
+                          }}
+                        >
+                          {answer.name}
+                        </a>
+                      </td>
+                      <td>{answer.grade}</td>
+                      <td>
+                        <mdui-tooltip
+                          content={new Date(
+                            answer.timestamp.seconds * 1000
+                          ).toLocaleString("de-DE")}
+                          trigger="click"
+                        >
+                          <span>
+                            {new Date(
+                              answer.timestamp.seconds * 1000
+                            ).toLocaleDateString("de-DE")}
+                          </span>
+                        </mdui-tooltip>
                       </td>
                     </tr>
                   ))}

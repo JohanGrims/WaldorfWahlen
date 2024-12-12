@@ -54,14 +54,7 @@ export default function Match() {
                           <td>{s.listIndex}</td>
                           <td>
                             <Link
-                              to={`../answers?search=${
-                                choices.filter(
-                                  (choice) =>
-                                    choice.listIndex ===
-                                      s.listIndex.toString() &&
-                                    choice.grade === c.grade.toString()
-                                )[0]?.id
-                              }`}
+                              to={`../answers?grade=${c.grade}&listIndex=${s.listIndex}`}
                             >
                               {
                                 choices.filter(
@@ -71,21 +64,21 @@ export default function Match() {
                                     choice.grade === c.grade.toString()
                                 )[0]?.name
                               }
+                              {choices.filter(
+                                (choice) =>
+                                  choice.listIndex === s.listIndex.toString() &&
+                                  choice.grade === c.grade.toString()
+                              ).length > 1 &&
+                                " + " +
+                                  (choices.filter(
+                                    (choice) =>
+                                      choice.listIndex ===
+                                        s.listIndex.toString() &&
+                                      choice.grade === c.grade.toString()
+                                  ).length -
+                                    1) +
+                                  " weitere"}
                             </Link>
-                            {choices.filter(
-                              (choice) =>
-                                choice.listIndex === s.listIndex.toString() &&
-                                choice.grade === c.grade.toString()
-                            ).length > 1 &&
-                              " + " +
-                                (choices.filter(
-                                  (choice) =>
-                                    choice.listIndex ===
-                                      s.listIndex.toString() &&
-                                    choice.grade === c.grade.toString()
-                                ).length -
-                                  1) +
-                                " weitere"}{" "}
                             {choices.filter(
                               (choice) =>
                                 choice.listIndex === s.listIndex.toString() &&
