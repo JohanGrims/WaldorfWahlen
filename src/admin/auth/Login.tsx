@@ -29,11 +29,7 @@ export default function Login() {
     signInWithEmailAndPassword(auth, email, password)
       .then((userCredential) => {
         const user = userCredential.user;
-        snackbar({
-          message: `Willkommen, ${user.email}`,
-          closeable: true,
-        });
-        setLoading(false);
+        window.location.reload();
       })
       .catch((error) => {
         console.error(error);
