@@ -17,11 +17,10 @@ export default function Answers() {
 
   const [loading, setLoading] = React.useState(true);
 
-  const search = new URLSearchParams(window.location.search).get("search");
-  const grade = new URLSearchParams(window.location.search).get("grade");
-  const listIndex = new URLSearchParams(window.location.search).get(
-    "listIndex"
-  );
+  const searchParams = new URLSearchParams(window.location.search);
+  const search = searchParams.get("search");
+  const grade = searchParams.get("grade");
+  const listIndex = searchParams.get("listIndex");
 
   const [mode, setMode] = React.useState(
     search || grade || listIndex ? "by-name" : "by-option"
