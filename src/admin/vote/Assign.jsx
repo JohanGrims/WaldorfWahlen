@@ -11,6 +11,8 @@ export default function Assign() {
   const [loading, setLoading] = React.useState(false);
   const [mode, setMode] = React.useState("by-option");
 
+  const [search, setSearch] = React.useState("");
+
   const [rules, setRules] = React.useState([
     {
       apply: "*",
@@ -26,6 +28,12 @@ export default function Assign() {
       newResults[result.id] = result.result;
     });
 
+    // assign other results to first choice
+    choices.forEach((choice) => {
+      if (!newResults[choice.id]) {
+        newResults[choice.id] = choice.selected[0];
+      }
+    });
     setResults(newResults);
   }
 
@@ -412,6 +420,61 @@ export default function Assign() {
     snackbar({ message: "Ergebnisse gespeichert." });
   }
 
+  const filteredResults = () => {
+    if (mode === "power-search") {
+      return sortedResults.filter(([key]) => {
+        const choice = choices.find((choice) => choice.id === key);
+        const searchTerms = search.split(",");
+        return searchTerms.every((term) => {
+          const orTerms = term.split("|");
+          return orTerms.some((orTerm) => {
+            const isNegative = orTerm.startsWith("!");
+            const [key, value] = isNegative
+              ? orTerm.slice(1).split("=")
+              : orTerm.split("=");
+            if (value) {
+              if (key === "name") {
+                return isNegative
+                  ? !choice.name.toLowerCase().includes(value.toLowerCase())
+                  : choice.name.toLowerCase().includes(value.toLowerCase());
+              }
+              if (key === "grade") {
+                return isNegative
+                  ? choice.grade !== value
+                  : choice.grade === value;
+              }
+              if (key === "assignedTo") {
+                return isNegative
+                  ? results[choice.id] !== value
+                  : results[choice.id] === value;
+              }
+              if (key === "choice") {
+                return isNegative
+                  ? results[choice.id] !== choice.selected[parseInt(value) - 1]
+                  : results[choice.id] === choice.selected[parseInt(value) - 1];
+              }
+              if (key === "selected") {
+                return isNegative
+                  ? !choice.selected.includes(value)
+                  : choice.selected.includes(value);
+              }
+              if (key.startsWith("selected[")) {
+                const index = parseInt(key.match(/\d+/)?.[0]) - 1;
+                if (isNaN(index)) return false;
+                if (!choice.selected[index]) return false;
+                return isNegative
+                  ? choice.selected[index] !== value
+                  : choice.selected[index] === value;
+              }
+            }
+            return false;
+          });
+        });
+      });
+    }
+    return sortedResults;
+  };
+
   return (
     <div className="mdui-prose">
       <div
@@ -446,19 +509,31 @@ export default function Assign() {
         </div>
       </div>
       <p />
-      Hier sind die optimierten Zuordnungen der Schüler zu den Projekten.
+      {mode !== "power-search" && (
+        <>
+          Insgesamt wurden {Object.keys(results).length} Schüler zugeordnet.
+          Davon haben:{" "}
+          {Object.entries(wahlenCounts).map(([wahl, count]) => (
+            <>
+              <i>{count}</i> Schüler die{" "}
+              {wahl === "1"
+                ? "Erstwahlen, "
+                : `${wahl}. Wahlen${
+                    wahl === vote.selectCount.toString() ? "." : ","
+                  } `}
+            </>
+          ))}
+        </>
+      )}
       <p />
-      Insgesamt wurden {Object.keys(results).length} Schüler zugeordnet. Davon
-      haben:
-      <ul>
-        {Object.entries(wahlenCounts).map(([wahl, count]) => (
-          <li key={wahl}>
-            {count} Schüler die{" "}
-            {wahl === "1" ? "Erstwahlen" : `${wahl}. Wahlen`}
-          </li>
-        ))}
-      </ul>
       <mdui-radio-group value={mode}>
+        <mdui-radio
+          value="power-search"
+          onClick={() => setMode("power-search")}
+          unchecked-icon="query_stats"
+        >
+          Power-Search <mdui-icon name="beta"></mdui-icon>
+        </mdui-radio>
         <mdui-radio value="by-option" onClick={() => setMode("by-option")}>
           Nach Projekt
         </mdui-radio>
@@ -469,7 +544,208 @@ export default function Assign() {
           Nach Name
         </mdui-radio>
       </mdui-radio-group>
-      <p />
+      {mode === "power-search" && (
+        <div>
+          <div className="mdui-prose">
+            Durchsuchen Sie die Ergebnisse mit folgenden Operatoren:
+            <ul>
+              <li>
+                <code>name=Johan</code>: Schüler deren Name Johan enthält
+              </li>
+              <li>
+                <code>grade=12</code>: Schüler der 12. Klasse
+              </li>
+              <li>
+                <code>assignedTo=abc</code>: Schüler die zu dem Projekt mit der
+                ID abc zugewiesen sind
+              </li>
+              <li>
+                <code>choice=2</code>: Schüler die zu ihrer Zweitwahl zugewiesen
+                sind
+              </li>
+              <li>
+                <code>selected=abc</code>: Schüler die das Projekt mit der ID
+                abc gewählt haben
+              </li>
+              <li>
+                <code>selected[1]=abc</code>: Schüler die das Projekt mit der ID
+                abc als Erstwahl gewählt haben
+              </li>
+            </ul>
+            <p />
+            Kombinieren Sie beliegbig viele Operatoren mit einem Komma:{" "}
+            <code>
+              name=Johan,grade=12,assignedTo=xyz,choice=2,selected=abc
+            </code>
+            <br />
+            Schreiben Sie ein logisches Oder mit einem Pipe:{" "}
+            <code>name=Johan|name=Max,grade=12</code>
+            <br />
+            Nutzen Sie ein ! um die Bedingung zu negieren:{" "}
+            <code>!grade=12</code>
+          </div>
+          <p />
+          <mdui-collapse>
+            <mdui-collapse-item>
+              <mdui-list-item slot="header" icon="preview">
+                Projekte anzeigen
+              </mdui-list-item>
+              <div className="mdui-table">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>
+                        <b>Projekt</b>
+                      </th>
+                      <th>
+                        <b>Maximalanzahl</b>
+                      </th>
+                      <th>
+                        <b>Belegte Plätze</b>
+                      </th>
+                      <th>
+                        <b>ID</b>
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {options.map((option, i) => (
+                      <tr key={i}>
+                        <td>{option.title}</td>
+                        <td>{option.max}</td>
+                        <td>
+                          {
+                            sortedResults.filter(
+                              ([, value]) => value === option.id
+                            ).length
+                          }
+                        </td>
+                        <td>{option.id}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </mdui-collapse-item>
+          </mdui-collapse>
+          <p />
+          <div
+            className="flex-row"
+            style={{ gap: "10px", alignItems: "center" }}
+          >
+            <mdui-text-field
+              label="Power-Search"
+              clearable
+              placeholder="name=Johan,grade=12"
+              onInput={(e) => {
+                setSearch(e.target.value);
+              }}
+              value={search}
+            ></mdui-text-field>
+            <mdui-tooltip
+              variant="rich"
+              headline="Zufallswahl"
+              content="Es wird ein zufälliger Schüler nach den Bedingungen ausgewählt."
+            >
+              <mdui-button-icon
+                onClick={() => {
+                  const filtered = filteredResults();
+                  const randomIndex = Math.floor(Math.random() * filtered.length);
+
+                  const element = document.querySelector(
+                    `#power-search tr:nth-child(${
+                      randomIndex + 1
+                    })`
+                  );
+                    
+                  console.log(element);
+                  element.scrollIntoView({
+                    behavior: "smooth",
+                  });
+                  element.style.backgroundColor =
+                    "rgb(var(--mdui-color-tertiary-container-dark))";
+                  setTimeout(() => {
+                    element.style.backgroundColor = "";
+                  }, 5000);
+                }}
+                icon="casino--outlined"
+              ></mdui-button-icon>
+            </mdui-tooltip>
+          </div>
+          <div className="mdui-table">
+            <table>
+              <thead>
+                <tr>
+                  <th>
+                    <b>Name</b>
+                  </th>
+                  <th>
+                    <b>Klasse</b>
+                  </th>
+                  <th>
+                    <b>#</b>
+                  </th>
+                  {Array.from(
+                    { length: vote.selectCount },
+                    (_, i) => i + 1
+                  ).map((i) => (
+                    <th key={i}>
+                      <b>Wahl {i}</b>
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody id="power-search">
+                {filteredResults().map(([key, value]) => (
+                  <tr key={key}>
+                    <td>{choices.find((choice) => choice.id === key).name}</td>
+                    <td>{choices.find((choice) => choice.id === key).grade}</td>
+                    <td>
+                      {choices.find((choice) => choice.id === key).listIndex}
+                    </td>
+                    {choices
+                      .find((choice) => choice.id === key)
+                      .selected.map((selected, i) => (
+                        <td
+                          key={i}
+                          style={{
+                            cursor: selected !== value && "pointer",
+                            textDecoration: selected !== value && "underline",
+                            color: selected !== value && "rgb(27, 68, 133)",
+                          }}
+                          onClick={() => {
+                            if (selected === value) return;
+                            const newResults = { ...results };
+                            newResults[key] = selected;
+                            setResults(newResults);
+                            const previousResults = { ...results };
+                            snackbar({
+                              message: "Änderung rückgängig machen",
+                              action: "Rückgängig",
+                              onActionClick: () => setResults(previousResults),
+                            });
+                          }}
+                        >
+                          {selected === value && `✓ `}
+                          {`${
+                            options.find((option) => option.id === selected)
+                              .title
+                          } (${
+                            sortedResults.filter(
+                              ([, value]) => value === selected
+                            ).length
+                          }/${
+                            options.find((option) => option.id === selected).max
+                          })`}
+                        </td>
+                      ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
       {mode === "by-option" && (
         <mdui-tabs
           style={{ width: "100%", overflowX: "auto" }}
