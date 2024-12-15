@@ -28,6 +28,12 @@ export default function Assign() {
       newResults[result.id] = result.result;
     });
 
+    // assign other results to first choice
+    choices.forEach((choice) => {
+      if (!newResults[choice.id]) {
+        newResults[choice.id] = choice.selected[0];
+      }
+    });
     setResults(newResults);
   }
 
