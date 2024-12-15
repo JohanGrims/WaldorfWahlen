@@ -546,49 +546,61 @@ export default function Assign() {
       </mdui-radio-group>
       {mode === "power-search" && (
         <div>
-          <div className="mdui-prose">
-            Durchsuchen Sie die Ergebnisse mit folgenden Operatoren:
-            <ul>
-              <li>
-                <code>name=Johan</code>: Schüler deren Name Johan enthält
-              </li>
-              <li>
-                <code>grade=12</code>: Schüler der 12. Klasse
-              </li>
-              <li>
-                <code>assignedTo=abc</code>: Schüler die zu dem Projekt mit der
-                ID abc zugewiesen sind
-              </li>
-              <li>
-                <code>choice=2</code>: Schüler die zu ihrer Zweitwahl zugewiesen
-                sind
-              </li>
-              <li>
-                <code>selected=abc</code>: Schüler die das Projekt mit der ID
-                abc gewählt haben
-              </li>
-              <li>
-                <code>selected[1]=abc</code>: Schüler die das Projekt mit der ID
-                abc als Erstwahl gewählt haben
-              </li>
-            </ul>
-            <p />
-            Kombinieren Sie beliegbig viele Operatoren mit einem Komma:{" "}
-            <code>
-              name=Johan,grade=12,assignedTo=xyz,choice=2,selected=abc
-            </code>
-            <br />
-            Schreiben Sie ein logisches Oder mit einem Pipe:{" "}
-            <code>name=Johan|name=Max,grade=12</code>
-            <br />
-            Nutzen Sie ein ! um die Bedingung zu negieren:{" "}
-            <code>!grade=12</code>
-          </div>
-          <p />
           <mdui-collapse>
-            <mdui-collapse-item>
-              <mdui-list-item slot="header" icon="preview">
+            <mdui-collapse-item value="info">
+              <mdui-list-item rounded slot="header" icon="info">
+                Informationen
+                <mdui-icon
+                  slot="end-icon"
+                  name="keyboard_arrow_down"
+                ></mdui-icon>
+              </mdui-list-item>
+              <div className="mdui-prose">
+                Durchsuchen Sie die Ergebnisse mit folgenden Operatoren:
+                <ul>
+                  <li>
+                    <code>name=Johan</code>: Schüler deren Name Johan enthält
+                  </li>
+                  <li>
+                    <code>grade=12</code>: Schüler der 12. Klasse
+                  </li>
+                  <li>
+                    <code>assignedTo=abc</code>: Schüler die zu dem Projekt mit
+                    der ID abc zugewiesen sind
+                  </li>
+                  <li>
+                    <code>choice=2</code>: Schüler die zu ihrer Zweitwahl
+                    zugewiesen sind
+                  </li>
+                  <li>
+                    <code>selected=abc</code>: Schüler die das Projekt mit der
+                    ID abc gewählt haben
+                  </li>
+                  <li>
+                    <code>selected[1]=abc</code>: Schüler die das Projekt mit
+                    der ID abc als Erstwahl gewählt haben
+                  </li>
+                </ul>
+                <p />
+                Kombinieren Sie beliegbig viele Operatoren mit einem Komma:{" "}
+                <code>
+                  name=Johan,grade=12,assignedTo=xyz,choice=2,selected=abc
+                </code>
+                <br />
+                Schreiben Sie ein logisches Oder mit einem Pipe:{" "}
+                <code>name=Johan|name=Max,grade=12</code>
+                <br />
+                Nutzen Sie ein ! um die Bedingung zu negieren:{" "}
+                <code>!grade=12</code>
+              </div>
+            </mdui-collapse-item>
+            <mdui-collapse-item value="results">
+              <mdui-list-item rounded slot="header" icon="preview">
                 Projekte anzeigen
+                <mdui-icon
+                  slot="end-icon"
+                  name="keyboard_arrow_down"
+                ></mdui-icon>
               </mdui-list-item>
               <div className="mdui-table">
                 <table>
@@ -650,14 +662,14 @@ export default function Assign() {
               <mdui-button-icon
                 onClick={() => {
                   const filtered = filteredResults();
-                  const randomIndex = Math.floor(Math.random() * filtered.length);
+                  const randomIndex = Math.floor(
+                    Math.random() * filtered.length
+                  );
 
                   const element = document.querySelector(
-                    `#power-search tr:nth-child(${
-                      randomIndex + 1
-                    })`
+                    `#power-search tr:nth-child(${randomIndex + 1})`
                   );
-                    
+
                   console.log(element);
                   element.scrollIntoView({
                     behavior: "smooth",
