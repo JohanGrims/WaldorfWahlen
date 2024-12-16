@@ -508,7 +508,7 @@ Results.loader =  async function loader({ params }) {
   const options = (
     await getDocs(collection(db, `/votes/${id}/options`))
   ).docs.map((doc) => {
-    return { id: doc.id, ...doc.data() };
+    return { id, ...doc.data() };
   });
 
   const results = (
