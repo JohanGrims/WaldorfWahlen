@@ -503,7 +503,8 @@ export default function Results() {
 
 Results.loader =  async function loader({ params }) {
   const { id } = params;
-  const vote = (await getDoc(doc(db, `/votes/${id}`))).data();
+  const vote = await getDoc(doc(db, `/votes/${id}`));
+  const voteData = { id: vote.id, ...vote.data() };
   const options = (
     await getDocs(collection(db, `/votes/${id}/options`))
   ).docs.map((doc) => {
@@ -523,7 +524,7 @@ Results.loader =  async function loader({ params }) {
   });
 
   return {
-    vote,
+    vote: voteData,
     options,
     results,
     choices,

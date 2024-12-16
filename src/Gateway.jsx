@@ -7,7 +7,8 @@ export default function Gateway() {
 }
 
 Gateway.loader = async function loader({ params }) {
-  const vote = await getDoc(doc(db, `/votes/${params.id}`));
+  const { id } = params;
+  const vote = await getDoc(doc(db, `/votes/${id}`));
   if (!vote.exists()) {
     new Response("Not Found", {
       status: 404,
@@ -25,17 +26,17 @@ Gateway.loader = async function loader({ params }) {
       moment.unix(voteData.endTime.seconds).tz("Europe/Berlin")
     )
   ) {
-    return redirect(`/r/${voteData.id}`);
+    return redirect(`/r/${id}`);
   }
   if (
     berlinTime.isBefore(
       moment.unix(voteData.startTime.seconds).tz("Europe/Berlin")
     )
   ) {
-    return redirect(`/s/${voteData.id}`);
+    return redirect(`/s/${id}`);
   }
-  if (localStorage.getItem(voteData.id)) {
-    return redirect(`/x/${voteData.id}`);
+  if (localStorage.getItem(id)) {
+    return redirect(`/x/${id}`);
   }
-  return redirect(`/v/${voteData.id}`);
+  return redirect(`/v/${id}`);
 };
