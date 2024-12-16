@@ -15,6 +15,8 @@ import { db } from "../../firebase";
 export default function Answers() {
   const { vote, options } = useLoaderData();
 
+  console.log(vote);
+
   const [loading, setLoading] = React.useState(true);
 
   const searchParams = new URLSearchParams(window.location.search);
@@ -43,6 +45,8 @@ export default function Answers() {
           ...doc.data(),
         }));
         setAnswers(answerData);
+        console.log(answerData);
+        console.log(vote.id);
         setLoading(false);
 
         if (!isFirstLoad) {
@@ -569,14 +573,11 @@ export default function Answers() {
 Answers.loader = async function loader({ params }) {
   const { id } = params;
   const vote = await getDoc(doc(db, `/votes/${id}`));
-  const voteData = vote.data();
+  const voteData = { id, ...vote.data() };
   const options = await getDocs(collection(db, `/votes/${id}/options`));
   const optionData = options.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-  // const answers = await getDocs(collection(db, `/votes/${id}/choices`));
-  // const answerData = answers.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
   return {
     vote: voteData,
     options: optionData,
-    // answers: answerData,
   };
-}
+};
