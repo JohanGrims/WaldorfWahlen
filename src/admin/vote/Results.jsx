@@ -224,7 +224,6 @@ export default function Results() {
                         options.find((option) => option.id === result.result)
                           ?.title
                       }
-                      {result.result}
                     </td>
                   </tr>
                 ))}
