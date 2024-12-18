@@ -59,30 +59,28 @@ export default function Match() {
                               {
                                 choices.filter(
                                   (choice) =>
-                                    choice.listIndex ===
-                                      s.listIndex.toString() &&
-                                    choice.grade === c.grade.toString()
+                                    choice.listIndex == s.listIndex &&
+                                    choice.grade == c.grade
                                 )[0]?.name
                               }
                               {choices.filter(
                                 (choice) =>
-                                  choice.listIndex === s.listIndex.toString() &&
-                                  choice.grade === c.grade.toString()
+                                  choice.listIndex == s.listIndex &&
+                                  choice.grade == c.grade
                               ).length > 1 &&
                                 " + " +
                                   (choices.filter(
                                     (choice) =>
-                                      choice.listIndex ===
-                                        s.listIndex.toString() &&
-                                      choice.grade === c.grade.toString()
+                                      choice.listIndex == s.listIndex &&
+                                      choice.grade == c.grade
                                   ).length -
                                     1) +
                                   " weitere"}
                             </Link>
                             {choices.filter(
                               (choice) =>
-                                choice.listIndex === s.listIndex.toString() &&
-                                choice.grade === c.grade.toString()
+                                choice.listIndex == s.listIndex &&
+                                choice.grade == c.grade
                             ).length < 1 && (
                               <Link
                                 to={`../add?name=${s.name}&grade=${c.grade}&listIndex=${s.listIndex}`}
