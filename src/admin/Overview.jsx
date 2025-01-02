@@ -52,7 +52,7 @@ export default function Overview() {
                 gap: "10px",
               }}
             >
-              <h2>Downloads</h2>
+              <h2>Exportieren</h2>
               <mdui-icon name="downloading"></mdui-icon>
             </div>
             Wählen mehrere Sie Wahlen aus, deren Ergebnisse Sie in verschiedenen
