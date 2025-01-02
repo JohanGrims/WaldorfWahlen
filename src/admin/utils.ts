@@ -69,3 +69,47 @@ export const capitalizeWords = (str: string): string => {
       return char;
     }); // Capitalize words correctly
 };
+
+
+
+/**
+ * Sorts a list of votes based on a search query and date range.
+ *
+ * This function filters the list of votes based on a search query and date range,
+ * and then sorts the remaining votes by their start time in descending order.
+ *
+ * @param {Array} votes - The list of votes to be sorted.
+ * @param {string} search - The search query to filter the votes by.
+ * @param {string} fromDate - The start date of the date range to filter the votes by.
+ * @param {string} toDate - The end date of the date range to filter the votes by.
+ * @returns {Array} The sorted list of votes that match the search query and date range.
+ */
+export function sortVotes(
+  votes: any[],
+  search: string,
+  fromDate: string,
+  toDate: string
+) {
+  return votes
+    .filter((vote: any) => {
+      return (
+        vote.title.toLowerCase().includes(search.toLowerCase()) ||
+        vote.description?.toLowerCase().includes(search.toLowerCase())
+      );
+    })
+    .filter((vote: any) => {
+      return (
+        new Date(vote.startTime.seconds * 1000).toISOString().split("T")[0] >=
+        fromDate
+      );
+    })
+    .filter((vote: any) => {
+      return (
+        new Date(vote.startTime.seconds * 1000).toISOString().split("T")[0] <=
+        toDate
+      );
+    })
+    .sort((a, b) => {
+      return b.startTime.seconds - a.startTime.seconds;
+    });
+}

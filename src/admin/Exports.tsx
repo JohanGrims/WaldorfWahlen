@@ -1,12 +1,10 @@
 import { useLoaderData } from "react-router-dom";
 import React from "react";
-import { collection, doc, getDoc, getDocs } from "firebase/firestore";
+import { collection, getDocs } from "firebase/firestore";
 import { db } from "../firebase";
 
-import * as XLSX from "xlsx";
-import JSZip from "jszip";
-import saveAs from "file-saver";
-import { Choice, Option, Vote } from "../types";
+import { sortVotes } from "./utils";
+import { handleDownload } from "./download";
 
 export default function Exports() {
   const { votes } = useLoaderData() as { votes: any };
@@ -22,7 +20,9 @@ export default function Exports() {
 
   const [step, setStep] = React.useState("select");
 
-  const [fileFormat, setFileFormat] = React.useState<"excel" | "json">("excel");
+  const [fileFormat, setFileFormat] = React.useState<
+    "excel" | "json" | "students"
+  >("excel");
 
   const [config, setConfig] = React.useState<{
     files: "single" | "multiple";
@@ -42,28 +42,7 @@ export default function Exports() {
     state: "idle",
   });
 
-  const filteredVotes = votes
-    .filter((vote: any) => {
-      return (
-        vote.title.toLowerCase().includes(search.toLowerCase()) ||
-        vote.description?.toLowerCase().includes(search.toLowerCase())
-      );
-    })
-    .filter((vote: any) => {
-      return (
-        new Date(vote.startTime.seconds * 1000).toISOString().split("T")[0] >=
-        fromDate
-      );
-    })
-    .filter((vote: any) => {
-      return (
-        new Date(vote.startTime.seconds * 1000).toISOString().split("T")[0] <=
-        toDate
-      );
-    })
-    .sort((a, b) => {
-      return b.startTime.seconds - a.startTime.seconds;
-    });
+  const filteredVotes = sortVotes(votes, search, fromDate, toDate);
 
   const selectAll = () => {
     if (selected.length === filteredVotes.length) {
@@ -74,318 +53,15 @@ export default function Exports() {
   };
 
   React.useEffect(() => {
-    const download = async () => {
-      let data = [] as {
-        options: Option[];
-        choices: Choice[];
-        results: any[];
-        id: string;
-        selectCount: number;
-        title: string;
-        extraFields: any[];
-        active: boolean;
-      }[];
-
-      for (let i = 0; i < selected.length; i++) {
-        const id = selected[i];
-
-        setDownloadState({
-          index: i + 1,
-          total: selected.length,
-          state: "fetching",
-        });
-        console.log(
-          `Fetching data for vote ${id}`,
-          i,
-          selected.length,
-          new Date().toISOString()
-        );
-
-        const vote = await getDoc(doc(db, `votes/${id}`));
-        const voteData = { id: vote.id, ...vote.data() };
-        const options = await getDocs(collection(db, `votes/${id}/options`));
-        const optionsData = options.docs.map((doc) => {
-          return { id: doc.id, ...doc.data() };
-        });
-        const choices = await getDocs(collection(db, `votes/${id}/choices`));
-        const choicesData = choices.docs.map((doc) => {
-          return { id: doc.id, ...doc.data() };
-        });
-        const results = await getDocs(collection(db, `votes/${id}/results`));
-        const resultsData = results.docs.map((doc) => {
-          return { id: doc.id, ...doc.data() };
-        });
-
-        data.push({
-          options: optionsData as Option[],
-          choices: choicesData as Choice[],
-          results: resultsData as any[],
-          ...(voteData as Vote),
-        });
-      }
-
-      if (fileFormat === "excel") {
-        if (config.files === "multiple") {
-          const zip = new JSZip();
-          setDownloadState({
-            state: "writing",
-          });
-          data.forEach((e) => {
-            // Create workbook
-            const workbook = XLSX.utils.book_new();
-
-            console.log(e);
-
-            // Create options worksheet
-            const options = e.options.map((option) => {
-              return [
-                ...(config.references === "id" || config.references === "both"
-                  ? [option.id]
-                  : []),
-
-                option.title,
-                option.teacher,
-                option.max,
-                option.description,
-              ];
-            });
-            const optionsWorksheet = XLSX.utils.aoa_to_sheet([
-              config.headers
-                ? [
-                    ...(config.references === "id" ||
-                    config.references === "both"
-                      ? ["#"]
-                      : []),
-                    "Titel",
-                    "Lehrer",
-                    "Maximale Anzahl",
-                    "Beschreibung",
-                  ]
-                : [],
-              ...options,
-            ]);
-            XLSX.utils.book_append_sheet(
-              workbook,
-              optionsWorksheet,
-              "Optionen"
-            );
-
-            // Create choices worksheet
-            const choices = e.choices.map((choice) => {
-              return [
-                ...(config.references === "id" || config.references === "both"
-                  ? [choice.id]
-                  : []),
-                choice.name,
-                choice.grade,
-                ...(config.references === "id" || config.references === "both"
-                  ? [...choice.selected]
-                  : []),
-                ...(config.references === "both" ||
-                config.references === "inline"
-                  ? [
-                      ...choice.selected.map(
-                        (id) =>
-                          e.options.find((option) => option.id === id)?.title
-                      ),
-                    ]
-                  : []),
-                ...choice.extraFields,
-                Number(choice.listIndex),
-              ];
-            });
-            const choicesWorksheet = XLSX.utils.aoa_to_sheet([
-              config.headers
-                ? [
-                    ...(config.references === "id" ||
-                    config.references === "both"
-                      ? ["#"]
-                      : []),
-                    "Name",
-                    "Klasse",
-                    ...(config.references === "id" ||
-                    config.references === "both"
-                      ? Array.from({ length: e.selectCount }).map(
-                          (_, i) => `Wahl # ${i + 1}`
-                        )
-                      : []),
-                    ...(config.references === "both" ||
-                    config.references === "inline"
-                      ? Array.from({ length: e.selectCount }).map(
-                          (_, i) => `Wahl ${i + 1}`
-                        )
-                      : []),
-                    ...(e.extraFields ?? []).map((field: any) => field),
-                    "Liste",
-                  ]
-                : [],
-              ...choices,
-            ]);
-            XLSX.utils.book_append_sheet(workbook, choicesWorksheet, "Wahlen");
-
-            // Create results worksheet
-            const results = e.results.map((result: any) => {
-              if (config.references === "id") {
-                return [result.id, result.result];
-              } else if (config.references === "inline") {
-                return [
-                  e.choices.find((choice) => choice.id === result.id)?.name,
-                  e.options.find((option) => option.id === result.result)
-                    ?.title,
-                ];
-              }
-              return [
-                result.id,
-                e.choices.find((choice) => choice.id === result.id)?.name,
-                result.result,
-                e.options.find((option) => option.id === result.result)?.title,
-              ];
-            });
-            const resultsWorksheet = XLSX.utils.aoa_to_sheet([
-              config.headers
-                ? [
-                    ...(config.references === "id"
-                      ? ["# Name", "# Ergebnis"]
-                      : []),
-                    ...(config.references === "inline"
-                      ? ["Name", "Ergebnis"]
-                      : []),
-                    ...(config.references === "both"
-                      ? ["# Name", "Name", "# Ergebnis", "Ergebnis"]
-                      : []),
-                  ]
-                : [],
-              ...results,
-            ]);
-            XLSX.utils.book_append_sheet(
-              workbook,
-              resultsWorksheet,
-              "Ergebnisse"
-            );
-
-            // Write workbook to binary string
-            const fileContent = XLSX.write(workbook, {
-              bookType: "xlsx",
-              type: "binary",
-            });
-
-            // Add to ZIP
-            console.log(e.title);
-            zip.file(
-              `${e.title.replace(/[^a-z0-9]/gi, "_") || "Wahl"}.xlsx`,
-              fileContent,
-              { binary: true }
-            );
-          });
-          const zipBlob = await zip.generateAsync({ type: "blob" });
-          saveAs(zipBlob, "download.zip");
-
-          setDownloadState({
-            state: "idle",
-          });
-          setSelected([]);
-          setStep("select");
-        } else {
-          setDownloadState({
-            state: "writing",
-          });
-          // Create workbook
-          const workbook = XLSX.utils.book_new();
-
-          // Create new sheet for every vote & only show results
-          data.forEach((e) => {
-            const results = e.results.map((result: any) => {
-              return [
-                ...(config.references === "id" || config.references === "both" // ID
-                  ? [result.id]
-                  : []),
-                ...(config.references === "inline" ||
-                config.references === "both" // Name
-                  ? [e.choices.find((choice) => choice.id === result.id)?.name]
-                  : []),
-                ...(config.references === "id" || config.references === "both" // Result ID
-                  ? [result.result]
-                  : []),
-                ...(config.references === "inline" ||
-                config.references === "both" // Result Name
-                  ? [
-                      e.options.find((option) => option.id === result.result)
-                        ?.title,
-                    ]
-                  : []),
-              ];
-            });
-            const resultsWorksheet = XLSX.utils.aoa_to_sheet([
-              config.headers
-                ? [
-                    ...(config.references === "id" ||
-                    config.references === "both"
-                      ? ["#"]
-                      : []),
-                    ...(config.references === "inline" ||
-                    config.references === "both"
-                      ? ["Name"]
-                      : []),
-                    ...(config.references === "id" ||
-                    config.references === "both"
-                      ? ["#"]
-                      : []),
-                    ...(config.references === "inline" ||
-                    config.references === "both"
-                      ? ["Name"]
-                      : []),
-                  ]
-                : [],
-              ...results,
-            ]);
-            XLSX.utils.book_append_sheet(
-              workbook,
-              resultsWorksheet,
-              e.title.replace(/[^a-z0-9]/gi, "_") || "Wahl"
-            );
-          });
-          const excelBuffer = XLSX.write(workbook, {
-            bookType: "xlsx",
-            type: "array",
-          });
-          const blob = new Blob([excelBuffer], {
-            type: "application/octet-stream",
-          });
-          saveAs(blob, `download.xlsx`);
-
-          setDownloadState({
-            state: "idle",
-          });
-          setSelected([]);
-          setStep("select");
-        }
-      }
-
-      if (fileFormat === "json") {
-        const zip = new JSZip();
-        setDownloadState({
-          state: "writing",
-        });
-        data.forEach((e) => {
-          zip.file(
-            `${e.title.replace(/[^a-z0-9]/gi, "_") || "Wahl"}.json`,
-            JSON.stringify(e),
-            { binary: false }
-          );
-        });
-        const zipBlob = await zip.generateAsync({ type: "blob" });
-        saveAs(zipBlob, "download.zip");
-
-        setDownloadState({
-          state: "idle",
-        });
-        setSelected([]);
-        setStep("select");
-      }
-    };
-
     if (step === "download") {
-      download();
+      handleDownload(
+        selected,
+        config,
+        fileFormat,
+        setDownloadState,
+        setSelected,
+        setStep
+      );
     }
   }, [step]);
 
@@ -535,6 +211,18 @@ export default function Exports() {
               </p>
             </div>
           </mdui-tab>
+          <mdui-tab
+            value={"students"}
+            onClick={() => setFileFormat("students")}
+          >
+            <div>
+              <h3>SchülerInnen</h3>
+              <p>
+                Erstellen Sie eine Übersicht für die ausgewählten Daten zu den
+                SchülerInnen.
+              </p>
+            </div>
+          </mdui-tab>
 
           <mdui-tab-panel slot="panel" value="excel">
             <br />
@@ -622,7 +310,68 @@ export default function Exports() {
             <br />
           </mdui-tab-panel>
 
-          <mdui-tab-panel slot="panel" value="json"></mdui-tab-panel>
+          <mdui-tab-panel slot="panel" value="json">
+            <br />
+            <b>Es sind keine Einstellungen möglich.</b>
+            <p />
+            JSON (JavaScript Object Notation) ist ein einfaches Datenformat, das
+            für den Datenaustausch zwischen Anwendungen verwendet wird. Es ist
+            einfach zu lesen und zu schreiben und basiert auf einer Untergruppe
+            der JavaScript-Programmiersprache.
+          </mdui-tab-panel>
+
+          <mdui-tab-panel slot="panel" value="students">
+            <br />
+            <b>
+              <i>
+                Diese Funktion ist noch nicht vorhanden. Wenn Sie fortfahren,
+                wird noch nichts passieren.
+              </i>
+            </b>
+            <p />
+            <b>Es sind keine Einstellungen möglich.</b>
+            <p />
+            Diese Funktion gibt für jede/n SchülerIn eine Übersicht über die
+            Ergebnisse aus. Das Format ist eine Excel Datei (.xlsx) mit
+            folgendem Format: <br />
+            <table className="mdui-table">
+              <thead>
+                <tr>
+                  <th>
+                    <b>Name</b>
+                  </th>
+                  <th>
+                    <b>Klasse</b>
+                  </th>
+                  <th>
+                    <b>#</b>
+                  </th>
+                  <th>
+                    <b>Wahl ABC</b>
+                  </th>
+                  <th>
+                    <b>Wahl XYZ</b>
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Max Mustermann</td>
+                  <td>11</td>
+                  <td>1</td>
+                  <td>Option X</td>
+                  <td>Option Y</td>
+                </tr>
+                <tr>
+                  <td>Erika Musterfrau</td>
+                  <td>11</td>
+                  <td>4</td>
+                  <td>Option A</td>
+                  <td>Option Z</td>
+                </tr>
+              </tbody>
+            </table>
+          </mdui-tab-panel>
         </mdui-tabs>
 
         <div
