@@ -8,9 +8,10 @@ pnpm-debug.log*
 lerna-debug.log*
 
 node_modules
+node_modules_old
 dist
 dist-ssr
-*.local
+*.local 
 pnpm-lock.yaml
 
 # Editor directories and files

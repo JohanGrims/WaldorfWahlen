@@ -6,7 +6,6 @@ import "./styles.css";
 import "mdui";
 import { setColorScheme, setTheme } from "mdui";
 import "mdui/mdui.css";
-
 setColorScheme("#f89e24");
 setTheme(localStorage.getItem("theme") || "dark");
 
@@ -152,6 +151,19 @@ const routes = [
                   const module = await import(
                     /* webpackChunkName: "Students" */
                     "./admin/Students"
+                  );
+                  return {
+                    loader: module.default.loader,
+                    Component: module.default,
+                  };
+                },
+              },
+              {
+                path: "exports",
+                lazy: async () => {
+                  const module = await import(
+                    /* webpackChunkName: "Exports" */
+                    "./admin/Exports"
                   );
                   return {
                     loader: module.default.loader,
@@ -342,23 +354,6 @@ const routes = [
                       return {
                         loader: module.default.loader,
                         Component: module.default,
-                      };
-                    },
-                  },
-                  {
-                    path: "export",
-                    lazy: async () => {
-                      const loaderModule = await import(
-                        /* webpackChunkName: "VoteAdmin" */
-                        "./admin/vote/index"
-                      );
-                      const componentModule = await import(
-                        /* webpackChunkName: "Export" */
-                        "./admin/vote/Export"
-                      );
-                      return {
-                        loader: loaderModule.default.loader,
-                        Component: componentModule.default,
                       };
                     },
                   },

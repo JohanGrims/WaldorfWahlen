@@ -72,12 +72,12 @@ export default function AdminVote() {
           variant="filled"
           style={{ padding: "20px", flex: 1 }}
           clickable
-          onClick={() => navigate(`/admin/${vote.id}/export`)}
+          onClick={() => navigate(`/admin/${vote.id}/add`)}
         >
-          <h3>Export</h3>
+          <h3>Hinzufügen</h3>
           <p>
             <span style={{ fontSize: "50px" }}>
-              <mdui-icon name="upgrade" style={{ fontSize: "50px" }} />
+              <mdui-icon name="add" style={{ fontSize: "50px" }} />
             </span>
           </p>
         </mdui-card>

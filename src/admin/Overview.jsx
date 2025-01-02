@@ -10,30 +10,56 @@ export default function Overview() {
   return (
     <div className="mdui-prose">
       <h2>Übersicht</h2>
-      <mdui-card
-        variant="outlined"
-        style={{ width: "100%", padding: "20px" }}
-        clickable
-        onClick={() => navigate("/admin/students/new-class")}
-      >
-        <div
-          className="mdui-prose"
-          style={{ width: "100%", userSelect: "none" }}
+      <div className="flex-gap">
+        <mdui-card
+          variant="outlined"
+          style={{ width: "100%", padding: "20px" }}
+          clickable
+          onClick={() => navigate("/admin/students/new-class")}
         >
           <div
-            style={{
-              display: "flex",
-              textWrap: "nowrap",
-              gap: "10px",
-            }}
+            className="mdui-prose"
+            style={{ width: "100%", userSelect: "none" }}
           >
-            <h2>SchülerInnen</h2>
-            <mdui-icon name="groups"></mdui-icon>
+            <div
+              style={{
+                display: "flex",
+                textWrap: "nowrap",
+                gap: "10px",
+              }}
+            >
+              <h2>SchülerInnen</h2>
+              <mdui-icon name="groups"></mdui-icon>
+            </div>
+            Verwalten Sie die Datenbank der SchülerInnen, fügen Sie neue
+            SchülerInnen hinzu und bearbeiten Sie bestehende Klassenlisten.
           </div>
-          Verwalten Sie die Datenbank der SchülerInnen, fügen Sie neue
-          SchülerInnen hinzu und bearbeiten Sie bestehende Klassenlisten.
-        </div>
-      </mdui-card>
+        </mdui-card>
+        <mdui-card
+          variant="outlined"
+          style={{ width: "100%", padding: "20px" }}
+          clickable
+          onClick={() => navigate("/admin/exports")}
+        >
+          <div
+            className="mdui-prose"
+            style={{ width: "100%", userSelect: "none" }}
+          >
+            <div
+              style={{
+                display: "flex",
+                textWrap: "nowrap",
+                gap: "10px",
+              }}
+            >
+              <h2>Exportieren</h2>
+              <mdui-icon name="downloading"></mdui-icon>
+            </div>
+            Wählen mehrere Sie Wahlen aus, deren Ergebnisse Sie in verschiedenen
+            Formaten herunterladen können.
+          </div>
+        </mdui-card>
+      </div>
       <p />
       <br />
       <div
