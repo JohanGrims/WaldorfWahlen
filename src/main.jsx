@@ -358,23 +358,6 @@ const routes = [
                     },
                   },
                   {
-                    path: "export",
-                    lazy: async () => {
-                      const loaderModule = await import(
-                        /* webpackChunkName: "VoteAdmin" */
-                        "./admin/vote/index"
-                      );
-                      const componentModule = await import(
-                        /* webpackChunkName: "Export" */
-                        "./admin/vote/Export"
-                      );
-                      return {
-                        loader: loaderModule.default.loader,
-                        Component: componentModule.default,
-                      };
-                    },
-                  },
-                  {
                     path: "results",
                     lazy: async () => {
                       const module = await import(

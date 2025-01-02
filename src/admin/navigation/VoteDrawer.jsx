@@ -167,13 +167,6 @@ export default function VoteDrawer({}) {
           active={active === "share"}
           onCLick={() => navigate(`/admin/${id}/share`)}
         />
-
-        <DrawerItem
-          icon="upgrade"
-          title="Exportieren"
-          active={active === "export"}
-          onCLick={() => navigate(`/admin/${id}/export`)}
-        />
         <DrawerItem
           icon={"delete"}
           title={"Löschen"}
