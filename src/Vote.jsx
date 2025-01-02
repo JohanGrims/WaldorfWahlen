@@ -473,8 +473,6 @@ Vote.loader = async function loader({ params, request }) {
   const voteData = vote.data();
   const optionsData = options.docs.map((e) => ({ id: e.id, ...e.data() }));
 
-  console.log(request.url.split("/")[3]);
-
   const type = request.url.split("/")[3];
 
   if (type === "v") {

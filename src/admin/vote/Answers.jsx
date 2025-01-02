@@ -15,8 +15,6 @@ import { db } from "../../firebase";
 export default function Answers() {
   const { vote, options } = useLoaderData();
 
-  console.log(vote);
-
   const [loading, setLoading] = React.useState(true);
 
   const searchParams = new URLSearchParams(window.location.search);
@@ -45,8 +43,6 @@ export default function Answers() {
           ...doc.data(),
         }));
         setAnswers(answerData);
-        console.log(answerData);
-        console.log(vote.id);
         setLoading(false);
 
         if (!isFirstLoad) {
@@ -438,7 +434,6 @@ export default function Answers() {
                             onConfirm: (value) => {
                               try {
                                 const data = JSON.parse(value);
-                                console.log(data);
                                 updateAnswer({ id: answer.id, data });
                               } catch (error) {
                                 snackbar("Ungültige JSON-Daten.");

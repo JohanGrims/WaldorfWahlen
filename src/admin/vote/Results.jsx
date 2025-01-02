@@ -503,16 +503,13 @@ export default function Results() {
 
 Results.loader = async function loader({ params }) {
   const { id } = params;
-  console.log(id);
   const vote = await getDoc(doc(db, `/votes/${id}`));
   const voteData = { id, ...vote.data() };
-  console.log(voteData);
   const options = (
     await getDocs(collection(db, `/votes/${id}/options`))
   ).docs.map((doc) => {
     return { id: doc.id, ...doc.data() };
   });
-  console.log(options);
 
   const results = (
     await getDocs(collection(db, `/votes/${id}/results`))

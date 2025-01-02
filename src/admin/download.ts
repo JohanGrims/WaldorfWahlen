@@ -45,12 +45,6 @@ export async function handleDownload(
       total: selected.length,
       state: "fetching",
     });
-    console.log(
-      `Fetching data for vote ${id}`,
-      i,
-      selected.length,
-      new Date().toISOString()
-    );
 
     const vote = await getDoc(doc(db, `votes/${id}`));
     const voteData = { id: vote.id, ...vote.data() };

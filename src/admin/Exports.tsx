@@ -216,7 +216,9 @@ export default function Exports() {
             onClick={() => setFileFormat("students")}
           >
             <div>
-              <h3>SchülerInnen</h3>
+              <h3>
+                SchülerInnen<mdui-badge>beta</mdui-badge>
+              </h3>
               <p>
                 Erstellen Sie eine Übersicht für die ausgewählten Daten zu den
                 SchülerInnen.
@@ -322,13 +324,6 @@ export default function Exports() {
 
           <mdui-tab-panel slot="panel" value="students">
             <br />
-            <b>
-              <i>
-                Diese Funktion ist noch nicht vorhanden. Wenn Sie fortfahren,
-                wird noch nichts passieren.
-              </i>
-            </b>
-            <p />
             <b>Es sind keine Einstellungen möglich.</b>
             <p />
             Diese Funktion gibt für jede/n SchülerIn eine Übersicht über die

@@ -670,7 +670,6 @@ export default function Assign() {
                     `#power-search tr:nth-child(${randomIndex + 1})`
                   );
 
-                  console.log(element);
                   element.scrollIntoView({
                     behavior: "smooth",
                   });
