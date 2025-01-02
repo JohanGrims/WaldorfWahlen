@@ -13,7 +13,6 @@ import { db } from "../firebase";
 import { Class, Student } from "../types";
 
 import * as XLSX from "xlsx";
-
 export default function Students() {
   const { classes } = useLoaderData() as { classes: Class[] };
 

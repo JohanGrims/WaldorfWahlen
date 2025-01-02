@@ -5,8 +5,9 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { db } from "../../firebase";
 import { DrawerItem } from "./components";
 import VoteDrawer from "./VoteDrawer";
+import routes from "./routes.json";
 
-let pages = [undefined, "new", "settings", "students", "help", "changelog"];
+let pages = [undefined, ...routes];
 
 export default function DrawerList() {
   const [activeVotes, setActiveVotes] = React.useState([]);
@@ -241,15 +242,31 @@ export default function DrawerList() {
         <br />
         <mdui-divider />
         <br />
-        <DrawerItem
-          active={active === "students"}
-          title={"SchülerInnen"}
-          icon={"groups"}
-          onCLick={() => navigate("/admin/students/new-class")}
-        />
-
+        <mdui-tooltip
+          variant="rich"
+          headline="Exportieren"
+          content="Exportieren Sie die Ergebnisse der Wahlen."
+        >
+          <DrawerItem
+            active={active === "exports"}
+            title={"Exportieren"}
+            icon={"downloading"}
+            onCLick={() => navigate("/admin/exports")}
+          />
+        </mdui-tooltip>
+        <mdui-tooltip
+          variant="rich"
+          headline="Klassen"
+          content="Verwalten Sie die Klassen und SchülerInnen."
+        >
+          <DrawerItem
+            active={active === "students"}
+            title={"SchülerInnen"}
+            icon={"groups"}
+            onCLick={() => navigate("/admin/students/new-class")}
+          />
+        </mdui-tooltip>
         <br />
-
         <mdui-divider />
         <br />
         <mdui-tooltip

@@ -233,13 +233,13 @@ export default function Results() {
           <div className="print-table">
             <h2>{vote.title}</h2>
             <table>
-              <>
+              <thead>
                 <tr>
                   <th>Klasse</th>
                   <th>Name</th>
                   <th>Projekt</th>
                 </tr>
-              </>
+              </thead>
               <tbody>
                 {filteredResults().map((result) => (
                   <tr key={result.id}>
@@ -258,7 +258,7 @@ export default function Results() {
                   </tr>
                 ))}
               </tbody>
-              <>
+              <tfoot>
                 <tr>
                   <td colSpan="3">
                     <i>
@@ -267,7 +267,7 @@ export default function Results() {
                     </i>
                   </td>
                 </tr>
-              </>
+              </tfoot>
             </table>
           </div>
         </>
@@ -341,12 +341,12 @@ export default function Results() {
               <div key={option.id}>
                 <h3>{option.title}</h3>
                 <table>
-                  <>
+                  <thead>
                     <tr>
                       <th>Name</th>
                       <th>Klasse</th>
                     </tr>
-                  </>
+                  </thead>
                   <tbody>
                     {filteredResults()
                       .filter((result) => result.result === option.id)
@@ -374,12 +374,12 @@ export default function Results() {
                 </table>
               </div>
             ))}
-            <>
+            <tfoot>
               <p>
                 Generiert am {new Date().toLocaleDateString()} von{" "}
                 {auth.currentUser.email} mit WaldorfWahlen
               </p>
-            </>
+            </tfoot>
           </div>
         </>
       )}
@@ -457,12 +457,12 @@ export default function Results() {
               <div key={grade}>
                 <h3>Klasse {grade}</h3>
                 <table>
-                  <>
+                  <thead>
                     <tr>
                       <th>Name</th>
                       <th>Projekt</th>
                     </tr>
-                  </>
+                  </thead>
                   <tbody>
                     {filteredResults()
                       .filter((result) => result.grade === grade)
@@ -488,12 +488,12 @@ export default function Results() {
                 <br />
               </div>
             ))}
-            <>
+            <tfoot>
               <p>
                 Generiert am {new Date().toLocaleDateString()} von{" "}
                 {auth.currentUser.email} mit WaldorfWahlen
               </p>
-            </>
+            </tfoot>
           </div>
         </>
       )}
