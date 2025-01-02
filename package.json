@@ -14,6 +14,7 @@
     "crypto-js": "^4.2.0",
     "file-saver": "^2.0.5",
     "firebase": "^10.7.1",
+    "jszip": "^3.10.1",
     "mathjs": "^12.2.1",
     "mdui": "^2.1.2",
     "moment-timezone": "^0.5.45",

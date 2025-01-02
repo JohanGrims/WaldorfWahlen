@@ -10,6 +10,7 @@ import { saveAs } from "file-saver";
 export default function Exports() {
   const { votes } = useLoaderData() as { votes: any };
 
+  const [filter, setFilter] = React.useState(false);
   const [search, setSearch] = React.useState("");
   const [fromDate, setFromDate] = React.useState("");
   const [toDate, setToDate] = React.useState(
@@ -19,6 +20,20 @@ export default function Exports() {
   const [selected, setSelected] = React.useState<any[]>([]);
 
   const [step, setStep] = React.useState("select");
+
+  const [fileFormat, setFileFormat] = React.useState<"excel" | "pdf" | "json">(
+    "excel"
+  );
+
+  const [config, setConfig] = React.useState<{
+    files: "single" | "multiple";
+    headers: boolean;
+    references: "id" | "inline" | "both";
+  }>({
+    files: "multiple",
+    headers: true,
+    references: "inline",
+  });
 
   const filteredVotes = votes
     .filter((vote: any) => {
@@ -65,18 +80,34 @@ export default function Exports() {
             icon="checklist"
             onClick={selectAll}
           ></mdui-button-icon>
-          <mdui-dropdown>
-            <mdui-button icon="filter_list" variant="tonal" slot="trigger">
-              Filter
-            </mdui-button>
-            <mdui-card
-              style={{
-                padding: "1em",
-                display: "flex",
-                flexDirection: "column",
-                gap: "1em",
-              }}
+          <mdui-button
+            onClick={() => setFilter(!filter)}
+            icon="filter_list"
+            variant="tonal"
+          >
+            Filter
+          </mdui-button>
+
+          <div style={{ flex: 1 }}></div>
+          <span>{selected.length} ausgewählt</span>
+          {selected.length > 0 ? (
+            <mdui-button
+              variant="outlined"
+              icon="arrow_forward"
+              onClick={() => setStep("file")}
             >
+              Fortfahren
+            </mdui-button>
+          ) : (
+            <mdui-button variant="outlined" icon="arrow_forward" disabled>
+              Fortfahren
+            </mdui-button>
+          )}
+        </div>
+        {filter && (
+          <>
+            <br />
+            <div style={{ display: "flex", gap: "1em" }}>
               <mdui-text-field
                 label="Suche"
                 variant="outlined"
@@ -110,25 +141,10 @@ export default function Exports() {
                 }
                 clearable
               />
-            </mdui-card>
-          </mdui-dropdown>
+            </div>
+          </>
+        )}
 
-          <div style={{ flex: 1 }}></div>
-          <span>{selected.length} ausgewählt</span>
-          {selected.length > 0 ? (
-            <mdui-button
-              variant="outlined"
-              icon="arrow_forward"
-              onClick={() => setStep("file")}
-            >
-              Fortfahren
-            </mdui-button>
-          ) : (
-            <mdui-button variant="outlined" icon="arrow_forward" disabled>
-              Fortfahren
-            </mdui-button>
-          )}
-        </div>
         <br />
         <mdui-divider />
         <br />
@@ -213,8 +229,104 @@ export default function Exports() {
   if (step === "file") {
     return (
       <div className="mdui-prose">
-        <h2>Einstellungen</h2>
+        <div
+          className="flex-gap"
+          style={{ marginBottom: "30px", alignItems: "center" }}
+        >
+          <mdui-button-icon
+            icon="arrow_back"
+            onClick={() => setStep("select")}
+          ></mdui-button-icon>
+          <h2 style={{ margin: 0 }}>Einstellungen</h2>
+        </div>
+        <mdui-tabs value={fileFormat}>
+          <mdui-tab value="excel" onClick={() => setFileFormat("excel")}>
+            <div>
+              <h3>XLSX</h3>
+              <p>
+                Speichern Sie die ausgewählten Daten in einer oder mehreren
+                Microsoft Excel Dateien.
+              </p>
+            </div>
+          </mdui-tab>
+          <mdui-tab value={"pdf"} onClick={() => setFileFormat("pdf")}>
+            <div>
+              <h3>PDF</h3>
+              <p>
+                Archivieren Sie die ausgewählten Daten als ausdruckbare PDF
+                Datei zur Weitergabe.
+              </p>
+            </div>
+          </mdui-tab>
+          <mdui-tab value={"json"} onClick={() => setFileFormat("json")}>
+            <div>
+              <h3>JSON</h3>
+              <p>
+                Exportieren Sie die ausgewählten Daten als JSON Datei zur
+                Weiterverarbeitung.
+              </p>
+            </div>
+          </mdui-tab>
+
+          <mdui-tab-panel slot="panel" value="excel">
+            <mdui-switch
+              checked={config.headers}
+              onInput={(e: any) =>
+                setConfig({ ...config, headers: e.target.checked })
+              }
+            />
+            <span>Header</span>
+
+            <mdui-switch
+              checked={config.files === "single"}
+              onInput={(e: any) =>
+                setConfig({
+                  ...config,
+                  files: e.target.checked ? "single" : "multiple",
+                })
+              }
+            />
+            <span>Single File</span>
+
+            <mdui-switch
+              checked={config.references === "id"}
+              onInput={(e: any) =>
+                setConfig({
+                  ...config,
+                  references: e.target.checked ? "id" : "inline",
+                })
+              }
+            />
+            <span>References</span>
+
+            <br />
+          </mdui-tab-panel>
+          <mdui-tab-panel slot="panel" value="pdf">
+            <mdui-switch
+              checked={config.headers}
+              onInput={(e: any) =>
+                setConfig({ ...config, headers: e.target.checked })
+              }
+            />
+            <span>Header</span>
+            <br />
+          </mdui-tab-panel>
+
+          <mdui-tab-panel slot="panel" value="json">
+            <mdui-switch
+              checked={config.headers}
+              onInput={(e: any) =>
+                setConfig({ ...config, headers: e.target.checked })
+              }
+            />
+            <span>Header</span>
+            <br />
+          </mdui-tab-panel>
+        </mdui-tabs>
+        <p />
         <mdui-button onClick={handleDownload}>Test</mdui-button>
+
+        {JSON.stringify(config)}
       </div>
     );
   }
