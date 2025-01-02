@@ -5,6 +5,7 @@ import { db } from "../firebase";
 
 import { sortVotes } from "./utils";
 import { handleDownload } from "./download";
+import CodeBlock from "./JSON";
 
 export default function Exports() {
   const { votes } = useLoaderData() as { votes: any };
@@ -206,7 +207,7 @@ export default function Exports() {
             <div>
               <h3>JSON</h3>
               <p>
-                Exportieren Sie die ausgewählten Daten als JSON Datei zur
+                Exportieren Sie die ausgewählten Daten als JSON Dateien zur
                 Weiterverarbeitung.
               </p>
             </div>
@@ -319,7 +320,9 @@ export default function Exports() {
             JSON (JavaScript Object Notation) ist ein einfaches Datenformat, das
             für den Datenaustausch zwischen Anwendungen verwendet wird. Es ist
             einfach zu lesen und zu schreiben und basiert auf einer Untergruppe
-            der JavaScript-Programmiersprache.
+            der JavaScript-Programmiersprache. Das Format ist folgendermaßen:
+            <CodeBlock />
+            <p />
           </mdui-tab-panel>
 
           <mdui-tab-panel slot="panel" value="students">
