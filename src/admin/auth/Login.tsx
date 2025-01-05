@@ -101,11 +101,7 @@ export default function Login() {
   };
 
   return (
-    <mdui-card
-      variant="filled"
-      className="card"
-      style={{ position: "absolute" }}
-    >
+    <mdui-card variant="filled" class="card" style={{ position: "absolute" }}>
       {loading && (
         <mdui-linear-progress
           style={{
