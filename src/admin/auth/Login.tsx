@@ -33,10 +33,30 @@ export default function Login() {
       })
       .catch((error) => {
         console.error(error);
-        snackbar({
-          message: error.message,
-        });
         setLoading(false);
+        if (error.code === "auth/invalid-credential") {
+          snackbar({
+            message: "Entweder Email oder Passwort ist falsch.",
+          });
+          return;
+        }
+        if (error.code === "auth/too-many-requests") {
+          snackbar({
+            message: "Zu viele Anfragen. Bitte versuchen Sie es später erneut.",
+          });
+          return;
+        }
+        if (error.code === "auth/invalid-email") {
+          snackbar({
+            message: "Ungültige Email-Adresse.",
+          });
+          return;
+        }
+
+        snackbar({
+          message:
+            "Ein Fehler ist aufgetreten. Bitte kontaktieren Sie den Administrator.",
+        });
       });
   };
 
