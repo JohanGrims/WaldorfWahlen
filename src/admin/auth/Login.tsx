@@ -33,10 +33,36 @@ export default function Login() {
       })
       .catch((error) => {
         console.error(error);
-        snackbar({
-          message: error.message,
-        });
         setLoading(false);
+        if (error.code === "auth/user-not-found") {
+          snackbar({
+            message: "Benutzer nicht gefunden.",
+          });
+          return;
+        }
+        if (error.code === "auth/wrong-password") {
+          snackbar({
+            message: "Falsches Passwort.",
+          });
+          return;
+        }
+        if (error.code === "auth/too-many-requests") {
+          snackbar({
+            message: "Zu viele Anfragen. Bitte versuchen Sie es später erneut.",
+          });
+          return;
+        }
+        if (error.code === "auth/invalid-email") {
+          snackbar({
+            message: "Ungültige Email-Adresse.",
+          });
+          return;
+        }
+
+        snackbar({
+          message:
+            "Ein Fehler ist aufgetreten. Bitte kontaktieren Sie den Administrator.",
+        });
       });
   };
 
@@ -75,7 +101,11 @@ export default function Login() {
   };
 
   return (
-    <mdui-card variant="filled" class="card" style={{ position: "absolute" }}>
+    <mdui-card
+      variant="filled"
+      className="card"
+      style={{ position: "absolute" }}
+    >
       {loading && (
         <mdui-linear-progress
           style={{
