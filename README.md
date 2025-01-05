@@ -44,7 +44,7 @@ WaldorfWahlen ist eine Webanwendung, die es der Waldorfschule Potsdam ermöglich
 
 ## Autor
 
-WaldorfWahlen wurde von @JohanGrims entwickelt.
+WaldorfWahlen wurde von [@JohanGrims](johangrims) entwickelt. Kontaktieren Sie mich bei Fragen oder Wünschen über Github Issues.
 
 ## Status
 
