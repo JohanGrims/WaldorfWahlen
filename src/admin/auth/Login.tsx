@@ -34,15 +34,9 @@ export default function Login() {
       .catch((error) => {
         console.error(error);
         setLoading(false);
-        if (error.code === "auth/user-not-found") {
+        if (error.code === "auth/invalid-credential") {
           snackbar({
-            message: "Benutzer nicht gefunden.",
-          });
-          return;
-        }
-        if (error.code === "auth/wrong-password") {
-          snackbar({
-            message: "Falsches Passwort.",
+            message: "Entweder Email oder Passwort ist falsch.",
           });
           return;
         }
