@@ -380,17 +380,5 @@ export async function handleDownload(
     });
     setSelected([]);
     setStep("select");
-
-    snackbar({
-      message: "Diese Funktion ist noch nicht verfügbar.",
-      onClose: () => {
-        setDownloadState({
-          state: "idle",
-        });
-        setSelected([]);
-        setStep("select");
-      },
-      autoCloseDelay: 2000,
-    });
   }
 }
