@@ -24,8 +24,6 @@ pnpm-lock.yaml
 *.njsproj
 *.sln
 *.sw?
-.d.ts
-
 
 # Emulator directory
 emulators
