@@ -33,7 +33,7 @@ export default function Result() {
         <p />
         <div className="button-container">
           <mdui-button onClick={() => navigate("/")}>Startseite</mdui-button>
-          {localStorage.getItem(id))?.choiceId && (
+          {localStorage.getItem(id)?.choiceId && (
           <mdui-button disabled variant="text">
             {JSON.parse(localStorage.getItem(id))?.choiceId}
           </mdui-button>
