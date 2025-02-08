@@ -1,6 +1,6 @@
 import { doc, getDoc } from "firebase/firestore";
 import moment from "moment-timezone";
-import { redirect } from "react-router-dom";
+import { replace } from "react-router-dom";
 import { db } from "./firebase";
 export default function Gateway() {
   return null;
@@ -20,23 +20,27 @@ Gateway.loader = async function loader({ params }) {
 
   const berlinTime = moment.tz(Date.now(), "Europe/Berlin");
 
-  if (
-    !voteData.active ||
-    berlinTime.isAfter(
-      moment.unix(voteData.endTime.seconds).tz("Europe/Berlin")
-    )
-  ) {
-    return redirect(`/r/${id}`);
+  // Convert vote end time and start time to Berlin timezone
+  const voteEndTime = moment.unix(voteData.endTime.seconds).tz("Europe/Berlin");
+  const voteStartTime = moment
+    .unix(voteData.startTime.seconds)
+    .tz("Europe/Berlin");
+
+  // If the vote is not active or the current time is after the vote end time, redirect to the results page
+  if (!voteData.active || berlinTime.isAfter(voteEndTime)) {
+    return replace(`/r/${id}`);
   }
-  if (
-    berlinTime.isBefore(
-      moment.unix(voteData.startTime.seconds).tz("Europe/Berlin")
-    )
-  ) {
-    return redirect(`/s/${id}`);
+
+  // If the current time is before the vote start time, redirect to the start page
+  if (berlinTime.isBefore(voteStartTime)) {
+    return replace(`/s/${id}`);
   }
+
+  // If the user has already voted (indicated by a local storage item), redirect to the confirmation page
   if (localStorage.getItem(id)) {
-    return redirect(`/x/${id}`);
+    return replace(`/x/${id}`);
   }
-  return redirect(`/v/${id}`);
+
+  // Otherwise, redirect to the voting page
+  return replace(`/v/${id}`);
 };
