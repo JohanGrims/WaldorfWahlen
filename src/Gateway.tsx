@@ -2,21 +2,33 @@ import { doc, getDoc } from "firebase/firestore";
 import moment from "moment-timezone";
 import { replace } from "react-router-dom";
 import { db } from "./firebase";
+import { Vote } from "./types";
 export default function Gateway() {
   return null;
 }
 
-Gateway.loader = async function loader({ params }) {
+/**
+ * Loader function for the Gateway component.
+ * @param {Object} context - The context object.
+ * @param {Object} context.params - The parameters object.
+ * @param {string} context.params.id - The ID of the vote.
+ * @returns {Promise<Response | void>} - A promise that resolves to a Response object or void.
+ */
+Gateway.loader = async function loader({
+  params,
+}: {
+  params: { id: string };
+}): Promise<Response | void> {
   const { id } = params;
   const vote = await getDoc(doc(db, `/votes/${id}`));
   if (!vote.exists()) {
-    new Response("Not Found", {
+    return new Response("Not Found", {
       status: 404,
       statusText: "Wahl nicht gefunden",
     });
   }
 
-  const voteData = { id: vote.id, ...vote.data() };
+  const voteData = { id: vote.id, ...vote.data() } as Vote;
 
   const berlinTime = moment.tz(Date.now(), "Europe/Berlin");
 
