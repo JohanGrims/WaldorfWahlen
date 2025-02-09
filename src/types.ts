@@ -1,3 +1,5 @@
+import { Timestamp } from "firebase/firestore";
+
 export type Option = {
   id: string;
   title: string;
@@ -21,8 +23,8 @@ export type Vote = {
   title: string;
   extraFields: any[];
   active: boolean;
-  startTime: any;
-  endTime: any;
+  startTime: Timestamp;
+  endTime: Timestamp;
 };
 
 export type Student = {
