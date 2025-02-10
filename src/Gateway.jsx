@@ -2,23 +2,11 @@ import { doc, getDoc } from "firebase/firestore";
 import moment from "moment-timezone";
 import { replace } from "react-router-dom";
 import { db } from "./firebase";
-import { Vote } from "./types";
 export default function Gateway() {
   return null;
 }
 
-/**
- * Loader function for the Gateway component.
- * @param {Object} context - The context object.
- * @param {Object} context.params - The parameters object.
- * @param {string} context.params.id - The ID of the vote.
- * @returns {Promise<Response | void>} - A promise that resolves to a Response object or void.
- */
-Gateway.loader = async function loader({
-  params,
-}: {
-  params: { id: string };
-}): Promise<Response | void> {
+Gateway.loader = async function loader({ params }) {
   const { id } = params;
   const vote = await getDoc(doc(db, `/votes/${id}`));
   if (!vote.exists()) {
@@ -28,7 +16,7 @@ Gateway.loader = async function loader({
     });
   }
 
-  const voteData = { id: vote.id, ...vote.data() } as Vote;
+  const voteData = { id: vote.id, ...vote.data() };
 
   const berlinTime = moment.tz(Date.now(), "Europe/Berlin");
 
