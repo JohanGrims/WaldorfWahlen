@@ -251,13 +251,9 @@ const routes = [
                     /* webpackChunkName: "Admins" */
                     "./admin/Admins"
                   );
-                  const componentModule = await import(
-                    /* webpackChunkName: "Admins" */
-                    "./admin/Admins"
-                  );
                   return {
                     loader: module.default.loader,
-                    Component: componentModule.default,
+                    Component: module.default,
                   };
                 },
               },
