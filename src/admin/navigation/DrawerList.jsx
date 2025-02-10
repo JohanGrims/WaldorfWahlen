@@ -294,6 +294,18 @@ export default function DrawerList() {
             onCLick={() => navigate("/admin/help")}
           />
         </mdui-tooltip>
+        <mdui-tooltip
+          variant="rich"
+          headline="Admins"
+          content="Verwalten Sie die Administratoren der Anwendung."
+        >
+          <DrawerItem
+            active={active === "admins"}
+            title={"Administratoren"}
+            icon={"manage_accounts"}
+            onCLick={() => navigate("/admin/admins")}
+          />
+        </mdui-tooltip>
 
         <mdui-tooltip
           variant="rich"

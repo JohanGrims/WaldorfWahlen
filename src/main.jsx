@@ -6,6 +6,7 @@ import "./styles.css";
 import "mdui";
 import { setColorScheme, setTheme } from "mdui";
 import "mdui/mdui.css";
+import { lazy } from "react";
 setColorScheme("#f89e24");
 setTheme(localStorage.getItem("theme") || "dark");
 
@@ -239,6 +240,23 @@ const routes = [
                   );
                   return {
                     loader: loaderModule.default.loader,
+                    Component: componentModule.default,
+                  };
+                },
+              },
+              {
+                path: "admins",
+                lazy: async () => {
+                  const module = await import(
+                    /* webpackChunkName: "Admins" */
+                    "./admin/Admins"
+                  );
+                  const componentModule = await import(
+                    /* webpackChunkName: "Admins" */
+                    "./admin/Admins"
+                  );
+                  return {
+                    loader: module.default.loader,
                     Component: componentModule.default,
                   };
                 },
