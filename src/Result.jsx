@@ -34,10 +34,11 @@ export default function Result() {
         <div className="button-container">
           <mdui-button onClick={() => navigate("/")}>Startseite</mdui-button>
           {localStorage.getItem(id)?.choiceId && (
-            <mdui-button disabled variant="text">
-              {JSON.parse(localStorage.getItem(id))?.choiceId}
-            </mdui-button>
-          )}
+          <mdui-button disabled variant="text">
+            {JSON.parse(localStorage.getItem(id))?.choiceId}
+          </mdui-button>
+          )
+          }
         </div>
       </mdui-dialog>
     );
