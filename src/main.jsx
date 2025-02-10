@@ -6,7 +6,7 @@ import "./styles.css";
 import "mdui";
 import { setColorScheme, setTheme } from "mdui";
 import "mdui/mdui.css";
-import { lazy } from "react";
+
 setColorScheme("#f89e24");
 setTheme(localStorage.getItem("theme") || "dark");
 
