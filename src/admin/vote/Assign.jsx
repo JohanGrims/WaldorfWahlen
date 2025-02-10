@@ -105,13 +105,16 @@ export default function Assign() {
         selectCount: vote.selectCount,
       };
 
-      const response = await fetch("https://api.chatwithsteiner.de/assign", {
-        method: "POST",
-        body: JSON.stringify(requestObject),
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
+      const response = await fetch(
+        "https://api.chatwithsteiner.de/waldorfwahlen/assign",
+        {
+          method: "POST",
+          body: JSON.stringify(requestObject),
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
 
       const data = await response.json();
 

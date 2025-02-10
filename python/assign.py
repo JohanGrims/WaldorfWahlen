@@ -13,6 +13,18 @@ cred = credentials.Certificate("waldorfwahlen-service-account.json")
 # Initialize the Firebase app with the credentials from the service account JSON file
 firebase_admin.initialize_app(cred)
 
+def authenticate(token, uid):
+    try:
+        # Verify the token
+        decoded_token = auth.verify_id_token(token)
+        # Check if the UID in the token matches the provided UID
+        if decoded_token["uid"] == uid:
+            return True
+        else:
+            return False
+    except Exception as e:
+        return None
+
 
 # example data
 # {"token":"eyJhbGciOiJSUzI1NiIsImtpZCI6IjAyMTAwNzE2ZmRkOTA0ZTViNGQ0OTExNmZmNWRiZGZjOTg5OTk0MDEiLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJodHRwczovL3NlY3VyZXRva2VuLmdvb2dsZS5jb20vd2FsZG9yZndhaGxlbiIsImF1ZCI6IndhbGRvcmZ3YWhsZW4iLCJhdXRoX3RpbWUiOjE3MjY0MDQ5MDgsInVzZXJfaWQiOiI4VHJxbVpmbU1mWFNjS0xTbW1SelA3MzJiWG0yIiwic3ViIjoiOFRycW1aZm1NZlhTY0tMU21tUnpQNzMyYlhtMiIsImlhdCI6MTcyNjU4Nzk4MywiZXhwIjoxNzI2NTkxNTgzLCJlbWFpbCI6ImpvaGFuLmdyaW1zZWhsQGdtYWlsLmNvbSIsImVtYWlsX3ZlcmlmaWVkIjpmYWxzZSwiZmlyZWJhc2UiOnsiaWRlbnRpdGllcyI6eyJlbWFpbCI6WyJqb2hhbi5ncmltc2VobEBnbWFpbC5jb20iXX0sInNpZ25faW5fcHJvdmlkZXIiOiJwYXNzd29yZCJ9fQ.GIZwxuDpvPuH_W8xrzvYa0jxKNJlGllbN0VajkNA4Tqb-tFZJJrVUuQa_bGe9XAw7ZocB2lBKyuatCi93i9fCYdM-NtLE8FSootEF-pt4v8qyvwf1Lz3jP3bjZrrcfLtOi0bL2FvsvqVJFP1PHXh43Eth7SrYOR5z7dbUCMLsqO_VepTYDUeLndmbjRoxLO3beCUUiJN_8jhogxxQ-NWfygUFOVSog8x81KUCTwb21iB5svXXUFJ0zQKwy5bpyfitVW-kgVNnC7kz9cuOPIgSgw6PCiEDN9tZ_QzcrB_KVEshp8ZRASKI4EwDgiEIdC3QQJR1ATUlz1WJirNATVuVA","uid":"8TrqmZfmMfXScKLSmmRzP732bXm2","projects":{"1":{"title":"Project 1","max":3},"2":{"title":"Project 2","max":4},"3":{"title":"Project 3","max":2}},"preferences":{"1":{"name":"Johan","selected":[1,2,3]},"2":{"name":"Sara","selected":[1,2,3]},"3":{"name":"Karl","selected":[1,2,3]},"4":{"name":"Anna","selected":[1,2,3]},"5":{"name":"Eva","selected":[1,2,3]}}}
@@ -23,13 +35,8 @@ def assign():
         token = data.get("token")
         uid = data.get("uid")
 
-        print(token)
-
-        # Verify the token and UID
-        decoded_token = auth.verify_id_token(token)
-
-        print(decoded_token)
-        if decoded_token["uid"] == uid:
+        
+        if authenticate(token, uid):
             # read more data from the request
 
             # prefences = {studentId (string): {selected: [idProject1, idProject2, ...], points: [number, number, number]},}
@@ -149,6 +156,103 @@ def assign():
         else:
             return jsonify({"error": "not authorized"}), 401
 
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    
+@app.route("/users", methods=["GET"])
+def users():
+    try:
+        token = request.args.get("token")
+        uid = request.args.get("uid")
+        if authenticate(token, uid):
+            users = auth.list_users()
+            return jsonify([{
+                "uid": user.uid,
+                "email": user.email,
+                "email_verified": user.email_verified,
+                "display_name": user.display_name,
+                "phone_number": user.phone_number,
+                "photo_url": user.photo_url,
+                "disabled": user.disabled
+            } for user in users.iterate_all()])
+        else:
+            return jsonify({"error": "not authorized"}), 401
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    
+@app.route("/users", methods=["POST"])
+def modify_user():
+    user_id = request.args.get("user_id")
+    if user_id is None:
+        print("Creating user")
+        try:
+            token = request.args.get("token")
+            uid = request.args.get("uid")
+            if authenticate(token, uid):
+                data = request.get_json()
+
+                # Get email and password from the request
+                email = data.get("email")
+                password = data.get("password")
+
+                user = auth.create_user(email=email, password=password)
+
+
+                return jsonify(
+                    {
+                        "uid": user.uid,
+                        "email": user.email,
+                        "email_verified": user.email_verified,
+                        "display_name": user.display_name,
+                        "phone_number": user.phone_number,
+                        "photo_url": user.photo_url,
+                        "disabled": user.disabled,
+                    }
+                )
+            else:
+                return jsonify({"error": "not authorized"}), 401
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+    else:
+        print("Updating user")
+        try:
+            token = request.args.get("token")
+            uid = request.args.get("uid")
+            if authenticate(token, uid):
+                data = request.get_json()
+
+                # Update disabled status
+                disabled = data.get("disabled")
+
+                user = auth.update_user(user_id, disabled=disabled)
+
+                return jsonify(
+                    {
+                        "uid": user.uid,
+                        "email": user.email,
+                        "email_verified": user.email_verified,
+                        "display_name": user.display_name,
+                        "phone_number": user.phone_number,
+                        "photo_url": user.photo_url,
+                        "disabled": user.disabled,
+                    }
+                )
+            else:
+                return jsonify({"error": "not authorized"}), 401
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+
+@app.route("/users", methods=["DELETE"])
+def delete_user():
+    try:
+        token = request.args.get("token")
+        uid = request.args.get("uid")
+        if authenticate(token, uid):
+            uid = request.args.get("user_id")
+            auth.delete_user(uid)
+            return jsonify({"message": "User deleted"})
+        else:
+            return jsonify({"error": "not authorized"}), 401
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
