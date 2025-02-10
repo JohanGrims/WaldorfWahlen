@@ -5,7 +5,9 @@ import { auth } from "../firebase";
 import { alert, confirm, prompt, snackbar } from "mdui";
 
 export default function Admins() {
-  const { admins } = useLoaderData();
+  const { admins } = useLoaderData() as {
+    admins: { email: string; uid: string; disabled: boolean }[];
+  };
 
   async function createAdmin() {
     // Create random password (40 characters)
