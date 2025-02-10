@@ -9,9 +9,11 @@ export default function Admins() {
 
   async function createAdmin() {
     // Create random password (40 characters)
-    const password = Array.from({ length: 40 })
-      .map(() => Math.random().toString(36)[2])
-      .join("");
+    const array = new Uint8Array(40);
+    window.crypto.getRandomValues(array);
+    const password = Array.from(array, (byte) =>
+      ("0" + byte.toString(36)).slice(-1)
+    ).join("");
 
     prompt({
       headline: "E-Mail",
