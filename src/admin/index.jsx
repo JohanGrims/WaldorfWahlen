@@ -103,6 +103,7 @@ export default function Admin() {
             icon="logout"
             onClick={() => {
               confirm({
+                icon: "logout",
                 headline: "Abmelden",
                 description: "Möchten Sie sich wirklich abmelden?",
                 cancelText: "Abbrechen",

@@ -425,7 +425,8 @@ export default function Answers() {
                         onClick={() => {
                           let data = JSON.stringify(answer, null, 2);
                           prompt({
-                            placeholder: "JSON-2Daten",
+                            icon: "edit",
+                            placeholder: "JSON-Daten",
                             confirmText: "Speichern",
                             cancelText: "Abbrechen",
                             headline: "Antwort bearbeiten",
@@ -467,6 +468,7 @@ export default function Answers() {
                         }}
                         onClick={() => {
                           confirm({
+                            icon: "delete",
                             headline: "Löschen",
                             description:
                               "Sind Sie sicher, dass Sie diese Antwort löschen möchten?",

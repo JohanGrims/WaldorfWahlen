@@ -2,7 +2,7 @@ import { collection, doc, getDoc, getDocs, setDoc } from "firebase/firestore";
 import { useLoaderData } from "react-router-dom";
 import { auth, db } from "../../firebase";
 
-import { confirm, snackbar } from "mdui";
+import { confirm, prompt, snackbar } from "mdui";
 import React from "react";
 
 export default function Results() {
@@ -11,6 +11,10 @@ export default function Results() {
   const [mode, setMode] = React.useState("all");
 
   const grades = [...new Set(choices.map((choice) => choice.grade))];
+
+  const [commentText, setCommentText] = React.useState("");
+  const [commentGroup, setCommentGroup] = React.useState("");
+  const [commenting, setCommenting] = React.useState(false);
 
   function printResults() {
     const printContents = document.querySelector(".print-table").outerHTML;
@@ -53,6 +57,7 @@ export default function Results() {
 
   function publishResults() {
     confirm({
+      icon: "warning",
       headline: "Ergebnisse veröffentlichen",
       description:
         "Sind Sie sicher, dass Sie die Ergebnisse veröffentlichen möchten? Dies kann nicht rückgängig gemacht werden.",
@@ -115,8 +120,236 @@ export default function Results() {
 
     return resultsList;
   };
+
+  function addComment(id) {
+    prompt({
+      icon: "comment",
+      headline: "Kommentar hinzufügen",
+      description: "Geben Sie Ihren Kommentar ein:",
+      textFieldOptions: {
+        placeholder: "Ihr Kommentar",
+        required: true,
+        label: "Kommentar",
+        maxlength: 1000,
+        counter: true,
+        rows: 3,
+      },
+      confirmText: "Hinzufügen",
+      cancelText: "Abbrechen",
+      onConfirm: (comment) => {
+        setDoc(
+          doc(db, `votes/${vote.id}/results/${id}`),
+          {
+            comments: [
+              ...(results.find((result) => result.id === id).comments || []),
+              {
+                from: auth.currentUser.email,
+                text: comment,
+                timestamp: Date.now(),
+              },
+            ],
+          },
+          {
+            merge: true,
+          }
+        ).then(() => {
+          snackbar({
+            message: "Kommentar hinzugefügt.",
+            action: "Seite neuladen",
+            onActionClick: () => window.location.reload(),
+          });
+        });
+      },
+    });
+  }
+
+  function deleteComment(id, index) {
+    confirm({
+      icon: "delete",
+      headline: "Kommentar löschen",
+      description: "Möchten Sie diesen Kommentar wirklich löschen?",
+      confirmText: "Ja, löschen",
+      cancelText: "Abbrechen",
+      onConfirm: () => {
+        const comments = results.find((result) => result.id === id).comments;
+        comments.splice(index, 1);
+        setDoc(
+          doc(db, `votes/${vote.id}/results/${id}`),
+          {
+            comments: comments,
+          },
+          {
+            merge: true,
+          }
+        ).then(() => {
+          snackbar({
+            message: "Kommentar gelöscht.",
+            action: "Seite neuladen",
+            onActionClick: () => window.location.reload(),
+          });
+        });
+      },
+    });
+  }
+
+  function addCommentToGroup() {
+    // Parse group
+    let group = {};
+    commentGroup.split(",").forEach((condition) => {
+      const [key, value] = condition.split("=");
+      group[key] = value;
+    });
+
+    // Filter results
+    let resultsToAdd = [];
+    choices.forEach((choice) => {
+      // Check if choice matches group, also considering the current results
+      if (
+        Object.keys(group).every((key) => {
+          if (key === "name") {
+            return choice.name.toLowerCase().includes(group[key].toLowerCase());
+          } else if (key === "grade") {
+            return parseInt(choice.grade) === parseInt(group[key]);
+          } else if (key === "assignedTo") {
+            // Check if the choice is assigned to the project with the ID group[key]
+            return filteredResults().some((result) => {
+              return result.id === choice.id && result.result === group[key];
+            });
+          } else if (key === "choice") {
+            // Check whitch index the assigned project has in the selected array (choices)
+            results[choice.id] == choice.selected[parseInt(group[key]) - 1];
+          }
+        })
+      ) {
+        resultsToAdd.push(choice.id);
+      }
+    });
+
+
+    // Add comments
+    resultsToAdd.forEach((id) => {
+      setDoc(
+        doc(db, `votes/${vote.id}/results/${id}`),
+        {
+          comments: [
+            ...(results.find((result) => result.id === id).comments || []),
+            {
+              from: auth.currentUser.email,
+              text: commentText,
+              timestamp: Date.now(),
+            },
+          ],
+        },
+        {
+          merge: true,
+        }
+      );
+    });
+
+    snackbar({
+      message: resultsToAdd.length + " Kommentare hinzugefügt.",
+      action: "Seite neuladen",
+      onActionClick: () => window.location.reload(),
+    });
+
+    setCommenting(false);
+  }
+
   return (
     <div className="mdui-prose">
+      <mdui-dialog fullscreen open={commenting}>
+        <mdui-button-icon
+          icon="close"
+          onClick={() => setCommenting(false)}
+        ></mdui-button-icon>
+        <mdui-text-field
+          label="Kommentar"
+          textarea
+          rows={5}
+          value={commentText}
+          onInput={(e) => setCommentText(e.target.value)}
+          placeholder="Ihr Kommentar"
+        />
+        <p />
+        <div>
+          <mdui-collapse>
+            <mdui-collapse-item value="info">
+              <mdui-list-item rounded slot="header" icon="info">
+                Informationen
+                <mdui-icon
+                  slot="end-icon"
+                  name="keyboard_arrow_down"
+                ></mdui-icon>
+              </mdui-list-item>
+              <div className="mdui-prose">
+                Durchsuchen Sie die Ergebnisse mit folgenden Operatoren:
+                <ul>
+                  <li>
+                    <code>name=Johan</code>: Schüler deren Name Johan enthält
+                  </li>
+                  <li>
+                    <code>grade=12</code>: Schüler der 12. Klasse
+                  </li>
+                  <li>
+                    <code>assignedTo=abc</code>: Schüler die zu dem Projekt mit
+                    der ID abc zugewiesen sind
+                  </li>
+                  <li>
+                    <code>choice=2</code>: Schüler die zu ihrer Zweitwahl
+                    zugewiesen sind
+                  </li>
+                </ul>
+              </div>
+            </mdui-collapse-item>
+            <mdui-collapse-item value="results">
+              <mdui-list-item rounded slot="header" icon="preview">
+                Projekte anzeigen
+                <mdui-icon
+                  slot="end-icon"
+                  name="keyboard_arrow_down"
+                ></mdui-icon>
+              </mdui-list-item>
+              <div className="mdui-table">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>
+                        <b>Projekt</b>
+                      </th>
+                      <th>
+                        <b>Maximalanzahl</b>
+                      </th>
+                      <th>
+                        <b>ID</b>
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {options.map((option, i) => (
+                      <tr key={i}>
+                        <td>{option.title}</td>
+                        <td>{option.max}</td>
+                        <td>{option.id}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </mdui-collapse-item>
+          </mdui-collapse>
+        </div>
+        <p />
+        <mdui-text-field
+          label="Gruppe"
+          value={commentGroup}
+          onInput={(e) => setCommentGroup(e.target.value)}
+          placeholder="grade=12"
+        />
+        <p />
+        <mdui-button onClick={() => addCommentToGroup()} icon="add">
+          Hinzufügen
+        </mdui-button>
+      </mdui-dialog>
       <h2>Ergebnisse</h2>
       <mdui-card
         variant="outlined"
@@ -180,17 +413,28 @@ export default function Results() {
       <p />
       <mdui-divider />
       <p />
-      <mdui-radio-group value={mode}>
-        <mdui-radio value="all" onClick={() => setMode("all")}>
-          Alle
-        </mdui-radio>
-        <mdui-radio value="project" onClick={() => setMode("project")}>
-          Nach Projekt
-        </mdui-radio>
-        <mdui-radio value="class" onClick={() => setMode("class")}>
-          Nach Klasse
-        </mdui-radio>
-      </mdui-radio-group>
+      <div style={{ display: "flex", justifyContent: "space-between" }}>
+        <mdui-radio-group value={mode}>
+          <mdui-radio value="all" onClick={() => setMode("all")}>
+            Alle
+          </mdui-radio>
+          <mdui-radio value="project" onClick={() => setMode("project")}>
+            Nach Projekt
+          </mdui-radio>
+          <mdui-radio value="class" onClick={() => setMode("class")}>
+            Nach Klasse
+          </mdui-radio>
+        </mdui-radio-group>
+
+        <mdui-button
+          onClick={() => {
+            setCommenting(true);
+          }}
+          icon="comment"
+        >
+          Kommentare hinzufügen
+        </mdui-button>
+      </div>
 
       {mode === "all" && (
         <>
@@ -219,11 +463,76 @@ export default function Results() {
                           .listIndex
                       }
                     </td>
-                    <td>
+                    <td
+                      style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        gap: "10px",
+                      }}
+                    >
                       {
                         options.find((option) => option.id === result.result)
                           ?.title
                       }
+
+                      {result.comments?.length < 1 ? (
+                        <mdui-button-icon
+                          icon="comment"
+                          onClick={() => addComment(result.id)}
+                        ></mdui-button-icon>
+                      ) : (
+                        <mdui-dropdown placement="left">
+                          <mdui-button-icon slot="trigger" icon="comment">
+                            <mdui-badge>{result.comments.length}</mdui-badge>
+                          </mdui-button-icon>
+                          <mdui-menu>
+                            <mdui-list>
+                              {result.comments.map((comment, index) => (
+                                <mdui-list-item
+                                  style={{
+                                    maxWidth: "500px",
+                                  }}
+                                  key={index}
+                                >
+                                  <div
+                                    style={{
+                                      whiteSpace: "normal",
+                                      height: "auto",
+                                    }}
+                                  >
+                                    {comment.text}
+                                    <br />
+                                    <i
+                                      style={{
+                                        color: "gray",
+                                        fontSize: "12px",
+                                        display: "flex",
+                                        justifyContent: "space-between",
+                                        alignItems: "center",
+                                      }}
+                                    >
+                                      {comment.from}{" "}
+                                      <mdui-button-icon
+                                        onClick={() => {
+                                          deleteComment(result.id, index);
+                                        }}
+                                        icon="delete"
+                                      ></mdui-button-icon>
+                                    </i>
+                                  </div>
+                                </mdui-list-item>
+                              ))}
+                              <mdui-list-item
+                                rounded
+                                onClick={() => addComment(result.id)}
+                                icon="comment"
+                              >
+                                <div>Kommentar hinzufügen</div>
+                              </mdui-list-item>
+                            </mdui-list>
+                          </mdui-menu>
+                        </mdui-dropdown>
+                      )}
                     </td>
                   </tr>
                 ))}
