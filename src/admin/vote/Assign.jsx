@@ -166,7 +166,9 @@ export default function Assign() {
       switchRef.current.addEventListener("change", handleToggle);
 
       return () => {
-        switchRef.current.removeEventListener("change", handleToggle);
+        if (switchRef.current) {
+          switchRef.current.removeEventListener("change", handleToggle);
+        }
       };
     }, [rules]);
 
