@@ -11,10 +11,12 @@ import Login from "./auth/Login";
 import DrawerList from "./navigation/DrawerList";
 
 export default function Admin() {
+  const mobile = window.innerWidth < 840;
+
   const [authUser, setAuthUser] = React.useState(false);
   const [loading, setLoading] = React.useState(true);
 
-  const [open, setOpen] = React.useState(window.innerWidth > 840);
+  const [open, setOpen] = React.useState(!mobile);
 
   const navigate = useNavigate();
 
@@ -44,22 +46,16 @@ export default function Admin() {
 
   return (
     <mdui-layout style={{ width: "100vw", height: "100vh" }}>
-      {open && <DrawerList />}
-      {open && window.innerWidth < 840 && (
-        <div
-          style={{
-            position: "absolute",
-            top: "0px",
-            right: "0px",
-            padding: "1rem",
-            zIndex: 100000,
+      {open && (
+        <DrawerList
+          onClose={() => {
+            if (mobile) {
+              setOpen(false);
+            }
           }}
-          onClick={() => setOpen(false)}
-        >
-          <mdui-button-icon icon="menu_open" variant="filled" />
-        </div>
+          mobile={mobile}
+        />
       )}
-
       <mdui-top-app-bar variant="center-aligned" scroll-behavior="elevate">
         {window.innerWidth < 840 && (
           <mdui-button-icon

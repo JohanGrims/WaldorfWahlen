@@ -5,7 +5,7 @@ import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { db } from "../../firebase";
 import { DrawerItem } from "./components";
 
-export default function VoteDrawer({}) {
+export default function VoteDrawer({ onClose = () => {} }) {
   const [loading, setLoading] = React.useState(true);
   const [data, setData] = React.useState([]);
 
@@ -39,6 +39,11 @@ export default function VoteDrawer({}) {
       });
   }, []);
 
+  const navigateTo = (path) => {
+    navigate(path);
+    onClose();
+  };
+
   if (loading || !data) {
     return (
       <mdui-navigation-drawer open>
@@ -52,7 +57,7 @@ export default function VoteDrawer({}) {
           <DrawerItem
             icon={"arrow_back"}
             title={""}
-            onCLick={() => navigate("/admin")}
+            onCLick={() => navigateTo("/admin")}
           />
           <mdui-linear-progress indeterminate></mdui-linear-progress>
         </mdui-list>
@@ -91,7 +96,7 @@ export default function VoteDrawer({}) {
             icon={"edit"}
             title={"Bearbeiten"}
             active={active === "edit"}
-            onCLick={() => navigate(`/admin/${id}/edit`)}
+            onCLick={() => navigateTo(`/admin/${id}/edit`)}
           />
         </mdui-tooltip>
 
@@ -99,7 +104,7 @@ export default function VoteDrawer({}) {
           icon={"dashboard"}
           title={"Übersicht"}
           active={active === undefined}
-          onCLick={() => navigate(`/admin/${id}`)}
+          onCLick={() => navigateTo(`/admin/${id}`)}
         />
         <DrawerItem
           icon={
@@ -117,13 +122,13 @@ export default function VoteDrawer({}) {
               : "Starten"
           }
           active={active === "schedule"}
-          onCLick={() => navigate(`/admin/${id}/schedule`)}
+          onCLick={() => navigateTo(`/admin/${id}/schedule`)}
         />
         <DrawerItem
           icon={"people"}
           title={"Antworten"}
           active={active === "answers"}
-          onCLick={() => navigate(`/admin/${id}/answers`)}
+          onCLick={() => navigateTo(`/admin/${id}/answers`)}
         />
         <br />
         <mdui-divider></mdui-divider>
@@ -132,25 +137,25 @@ export default function VoteDrawer({}) {
           icon={"fact_check"}
           title={"Abgleichen"}
           active={active === "match"}
-          onCLick={() => navigate(`/admin/${id}/match`)}
+          onCLick={() => navigateTo(`/admin/${id}/match`)}
         />
         <DrawerItem
           icon={"add"}
           title={"Hinzufügen"}
           active={active === "add"}
-          onCLick={() => navigate(`/admin/${id}/add`)}
+          onCLick={() => navigateTo(`/admin/${id}/add`)}
         />
         <DrawerItem
           icon={"auto_awesome"}
           title={"Zuteilen"}
           active={active === "assign" || active === "manually"}
-          onCLick={() => navigate(`/admin/${id}/assign`)}
+          onCLick={() => navigateTo(`/admin/${id}/assign`)}
         />
         <DrawerItem
           icon={"table"}
           title={"Ergebnisse"}
           active={active === "results"}
-          onCLick={() => navigate(`/admin/${id}/results`)}
+          onCLick={() => navigateTo(`/admin/${id}/results`)}
         />
         <br />
         <mdui-divider></mdui-divider>
@@ -165,13 +170,13 @@ export default function VoteDrawer({}) {
           icon={"share"}
           title={"Teilen"}
           active={active === "share"}
-          onCLick={() => navigate(`/admin/${id}/share`)}
+          onCLick={() => navigateTo(`/admin/${id}/share`)}
         />
         <DrawerItem
           icon={"delete"}
           title={"Löschen"}
           active={active === "delete"}
-          onCLick={() => navigate(`/admin/${id}/delete`)}
+          onCLick={() => navigateTo(`/admin/${id}/delete`)}
         />
       </mdui-list>
     </mdui-navigation-drawer>
