@@ -217,7 +217,13 @@ export default function Results() {
             });
           } else if (key === "choice") {
             // Check whitch index the assigned project has in the selected array (choices)
-            results[choice.id] == choice.selected[parseInt(group[key]) - 1];
+             return results.some(
+               (result) =>
+                 result.id === choice.id &&
+                 result.result === choice.selected[parseInt(group[key]) - 1]
+             );
+
+
           }
         })
       ) {
