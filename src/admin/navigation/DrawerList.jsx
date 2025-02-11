@@ -9,6 +9,30 @@ import routes from "./routes.json";
 
 let pages = [undefined, ...routes];
 
+/**
+ * Renders the navigation drawer for the admin interface.
+ *
+ * This component fetches voting data from Firestore and categorizes votes into active, scheduled,
+ * and expired. It displays these vote categories in collapsible sections along with various navigation
+ * items for actions such as creating new votes, viewing dashboards, and managing settings.
+ *
+ * Depending on the current route, if the active page is not recognized, it renders the VoteDrawer component.
+ * In addition, the component adapts its layout based on the mobile view by providing a sticky close button.
+ * Navigation actions trigger a route change and subsequently close the drawer via the onClose callback.
+ *
+ * @param {Object} props - The component props.
+ * @param {Function} [props.onClose=() => {}] - Callback function to close the drawer after navigation.
+ * @param {boolean} [props.mobile] - Flag indicating whether the component is rendered in mobile view.
+ * @returns {JSX.Element} The rendered navigation drawer.
+ *
+ * @example
+ * // Render the navigation drawer for a desktop view:
+ * <DrawerList onClose={handleClose} />
+ *
+ * @example
+ * // Render the navigation drawer for a mobile view:
+ * <DrawerList onClose={handleClose} mobile />
+ */
 export default function DrawerList({ onClose = () => {}, mobile }) {
   const [activeVotes, setActiveVotes] = React.useState([]);
   const [expiredVotes, setExpiredVotes] = React.useState([]);

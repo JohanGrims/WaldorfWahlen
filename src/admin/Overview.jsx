@@ -2,6 +2,31 @@ import { collection, getDocs } from "firebase/firestore";
 import moment from "moment-timezone";
 import { useLoaderData, useNavigate } from "react-router-dom";
 import { db } from "../firebase";
+/**
+ * Renders the Overview dashboard for managing voting sessions and student data.
+ *
+ * This React component retrieves vote data via the `useLoaderData` hook, expecting an object
+ * that contains a `votes` array. Each vote object should include properties such as:
+ * - `startTime` (an object with a `seconds` property) indicating when the vote starts,
+ * - `endTime` (an object with a `seconds` property) indicating when the vote ends,
+ * - `active` (a boolean indicating if the vote is currently active),
+ * - `title` (a string representing the vote's title), and
+ * - `id` (a unique identifier).
+ *
+ * The component displays:
+ * - A grid card for managing student data (navigates to "/admin/students/new-class"),
+ * - A grid card for exporting results (navigates to "/admin/exports"),
+ * - A list of voting session cards sorted in descending order by `startTime`.
+ *   Each session card evaluates the current time against `startTime` and `endTime` to determine
+ *   if the vote is active (shows an "event_available" icon), planned (shows a "schedule" icon),
+ *   or completed (shows a "done_all" icon) and navigates to a detailed view ("/admin/{vote.id}").
+ * - A grid card to create a new vote (navigates to "/admin/new").
+ *
+ * The component makes extensive use of inline styling to ensure a responsive grid layout,
+ * adapting to various screen sizes via CSS grid properties.
+ *
+ * @returns {JSX.Element} The rendered Overview component.
+ */
 export default function Overview() {
   const { votes } = useLoaderData();
 

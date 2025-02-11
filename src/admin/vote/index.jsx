@@ -2,6 +2,31 @@ import { collection, doc, getDoc, getDocs } from "firebase/firestore";
 import { useLoaderData, useNavigate } from "react-router-dom";
 import { db } from "../../firebase";
 
+/**
+ * Renders the admin interface for a vote, displaying vote details and various administrative actions.
+ *
+ * This component retrieves vote-related data (vote, choices, options, and results) via the `useLoaderData`
+ * hook, and adjusts its layout responsively based on the window's inner width. It displays the vote title,
+ * scheduling information (formatted for active votes), and a series of clickable cards that navigate to
+ * different admin functionalities:
+ * - Editing options
+ * - Viewing answers
+ * - Sharing the vote
+ * - Adding options
+ * - Matching data
+ * - Assigning tasks
+ * - Previewing the vote
+ * - Deleting the vote
+ *
+ * Navigation is managed by the `useNavigate` hook from React Router.
+ *
+ * @component
+ * @example
+ * // In your route configuration (e.g., using React Router):
+ * <Route path="/admin/:id" element={<AdminVote />} />
+ *
+ * @returns {JSX.Element} The rendered admin voting interface.
+ */
 export default function AdminVote() {
   const { vote, choices, options, results } = useLoaderData();
 

@@ -5,6 +5,24 @@ import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { db } from "../../firebase";
 import { DrawerItem } from "./components";
 
+/**
+ * A React component that renders a navigation drawer for managing voting-related actions in the admin panel.
+ *
+ * The VoteDrawer component fetches voting details from Firestore using the "id" URL parameter upon mounting. It updates
+ * its active navigation state based on the current route and conditionally renders various navigation items for actions
+ * such as editing vote settings, viewing overviews, scheduling or starting votes, handling responses, matching, adding options,
+ * assigning options, checking results, previewing, sharing, or deleting a vote. If voting data is still being fetched or is not
+ * available, the component displays a loading state with a progress indicator.
+ *
+ * Navigation is managed via React Router's "navigate" function and through a helper function "navigateTo", which also invokes
+ * the optional "onClose" callback to handle drawer closing. In scenarios where the vote document does not exist or an error occurs
+ * during data retrieval, a snackbar notification is displayed and navigation redirects back to the admin page.
+ *
+ * @param {Object} props - Component props.
+ * @param {Function} [props.onClose=() => {}] - Optional callback function that is called after a navigation event to close the drawer.
+ *
+ * @returns {JSX.Element} The rendered navigation drawer component.
+ */
 export default function VoteDrawer({ onClose = () => {} }) {
   const [loading, setLoading] = React.useState(true);
   const [data, setData] = React.useState([]);

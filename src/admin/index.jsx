@@ -10,6 +10,31 @@ import { useNavigate } from "react-router-dom";
 import Login from "./auth/Login";
 import DrawerList from "./navigation/DrawerList";
 
+/**
+ * Renders the administrative interface and manages authentication.
+ *
+ * This React functional component handles Firebase user authentication by listening to
+ * authentication state changes via the onAuthStateChanged hook. While waiting for the auth
+ * status to resolve, it displays a loading state. If the user is not authenticated, it renders
+ * the Login component; otherwise, it displays an admin layout.
+ *
+ * The admin layout includes:
+ * - A responsive DrawerList for navigation, automatically adjusted based on the device's screen width.
+ * - A top app bar that shows the authenticated user's email and an avatar dropdown menu with options
+ *   for navigating to settings, changelog, and help pages.
+ * - A logout button that triggers a confirmation dialog before signing out the user and showing a snackbar notification.
+ * - An Outlet component to render nested routes.
+ *
+ * The visibility of the DrawerList is controlled by the "open" state, which is initialized based on
+ * whether the device is classified as mobile (window.innerWidth < 840px).
+ *
+ * Side Effects:
+ * - Listens for authentication state changes using Firebase.
+ * - Triggers navigation via the useNavigate hook.
+ * - Displays a confirmation dialog and a snackbar on logout.
+ *
+ * @returns {JSX.Element} The rendered admin interface layout.
+ */
 export default function Admin() {
   const mobile = window.innerWidth < 840;
 
