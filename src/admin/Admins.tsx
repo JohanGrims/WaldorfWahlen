@@ -53,7 +53,6 @@ export default function Admins() {
   }
 
   async function updateAdmin(uid: string, disabled: boolean) {
-    console.log(uid, disabled);
     const email = admins.find((admin) => admin.uid === uid)?.email;
 
     confirm({
@@ -121,8 +120,6 @@ export default function Admins() {
             },
           });
         });
-
-        console.log(result);
       },
     });
   }

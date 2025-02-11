@@ -207,11 +207,6 @@ export default function Results() {
       if (
         Object.keys(group).every((key) => {
           if (key === "name") {
-            console.log(
-              choice.name.toLowerCase(),
-              group[key].toLowerCase(),
-              choice.name.toLowerCase().includes(group[key].toLowerCase())
-            );
             return choice.name.toLowerCase().includes(group[key].toLowerCase());
           } else if (key === "grade") {
             return parseInt(choice.grade) === parseInt(group[key]);
@@ -226,12 +221,10 @@ export default function Results() {
           }
         })
       ) {
-        console.log(choice);
         resultsToAdd.push(choice.id);
       }
     });
 
-    console.log(resultsToAdd);
 
     // Add comments
     resultsToAdd.forEach((id) => {
