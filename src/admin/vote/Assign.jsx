@@ -382,9 +382,17 @@ export default function Assign() {
               padding: "10px",
             }}
           >
-            <mdui-switch ref={switchRef}></mdui-switch>
+            {rules.some((rule) => rule.apply === "grade=12") ? (
+              <mdui-switch ref={switchRef} checked></mdui-switch>
+            ) : (
+              <mdui-switch ref={switchRef}></mdui-switch>
+            )}
 
-            <label>12. Klässler priorisieren</label>
+            {rules.some((rule) => rule.apply === "grade=12") ? (
+              <label>12. Klässler priorisieren</label>
+            ) : (
+              <label>12. Klässler nicht priorisieren</label>
+            )}
           </div>
           <mdui-card
             variant="filled"
