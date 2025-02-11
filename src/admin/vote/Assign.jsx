@@ -1,5 +1,5 @@
 import { collection, doc, getDoc, getDocs, setDoc } from "firebase/firestore";
-import { confirm, prompt, snackbar } from "mdui";
+import { confirm, snackbar } from "mdui";
 import React from "react";
 import { useLoaderData } from "react-router-dom";
 import { auth, db } from "../../firebase";
