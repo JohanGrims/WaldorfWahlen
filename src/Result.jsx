@@ -72,50 +72,52 @@ export default function Result() {
         </b>
       </div>
       <p />
-      <mdui-list>
-        {voteResult.comments.map((comment, index) => (
-          <mdui-list-item
-            rounded
-            style={{
-              width: "100%",
-              padding: "20px",
-            }}
-            key={index}
-            onClick={() => {
-              confirm({
-                icon: "mail",
-                headline: "E-Mail senden",
-                description: `Möchten Sie eine E-Mail an ${comment.from} senden?`,
-                onConfirm: () => {
-                  window.open(`mailto:${comment.from}`);
-                },
-                confirmText: "Ja",
-                cancelText: "Nein",
-              });
-            }}
-          >
-            <div
+      {voteResult.comments && voteResult.comments.length > 0 && (
+        <mdui-list>
+          {voteResult.comments.map((comment, index) => (
+            <mdui-list-item
+              rounded
               style={{
-                display: "flex",
-                justifyContent: "space-between",
-                gap: "20px",
+                width: "100%",
+                padding: "20px",
+              }}
+              key={index}
+              onClick={() => {
+                confirm({
+                  icon: "mail",
+                  headline: "E-Mail senden",
+                  description: `Möchten Sie eine E-Mail an ${comment.from} senden?`,
+                  onConfirm: () => {
+                    window.open(`mailto:${comment.from}`);
+                  },
+                  confirmText: "Ja",
+                  cancelText: "Nein",
+                });
               }}
             >
-              <mdui-avatar slot="icon">
-                {comment.from
-                  .split(/[@.]/)
-                  .slice(0, 2)
-                  .map((part) => part.charAt(0).toUpperCase())
-                  .join("")}
-              </mdui-avatar>
-
-              {comment.text}
-
-              <mdui-icon name="comment"></mdui-icon>
-            </div>
-          </mdui-list-item>
-        ))}
-      </mdui-list>
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  gap: "20px",
+                }}
+              >
+                <mdui-avatar slot="icon">
+                  {comment.from
+                    .split(/[@.]/)
+                    .slice(0, 2)
+                    .map((part) => part.charAt(0).toUpperCase())
+                    .join("")}
+                </mdui-avatar>
+  
+                {comment.text}
+  
+                <mdui-icon name="comment"></mdui-icon>
+              </div>
+            </mdui-list-item>
+          ))}
+        </mdui-list>
+      )}
       {voteResult.comments && <p />}
       <div className="button-container">
         <mdui-button onClick={() => navigate("/")}>Startseite</mdui-button>

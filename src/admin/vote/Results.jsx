@@ -4,7 +4,6 @@ import { auth, db } from "../../firebase";
 
 import { confirm, prompt, snackbar } from "mdui";
 import React from "react";
-import { max } from "numeric";
 
 export default function Results() {
   const { vote, options, results, choices } = useLoaderData();
