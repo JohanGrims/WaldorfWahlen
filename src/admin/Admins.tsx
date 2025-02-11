@@ -18,6 +18,7 @@ export default function Admins() {
     ).join("");
 
     prompt({
+      icon: "person_add",
       headline: "E-Mail",
       confirmText: "Erstellen",
       cancelText: "Abbrechen",
@@ -38,6 +39,7 @@ export default function Admins() {
           }
         ).then(() => {
           alert({
+            icon: "check",
             headline: "Admin erstellt",
             description: `Der Admin ${email} wurde erstellt. Bitten Sie den Admin, sein Passwort vor dem ersten Login zurückzusetzen. Anschließend bekommt er eine E-Mail mit einem Link zum Festlegen des Passworts.`,
             confirmText: "OK",
@@ -55,6 +57,7 @@ export default function Admins() {
     const email = admins.find((admin) => admin.uid === uid)?.email;
 
     confirm({
+      icon: "warning",
       headline: "Bestätigen",
       description: disabled
         ? `Möchten Sie den Admin ${email} wirklich aktivieren?`
@@ -96,6 +99,7 @@ export default function Admins() {
     }
 
     confirm({
+      icon: "warning",
       headline: "Bestätigen",
       description: `Möchten Sie den Admin ${email} wirklich löschen?`,
       confirmText: "Ja",

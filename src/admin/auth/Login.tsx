@@ -62,6 +62,7 @@ export default function Login() {
 
   const handlePasswordReset = () => {
     prompt({
+      icon: "lock",
       headline: "Passwort zurücksetzen",
       description: "Bitte geben Sie Ihre Email-Adresse ein.",
       confirmText: "Senden",
@@ -77,6 +78,7 @@ export default function Login() {
         sendPasswordResetEmail(auth, email)
           .then(() => {
             alert({
+              icon: "check",
               headline: "Email gesendet",
               description: "Bitte überprüfen Sie Ihren Posteingang.",
             });
@@ -85,6 +87,7 @@ export default function Login() {
           .catch((error) => {
             console.error(error);
             alert({
+              icon: "error",
               headline: "Fehler",
               description: error.message,
             });

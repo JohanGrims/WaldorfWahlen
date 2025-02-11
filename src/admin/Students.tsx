@@ -71,6 +71,7 @@ export default function Students() {
 
   async function removeClass(classId: string) {
     confirm({
+      icon: "warning",
       headline: "Klasse löschen",
       description:
         "Möchten Sie wirklich diese Klasse löschen? Diese Aktion kann nicht rückgängig gemacht werden.",
@@ -99,6 +100,7 @@ export default function Students() {
   async function upgradeClasses() {
     if (
       !confirm({
+        icon: "warning",
         headline: "Schuljahr wechseln",
         description:
           "Möchten Sie wirklich das Schuljahr wechseln? Alle Klassen werden hochgestuft. Diese Aktion kann nicht rückgängig gemacht werden.",
@@ -236,7 +238,8 @@ export default function Students() {
       </div>
       <mdui-tabs
         value={
-          classId || (sortedClasses.length < 1 ? "new-class" : sortedClasses[0].id)
+          classId ||
+          (sortedClasses.length < 1 ? "new-class" : sortedClasses[0].id)
         }
         style={{ width: "100%", overflowX: "auto" }}
       >
@@ -283,6 +286,7 @@ export default function Students() {
                 icon="edit"
                 onClick={() => {
                   const newGrade = prompt({
+                    icon: "edit",
                     headline: "Klassenstufe ändern",
                     description: "Bitte geben Sie die neue Klassenstufe ein.",
                     confirmText: "Speichern",

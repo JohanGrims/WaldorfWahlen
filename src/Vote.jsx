@@ -377,6 +377,7 @@ export default function Vote() {
             icon="refresh"
             onClick={() => {
               confirm({
+                icon: "refresh",
                 headline: "Zurücksetzen",
                 description: "Möchten Sie wirklich alle Eingaben zurücksetzen?",
                 onConfirm: () => {

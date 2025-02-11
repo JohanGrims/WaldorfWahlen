@@ -2,6 +2,7 @@ import { collection, doc, getDoc, getDocs } from "firebase/firestore";
 import React from "react";
 import { useLoaderData, useNavigate, useParams } from "react-router-dom";
 import { db } from "./firebase";
+import { confirm } from "mdui";
 
 export default function Result() {
   let { id } = useParams();
@@ -34,11 +35,10 @@ export default function Result() {
         <div className="button-container">
           <mdui-button onClick={() => navigate("/")}>Startseite</mdui-button>
           {localStorage.getItem(id)?.choiceId && (
-          <mdui-button disabled variant="text">
-            {JSON.parse(localStorage.getItem(id))?.choiceId}
-          </mdui-button>
-          )
-          }
+            <mdui-button disabled variant="text">
+              {JSON.parse(localStorage.getItem(id))?.choiceId}
+            </mdui-button>
+          )}
         </div>
       </mdui-dialog>
     );
@@ -72,6 +72,51 @@ export default function Result() {
         </b>
       </div>
       <p />
+      <mdui-list>
+        {voteResult.comments.map((comment, index) => (
+          <mdui-list-item
+            rounded
+            style={{
+              width: "100%",
+              padding: "20px",
+            }}
+            key={index}
+            onClick={() => {
+              confirm({
+                icon: "mail",
+                headline: "E-Mail senden",
+                description: `Möchten Sie eine E-Mail an ${comment.from} senden?`,
+                onConfirm: () => {
+                  window.open(`mailto:${comment.from}`);
+                },
+                confirmText: "Ja",
+                cancelText: "Nein",
+              });
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                gap: "20px",
+              }}
+            >
+              <mdui-avatar slot="icon">
+                {comment.from
+                  .split(/[@.]/)
+                  .slice(0, 2)
+                  .map((part) => part.charAt(0).toUpperCase())
+                  .join("")}
+              </mdui-avatar>
+
+              {comment.text}
+
+              <mdui-icon name="comment"></mdui-icon>
+            </div>
+          </mdui-list-item>
+        ))}
+      </mdui-list>
+      {voteResult.comments && <p />}
       <div className="button-container">
         <mdui-button onClick={() => navigate("/")}>Startseite</mdui-button>
       </div>
