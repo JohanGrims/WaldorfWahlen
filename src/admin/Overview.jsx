@@ -8,12 +8,25 @@ export default function Overview() {
   const navigate = useNavigate();
 
   return (
-    <div className="mdui-prose">
+    <div className="mdui-prose" style={{ width: "100%" }}>
       <h2>Übersicht</h2>
-      <div className="flex-gap">
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
+          gap: "20px",
+          width: "100%",
+          maxWidth: "1200px",
+          margin: "0 auto",
+        }}
+      >
         <mdui-card
           variant="outlined"
-          style={{ width: "100%", padding: "20px" }}
+          style={{
+            width: "100%",
+            padding: "20px",
+            boxSizing: "border-box",
+          }}
           clickable
           onClick={() => navigate("/admin/students/new-class")}
         >
@@ -37,7 +50,11 @@ export default function Overview() {
         </mdui-card>
         <mdui-card
           variant="outlined"
-          style={{ width: "100%", padding: "20px" }}
+          style={{
+            width: "100%",
+            padding: "20px",
+            boxSizing: "border-box",
+          }}
           clickable
           onClick={() => navigate("/admin/exports")}
         >
@@ -65,8 +82,11 @@ export default function Overview() {
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))",
+          gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
           gap: "20px",
+          width: "100%",
+          maxWidth: "1200px",
+          margin: "0 auto",
         }}
       >
         {votes
@@ -86,7 +106,7 @@ export default function Overview() {
               <mdui-card
                 key={vote.id}
                 variant="filled"
-                style={{ padding: "20px" }}
+                style={{ padding: "20px", width: "100%" }}
                 clickable
                 onClick={() => navigate(`/admin/${vote.id}`)}
               >
@@ -108,7 +128,7 @@ export default function Overview() {
           })}
         <mdui-card
           variant="outlined"
-          style={{ padding: "20px" }}
+          style={{ padding: "20px", width: "100%" }}
           clickable
           onClick={() => navigate("/admin/new")}
         >

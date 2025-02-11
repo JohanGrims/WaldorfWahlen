@@ -5,11 +5,18 @@ import { db } from "../../firebase";
 export default function AdminVote() {
   const { vote, choices, options, results } = useLoaderData();
 
+  const mobile = window.innerWidth < 840;
+
   const navigate = useNavigate();
 
   return (
     <div className="mdui-prose">
-      <div style={{ display: "flex", justifyContent: "space-between" }}>
+      <div
+        style={{
+          display: mobile ? "block" : "flex",
+          justifyContent: "space-between",
+        }}
+      >
         <h2>{vote.title}</h2>
         <mdui-chip onClick={() => navigate("./schedule")}>
           {!vote.active
@@ -31,7 +38,11 @@ export default function AdminVote() {
       </div>
       <p />
       <div
-        style={{ display: "flex", gap: "20px", justifyContent: "space-around" }}
+        style={{
+          display: "grid",
+          gap: "20px",
+          gridTemplateColumns: mobile ? "1fr 1fr" : "1fr 1fr 1fr 1fr",
+        }}
       >
         <mdui-card
           variant="filled"
@@ -81,11 +92,6 @@ export default function AdminVote() {
             </span>
           </p>
         </mdui-card>
-      </div>
-      <p />
-      <div
-        style={{ display: "flex", gap: "20px", justifyContent: "space-around" }}
-      >
         <mdui-card
           variant="filled"
           style={{ padding: "20px", flex: 1 }}

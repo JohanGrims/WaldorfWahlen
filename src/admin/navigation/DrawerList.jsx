@@ -9,7 +9,7 @@ import routes from "./routes.json";
 
 let pages = [undefined, ...routes];
 
-export default function DrawerList() {
+export default function DrawerList({ onClose = () => {}, mobile }) {
   const [activeVotes, setActiveVotes] = React.useState([]);
   const [expiredVotes, setExpiredVotes] = React.useState([]);
   const [scheduledVotes, setScheduledVotes] = React.useState([]);
@@ -81,8 +81,13 @@ export default function DrawerList() {
   }, [location]);
 
   if (!pages.includes(active)) {
-    return <VoteDrawer />;
+    return <VoteDrawer onClose={onClose} />;
   }
+
+  const navigateTo = (path) => {
+    navigate(path);
+    onClose();
+  };
 
   return (
     <mdui-navigation-drawer open>
@@ -93,9 +98,30 @@ export default function DrawerList() {
           flexDirection: "column",
         }}
       >
-        <mdui-list-item disabled>
-          <mdui-list-item-content>Administrator</mdui-list-item-content>
-        </mdui-list-item>
+        {mobile ? (
+          <div
+            style={{
+              position: "sticky",
+              top: 8,
+              zIndex: 1,
+            }}
+          >
+            <mdui-card
+              variant="outlined"
+              style={{
+                width: "100%",
+              }}
+            >
+              <mdui-list-item rounded onClick={onClose} icon="close">
+                Schließen
+              </mdui-list-item>
+            </mdui-card>
+          </div>
+        ) : (
+          <mdui-list-item disabled>
+            <mdui-list-item-content>Administrator</mdui-list-item-content>
+          </mdui-list-item>
+        )}
         {loading && <mdui-linear-progress indeterminate></mdui-linear-progress>}
 
         <mdui-tooltip
@@ -107,7 +133,7 @@ export default function DrawerList() {
             active={active === "new"}
             title={"Erstellen"}
             icon={"create"}
-            onCLick={() => navigate("/admin/new")}
+            onClick={() => navigateTo("/admin/new")}
           />
         </mdui-tooltip>
 
@@ -115,7 +141,7 @@ export default function DrawerList() {
           active={active === undefined}
           title={"Dashboard"}
           icon={"home"}
-          onCLick={() => navigate("/admin")}
+          onClick={() => navigateTo("/admin")}
         />
 
         <mdui-collapse accordion value="active-votes">
@@ -150,7 +176,7 @@ export default function DrawerList() {
                         <DrawerItem
                           active={active === e.id}
                           title={e.title}
-                          onCLick={() => navigate(`/admin/${e.id}`)}
+                          onClick={() => navigateTo(`/admin/${e.id}`)}
                         />
                       </mdui-tooltip>
                     ))}
@@ -190,7 +216,7 @@ export default function DrawerList() {
                         <DrawerItem
                           active={active === e.id}
                           title={e.title}
-                          onCLick={() => navigate(`/admin/${e.id}`)}
+                          onClick={() => navigateTo(`/admin/${e.id}`)}
                         />
                       </mdui-tooltip>
                     ))}
@@ -230,7 +256,7 @@ export default function DrawerList() {
                         <DrawerItem
                           active={active === e.id}
                           title={e.title}
-                          onCLick={() => navigate(`/admin/${e.id}`)}
+                          onClick={() => navigateTo(`/admin/${e.id}`)}
                         />
                       </mdui-tooltip>
                     ))}
@@ -251,7 +277,7 @@ export default function DrawerList() {
             active={active === "exports"}
             title={"Exportieren"}
             icon={"downloading"}
-            onCLick={() => navigate("/admin/exports")}
+            onClick={() => navigateTo("/admin/exports")}
           />
         </mdui-tooltip>
         <mdui-tooltip
@@ -263,7 +289,7 @@ export default function DrawerList() {
             active={active === "students"}
             title={"SchülerInnen"}
             icon={"groups"}
-            onCLick={() => navigate("/admin/students/new-class")}
+            onClick={() => navigateTo("/admin/students/new-class")}
           />
         </mdui-tooltip>
         <br />
@@ -278,7 +304,7 @@ export default function DrawerList() {
             active={active === "changelog"}
             title={"Neue Features"}
             icon={"tips_and_updates"}
-            onCLick={() => navigate("/admin/changelog")}
+            onClick={() => navigateTo("/admin/changelog")}
           />
         </mdui-tooltip>
 
@@ -291,7 +317,7 @@ export default function DrawerList() {
             active={active === "help"}
             title={"Hilfe & Kontakt"}
             icon={"support"}
-            onCLick={() => navigate("/admin/help")}
+            onClick={() => navigateTo("/admin/help")}
           />
         </mdui-tooltip>
         <mdui-tooltip
@@ -303,7 +329,7 @@ export default function DrawerList() {
             active={active === "admins"}
             title={"Administratoren"}
             icon={"manage_accounts"}
-            onCLick={() => navigate("/admin/admins")}
+            onClick={() => navigateTo("/admin/admins")}
           />
         </mdui-tooltip>
 
@@ -316,7 +342,7 @@ export default function DrawerList() {
             active={active === "settings"}
             title={"Einstellungen"}
             icon={"settings"}
-            onCLick={() => navigate("/admin/settings")}
+            onClick={() => navigateTo("/admin/settings")}
           />
         </mdui-tooltip>
       </mdui-list>
