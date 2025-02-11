@@ -133,7 +133,7 @@ export default function DrawerList({ onClose = () => {}, mobile }) {
             active={active === "new"}
             title={"Erstellen"}
             icon={"create"}
-            onCLick={() => navigateTo("/admin/new")}
+            onClick={() => navigateTo("/admin/new")}
           />
         </mdui-tooltip>
 
@@ -141,7 +141,7 @@ export default function DrawerList({ onClose = () => {}, mobile }) {
           active={active === undefined}
           title={"Dashboard"}
           icon={"home"}
-          onCLick={() => navigateTo("/admin")}
+          onClick={() => navigateTo("/admin")}
         />
 
         <mdui-collapse accordion value="active-votes">
@@ -176,7 +176,7 @@ export default function DrawerList({ onClose = () => {}, mobile }) {
                         <DrawerItem
                           active={active === e.id}
                           title={e.title}
-                          onCLick={() => navigateTo(`/admin/${e.id}`)}
+                          onClick={() => navigateTo(`/admin/${e.id}`)}
                         />
                       </mdui-tooltip>
                     ))}
@@ -216,7 +216,7 @@ export default function DrawerList({ onClose = () => {}, mobile }) {
                         <DrawerItem
                           active={active === e.id}
                           title={e.title}
-                          onCLick={() => navigateTo(`/admin/${e.id}`)}
+                          onClick={() => navigateTo(`/admin/${e.id}`)}
                         />
                       </mdui-tooltip>
                     ))}
@@ -256,7 +256,7 @@ export default function DrawerList({ onClose = () => {}, mobile }) {
                         <DrawerItem
                           active={active === e.id}
                           title={e.title}
-                          onCLick={() => navigateTo(`/admin/${e.id}`)}
+                          onClick={() => navigateTo(`/admin/${e.id}`)}
                         />
                       </mdui-tooltip>
                     ))}
@@ -277,7 +277,7 @@ export default function DrawerList({ onClose = () => {}, mobile }) {
             active={active === "exports"}
             title={"Exportieren"}
             icon={"downloading"}
-            onCLick={() => navigateTo("/admin/exports")}
+            onClick={() => navigateTo("/admin/exports")}
           />
         </mdui-tooltip>
         <mdui-tooltip
@@ -289,7 +289,7 @@ export default function DrawerList({ onClose = () => {}, mobile }) {
             active={active === "students"}
             title={"SchülerInnen"}
             icon={"groups"}
-            onCLick={() => navigateTo("/admin/students/new-class")}
+            onClick={() => navigateTo("/admin/students/new-class")}
           />
         </mdui-tooltip>
         <br />
@@ -304,7 +304,7 @@ export default function DrawerList({ onClose = () => {}, mobile }) {
             active={active === "changelog"}
             title={"Neue Features"}
             icon={"tips_and_updates"}
-            onCLick={() => navigateTo("/admin/changelog")}
+            onClick={() => navigateTo("/admin/changelog")}
           />
         </mdui-tooltip>
 
@@ -317,7 +317,7 @@ export default function DrawerList({ onClose = () => {}, mobile }) {
             active={active === "help"}
             title={"Hilfe & Kontakt"}
             icon={"support"}
-            onCLick={() => navigateTo("/admin/help")}
+            onClick={() => navigateTo("/admin/help")}
           />
         </mdui-tooltip>
         <mdui-tooltip
@@ -329,7 +329,7 @@ export default function DrawerList({ onClose = () => {}, mobile }) {
             active={active === "admins"}
             title={"Administratoren"}
             icon={"manage_accounts"}
-            onCLick={() => navigateTo("/admin/admins")}
+            onClick={() => navigateTo("/admin/admins")}
           />
         </mdui-tooltip>
 
@@ -342,7 +342,7 @@ export default function DrawerList({ onClose = () => {}, mobile }) {
             active={active === "settings"}
             title={"Einstellungen"}
             icon={"settings"}
-            onCLick={() => navigateTo("/admin/settings")}
+            onClick={() => navigateTo("/admin/settings")}
           />
         </mdui-tooltip>
       </mdui-list>
