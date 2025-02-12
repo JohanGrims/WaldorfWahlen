@@ -56,7 +56,7 @@ export default function Schedule() {
   return (
     <>
       <AdminVote />
-      <mdui-dialog open={true} headline="Status einstellen">
+      <mdui-dialog open={true} headline="Status einstellen" icon="schedule">
         <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
           <mdui-switch checked={vote.active} ref={switchRef}></mdui-switch>
           <label>Nutzern erlauben, Wahlen abzugeben</label>

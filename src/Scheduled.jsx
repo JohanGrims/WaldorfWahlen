@@ -7,7 +7,7 @@ export default function Scheduled() {
   const navigate = useNavigate();
 
   return (
-    <mdui-dialog open headline="Geplante Wahl">
+    <mdui-dialog open headline="Geplante Wahl" icon="schedule">
       <div className="mdui-prose">
         <p>Diese Wahl ist noch nicht aktiv.</p>
         <p>

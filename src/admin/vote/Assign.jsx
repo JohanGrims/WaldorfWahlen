@@ -1,7 +1,7 @@
 import { collection, doc, getDoc, getDocs, setDoc } from "firebase/firestore";
 import { confirm, snackbar } from "mdui";
 import React from "react";
-import { useLoaderData } from "react-router-dom";
+import { useBlocker, useLoaderData, useNavigate } from "react-router-dom";
 import { auth, db } from "../../firebase";
 
 export default function Assign() {
@@ -120,7 +120,9 @@ export default function Assign() {
 
       setResults(data);
       if (window.location.hostname === "localhost") {
+        // skip throttling on localhost
         setLoading(false);
+        return;
       }
       setTimeout(() => setLoading(false), 5000);
     } catch (error) {
@@ -131,6 +133,12 @@ export default function Assign() {
   }
 
   const switchRef = React.useRef(null);
+
+  let blocker = useBlocker(
+    ({ currentLocation, nextLocation }) =>
+      currentLocation.pathname !== nextLocation.pathname && results
+  );
+  const navigate = useNavigate();
 
   React.useEffect(() => {
     const handleToggle = () => {
@@ -201,6 +209,7 @@ export default function Assign() {
   if (!results) {
     return (
       <div className="mdui-prose">
+        {blocker.state === "blocked" && blocker.proceed()}
         <mdui-dialog
           open={editRules}
           onClosed={() => setEditRules(false)}
@@ -489,7 +498,24 @@ export default function Assign() {
         }
       );
     });
-    snackbar({ message: "Ergebnisse gespeichert." });
+    confirm({
+      headline: "Ergebnisse gespeichert",
+      description:
+        "Die Ergebnisse wurden erfolgreich gespeichert. Sie können diese URL mit anderen Lehrern teilen.",
+      icon: "done",
+      cancelText: "URL kopieren",
+      onCancel: (e) => {
+        navigator.clipboard.writeText(window.location.href);
+        snackbar({ message: "URL kopiert." });
+
+        return false;
+      },
+      confirmText: "Weiter",
+      onConfirm: () => {
+        setResults(null);
+        navigate(`/admin/${vote.id}/results`);
+      },
+    });
   }
 
   const filteredResults = () => {
@@ -549,6 +575,27 @@ export default function Assign() {
 
   return (
     <div className="mdui-prose">
+      <mdui-dialog
+        open={blocker.state === "blocked"}
+        headline={"Änderungen verwerfen?"}
+        icon="warning"
+      >
+        <div className="mdui-prose">
+          <p>
+            Sie haben Änderungen vorgenommen. Wenn Sie fortfahren, gehen diese
+            verloren.
+          </p>
+        </div>
+        <p />
+        <div className="button-container">
+          <mdui-button onClick={() => blocker.reset()} variant="text">
+            Zurück
+          </mdui-button>
+          <mdui-button onClick={() => blocker.proceed()}>
+            Fortfahren
+          </mdui-button>
+        </div>
+      </mdui-dialog>
       <div
         style={{
           display: "flex",

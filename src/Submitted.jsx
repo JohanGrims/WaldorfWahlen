@@ -7,7 +7,7 @@ export default function Submitted() {
   const navigate = useNavigate();
 
   return (
-    <mdui-dialog open headline="Vielen Dank!">
+    <mdui-dialog open headline="Vielen Dank!" icon="done">
       <div className="mdui-prose">
         <p>
           Ihre Wahl wurde erfolgreich abgegeben. Bei Fragen oder Problemen
