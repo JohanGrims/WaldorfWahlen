@@ -132,7 +132,3 @@ export default function Admin() {
   );
 }
 
-
-export function HydrateFallback() {
-  return <mdui-progess />;
-}
