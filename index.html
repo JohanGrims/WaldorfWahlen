@@ -50,42 +50,152 @@
   </head>
   <body>
     <div id="root">
-      <div class="spinner"></div>
+      <div class="loading">
+        <div part="loader" class="loader">
+          <div part="indicator" class="indeterminate"></div>
+
+          <div class="slow-loading" style="display: none;">
+            <p>
+              Das Laden der Seite dauert länger als erwartet. Bitte haben Sie
+              noch einen Moment Geduld &nbsp;
+            </p>
+            <span id="dots">
+              <span>.</span>
+              <span>.</span>
+              <span>.</span>
+            </span>
+            <script>
+              let visibleDots = 1;
+              const allDots = document.querySelectorAll("#dots span");
+              setInterval(() => {
+                allDots.forEach((dot, i) => {
+                  dot.style.visibility = i < visibleDots ? "visible" : "hidden";
+                });
+                visibleDots = visibleDots === allDots.length ? 0 : visibleDots + 1;
+              }, 500);
+            </script>
+          </div>
+        </div>
+
+        <noscript>
+          <div
+            style="
+              position: fixed;
+              top: 0;
+              left: 0;
+              width: 100%;
+              height: 100%;
+              background-color: var(--background-color);
+              display: flex;
+              justify-content: center;
+              align-items: center;
+              color: white;
+              font-size: 2rem;
+            "
+          >
+            <p>
+              Diese Seite benötigt JavaScript um zu funktionieren. Bitte
+              aktivieren Sie JavaScript in Ihrem Browser.
+            </p>
+          </div>
+        </noscript>
+      </div>
     </div>
     <style>
       body {
         padding: 0px;
         margin: 0px;
       }
-      .firebase-emulator-warning {
-        display: none;
+      :root {
+        --shape-corner: 0;
+        --background-color: #1f1b16;
+        --loader-background-color: #37322d;
+        --primary-color: #ffb868;
       }
-      .spinner {
+
+      .loading {
+        height: 100dvh;
+        width: 100dvw;
+        background-color: var(--background-color);
+      }
+      .loader {
+        position: fixed;
+        display: inline-block;
+        width: 100%;
+        height: 4px;
+        overflow: hidden;
+        border-radius: var(--shape-corner);
+        background-color: var(--loader-background-color);
+      }
+
+      .indeterminate::before,
+      .indeterminate::after {
+        content: "";
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        background-color: var(--primary-color);
+      }
+
+      .indeterminate::before {
+        left: 0;
+        animation: indeterminate-animation 2s linear infinite;
+      }
+
+      .indeterminate::after {
+        left: 0;
+        animation: indeterminate-short-animation 2s linear infinite;
+      }
+
+      @keyframes indeterminate-animation {
+        0% {
+          left: 0;
+          width: 0;
+        }
+        50% {
+          left: 30%;
+          width: 70%;
+        }
+        75% {
+          left: 100%;
+          width: 0;
+        }
+      }
+
+      @keyframes indeterminate-short-animation {
+        0%,
+        50% {
+          left: 0;
+          width: 0;
+        }
+        75% {
+          left: 0;
+          width: 25%;
+        }
+        100% {
+          left: 100%;
+          width: 0;
+        }
+      }
+
+      .slow-loading {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
         display: flex;
         justify-content: center;
         align-items: center;
-        height: 100vh;
-        background-color: #1f1b16;
-      }
-      .spinner::before {
-        content: "";
-        width: 50px;
-        height: 50px;
-        border-radius: 50%;
-        border: 5px solid #85735e;
-        border-top: 5px solid #f89e24;
-        animation: spin 1s linear infinite;
-      }
-      /* Add animation (spin) */
-      @keyframes spin {
-        0% {
-          transform: rotate(0deg);
-        }
-        100% {
-          transform: rotate(360deg);
-        }
+        color: white;
+        font-size: 2rem;
       }
     </style>
+    <script>
+      setTimeout(() => {
+        document.querySelector(".slow-loading").style.display = "flex";
+      }, 5000);
+    </script>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>

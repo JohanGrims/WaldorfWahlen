@@ -14,6 +14,7 @@ const routes = [
   {
     path: "/",
     errorElement: <ErrorPage />,
+    HydrateFallback: () => <mdui-linear-progress />,
     children: [
       {
         path: "/",
