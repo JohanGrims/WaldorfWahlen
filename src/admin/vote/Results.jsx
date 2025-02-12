@@ -1,5 +1,5 @@
 import { collection, doc, getDoc, getDocs, setDoc } from "firebase/firestore";
-import { useLoaderData } from "react-router-dom";
+import { useLoaderData, useRevalidator } from "react-router-dom";
 import { auth, db } from "../../firebase";
 
 import { confirm, prompt, snackbar } from "mdui";
@@ -15,6 +15,8 @@ export default function Results() {
   const [commentText, setCommentText] = React.useState("");
   const [commentGroup, setCommentGroup] = React.useState("");
   const [commenting, setCommenting] = React.useState(false);
+
+  const revalidator = useRevalidator();
 
   function printResults() {
     const printContents = document.querySelector(".print-table").outerHTML;
@@ -71,10 +73,9 @@ export default function Results() {
           },
           { merge: true }
         ).then(() => {
+          revalidator.revalidate();
           snackbar({
             message: "Ergebnisse veröffentlicht.",
-            action: "Seite neuladen",
-            onActionClick: () => window.location.reload(),
           });
         });
       },
@@ -153,10 +154,9 @@ export default function Results() {
             merge: true,
           }
         ).then(() => {
+          revalidator.revalidate();
           snackbar({
             message: "Kommentar hinzugefügt.",
-            action: "Seite neuladen",
-            onActionClick: () => window.location.reload(),
           });
         });
       },
@@ -182,10 +182,9 @@ export default function Results() {
             merge: true,
           }
         ).then(() => {
+          revalidator.revalidate();
           snackbar({
             message: "Kommentar gelöscht.",
-            action: "Seite neuladen",
-            onActionClick: () => window.location.reload(),
           });
         });
       },
@@ -217,20 +216,17 @@ export default function Results() {
             });
           } else if (key === "choice") {
             // Check whitch index the assigned project has in the selected array (choices)
-             return results.some(
-               (result) =>
-                 result.id === choice.id &&
-                 result.result === choice.selected[parseInt(group[key]) - 1]
-             );
-
-
+            return results.some(
+              (result) =>
+                result.id === choice.id &&
+                result.result === choice.selected[parseInt(group[key]) - 1]
+            );
           }
         })
       ) {
         resultsToAdd.push(choice.id);
       }
     });
-
 
     // Add comments
     resultsToAdd.forEach((id) => {
@@ -251,11 +247,9 @@ export default function Results() {
         }
       );
     });
-
+    revalidator.revalidate();
     snackbar({
       message: resultsToAdd.length + " Kommentare hinzugefügt.",
-      action: "Seite neuladen",
-      onActionClick: () => window.location.reload(),
     });
 
     setCommenting(false);
@@ -263,6 +257,9 @@ export default function Results() {
 
   return (
     <div className="mdui-prose">
+      {revalidator.state === "loading" && (
+        <mdui-linear-progress></mdui-linear-progress>
+      )}
       <mdui-dialog fullscreen open={commenting}>
         <mdui-button-icon
           icon="close"

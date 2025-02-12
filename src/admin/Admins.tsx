@@ -1,5 +1,5 @@
 import React from "react";
-import { useLoaderData } from "react-router-dom";
+import { useLoaderData, useRevalidator } from "react-router-dom";
 
 import { auth } from "../firebase";
 import { alert, confirm, prompt, snackbar } from "mdui";
@@ -8,6 +8,8 @@ export default function Admins() {
   const { admins } = useLoaderData() as {
     admins: { email: string; uid: string; disabled: boolean }[];
   };
+
+  const revaliator = useRevalidator();
 
   async function createAdmin() {
     // Create random password (40 characters)
@@ -43,10 +45,8 @@ export default function Admins() {
             headline: "Admin erstellt",
             description: `Der Admin ${email} wurde erstellt. Bitten Sie den Admin, sein Passwort vor dem ersten Login zurückzusetzen. Anschließend bekommt er eine E-Mail mit einem Link zum Festlegen des Passworts.`,
             confirmText: "OK",
-            onConfirm: () => {
-              window.location.reload();
-            },
           });
+          revaliator.revalidate();
         });
       },
     });
@@ -80,11 +80,9 @@ export default function Admins() {
             message: `Admin ${email} ${
               !disabled ? "aktiviert" : "deaktiviert"
             }!`,
-            action: "Aktualisieren",
-            onActionClick: () => {
-              window.location.reload();
-            },
           });
+
+          revaliator.revalidate();
         });
       },
     });
@@ -114,11 +112,8 @@ export default function Admins() {
         ).then(() => {
           snackbar({
             message: `Admin ${email} gelöscht!`,
-            action: "Aktualisieren",
-            onActionClick: () => {
-              window.location.reload();
-            },
           });
+          revaliator.revalidate();
         });
       },
     });
@@ -126,6 +121,7 @@ export default function Admins() {
 
   return (
     <div className="mdui-prose">
+      {revaliator.state === "loading" && <mdui-linear-progress />}
       <h2>Administratoren</h2>
       <p>
         Administratoren können die Wahl konfigurieren und die Ergebnisse

@@ -120,6 +120,7 @@ export default function Assign() {
 
       setResults(data);
       if (window.location.hostname === "localhost") {
+        // skip throttling on localhost
         setLoading(false);
       }
       setTimeout(() => setLoading(false), 5000);
