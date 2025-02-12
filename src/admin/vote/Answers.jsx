@@ -132,7 +132,6 @@ export default function Answers() {
 
   return (
     <div className="mdui-prose">
-      {revalidator.state === "loading" && <mdui-linear-progress />}
       <div
         style={{
           display: "flex",

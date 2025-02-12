@@ -24,7 +24,7 @@ export default function Add() {
     { name: string; grade: number; listIndex: string }[]
   >([]);
 
-  const revaliator = useRevalidator();
+  const revalidator = useRevalidator();
 
   React.useEffect(() => {
     const newSuggestedStudents: {
@@ -109,7 +109,7 @@ export default function Add() {
         snackbar({
           message: "Wahl hinzugefügt",
         });
-        revaliator.revalidate();
+        revalidator.revalidate();
         setSaving(false);
       })
       .catch((error) => {
@@ -125,7 +125,6 @@ export default function Add() {
 
   return (
     <div className="mdui-prose">
-      {revaliator.state === "loading" && <mdui-linear-progress />}
       <h2>Hinzufügen</h2>
       <p />
       {suggestedStudents.length < 1 ? (

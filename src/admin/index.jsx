@@ -1,6 +1,6 @@
 import { onAuthStateChanged } from "firebase/auth";
 import React from "react";
-import { Outlet } from "react-router-dom";
+import { Outlet, useRevalidator } from "react-router-dom";
 import { auth } from "../firebase";
 
 import "./admin.css";
@@ -19,6 +19,8 @@ export default function Admin() {
   const [open, setOpen] = React.useState(!mobile);
 
   const navigate = useNavigate();
+
+  const revalidator = useRevalidator();
 
   React.useEffect(() => {
     const listen = onAuthStateChanged(auth, (user) => {
@@ -57,6 +59,8 @@ export default function Admin() {
         />
       )}
       <mdui-top-app-bar variant="center-aligned" scroll-behavior="elevate">
+        {revalidator.state === "loading" && <mdui-linear-progress />}
+
         {window.innerWidth < 840 && (
           <mdui-button-icon
             icon="menu"

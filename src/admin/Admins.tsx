@@ -9,7 +9,7 @@ export default function Admins() {
     admins: { email: string; uid: string; disabled: boolean }[];
   };
 
-  const revaliator = useRevalidator();
+  const revalidator = useRevalidator();
 
   async function createAdmin() {
     // Create random password (40 characters)
@@ -46,7 +46,7 @@ export default function Admins() {
             description: `Der Admin ${email} wurde erstellt. Bitten Sie den Admin, sein Passwort vor dem ersten Login zurückzusetzen. Anschließend bekommt er eine E-Mail mit einem Link zum Festlegen des Passworts.`,
             confirmText: "OK",
           });
-          revaliator.revalidate();
+          revalidator.revalidate();
         });
       },
     });
@@ -82,7 +82,7 @@ export default function Admins() {
             }!`,
           });
 
-          revaliator.revalidate();
+          revalidator.revalidate();
         });
       },
     });
@@ -113,7 +113,7 @@ export default function Admins() {
           snackbar({
             message: `Admin ${email} gelöscht!`,
           });
-          revaliator.revalidate();
+          revalidator.revalidate();
         });
       },
     });
@@ -121,7 +121,6 @@ export default function Admins() {
 
   return (
     <div className="mdui-prose">
-      {revaliator.state === "loading" && <mdui-linear-progress />}
       <h2>Administratoren</h2>
       <p>
         Administratoren können die Wahl konfigurieren und die Ergebnisse

@@ -257,9 +257,6 @@ export default function Results() {
 
   return (
     <div className="mdui-prose">
-      {revalidator.state === "loading" && (
-        <mdui-linear-progress></mdui-linear-progress>
-      )}
       <mdui-dialog fullscreen open={commenting}>
         <mdui-button-icon
           icon="close"

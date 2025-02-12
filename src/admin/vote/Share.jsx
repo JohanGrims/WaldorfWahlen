@@ -20,7 +20,12 @@ export default function Share() {
 
   return (
     <div>
-      <mdui-dialog id="dialog" open={settings} headline="Einstellungen">
+      <mdui-dialog
+        id="dialog"
+        open={settings}
+        headline="Einstellungen"
+        icon="settings"
+      >
         <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
           <mdui-switch ref={switchRef} />
           <label>Nutzern erlauben, mehrfach eine Wahl abzugeben</label>

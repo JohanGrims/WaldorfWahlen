@@ -159,7 +159,7 @@ export default function Vote() {
 
   return (
     <div className="container">
-      <mdui-dialog open={confirmDialog} headline="Bestätigen">
+      <mdui-dialog open={confirmDialog} headline="Bestätigen" icon="check">
         <div className="mdui-prose">
           <p>
             Bitte überprüfen Sie Ihre Eingaben. Sie können diese nach dem

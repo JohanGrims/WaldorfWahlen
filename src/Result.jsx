@@ -23,7 +23,7 @@ export default function Result() {
 
   if (!result) {
     return (
-      <mdui-dialog open headline="Die Wahl ist beendet">
+      <mdui-dialog open headline="Die Wahl ist beendet" icon="done">
         <div className="mdui-prose">
           <p>
             Die Wahl ist beendet. Es sind (noch) keine Ergebnisse online
@@ -46,7 +46,7 @@ export default function Result() {
 
   if (!voteResult) {
     return (
-      <mdui-dialog open headline="Das Wahlergebnis ist da!">
+      <mdui-dialog open headline="Das Wahlergebnis ist da!" icon="done">
         <div className="mdui-prose">
           <p>
             Es sieht so aus, als hätten Sie aber nicht von diesem Gerät
@@ -63,7 +63,7 @@ export default function Result() {
   }
 
   return (
-    <mdui-dialog open headline="Das Wahlergebnis ist da!">
+    <mdui-dialog open headline="Das Wahlergebnis ist da!" icon="done">
       <div className="mdui-prose">
         <p>Es sieht so aus, als wären Sie im Projekt...</p>
         <p>...Trommelwirbel...</p>
@@ -109,9 +109,9 @@ export default function Result() {
                     .map((part) => part.charAt(0).toUpperCase())
                     .join("")}
                 </mdui-avatar>
-  
+
                 {comment.text}
-  
+
                 <mdui-icon name="comment"></mdui-icon>
               </div>
             </mdui-list-item>
