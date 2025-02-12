@@ -1,5 +1,5 @@
 import { collection, doc, getDoc, getDocs, setDoc } from "firebase/firestore";
-import { alert, confirm, snackbar } from "mdui";
+import { confirm, snackbar } from "mdui";
 import React from "react";
 import { useBlocker, useLoaderData, useNavigate } from "react-router-dom";
 import { auth, db } from "../../firebase";
@@ -135,9 +135,7 @@ export default function Assign() {
 
   let blocker = useBlocker(
     ({ currentLocation, nextLocation }) =>
-      currentLocation.pathname !== nextLocation.pathname &&
-      results &&
-      mode !== "proceed"
+      currentLocation.pathname !== nextLocation.pathname && results
   );
   const navigate = useNavigate();
 
