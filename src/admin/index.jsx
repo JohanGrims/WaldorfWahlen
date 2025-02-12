@@ -131,3 +131,8 @@ export default function Admin() {
     </mdui-layout>
   );
 }
+
+
+export function HydrateFallback() {
+  return <mdui-progess />;
+}
