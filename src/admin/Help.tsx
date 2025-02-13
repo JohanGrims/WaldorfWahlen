@@ -26,13 +26,6 @@ export default function Help() {
       </div>
       <Markdown className="help">{helpContent.content}</Markdown>
       <p />
-      <mdui-divider />
-      <p />
-      <div style={{ display: "flex", justifyContent: "center" }}>
-        <Link style={{ color: "white", fontSize: "12px" }} to="edit">
-          Bearbeiten
-        </Link>
-      </div>
     </div>
   );
 }
