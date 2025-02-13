@@ -330,7 +330,7 @@ Add.loader = async function loader({ params }) {
   const { id } = params;
   const vote = await getDoc(doc(db, `/votes/${id}`));
   if (!vote.exists()) {
-    throw new Response("Vote not found", { status: 404 });
+    throw new Response("Seite nicht gefunden", { status: 404 });
   }
   const voteData = { id: vote.id, ...vote.data() };
 

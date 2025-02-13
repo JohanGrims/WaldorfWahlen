@@ -49,9 +49,9 @@ ReleaseNotes.loader = async function loader() {
     }
     return { releaseNotes: data };
   } catch (error) {
-    throw new Response('Failed to load release notes', { 
-      status: error.message === 'Release notes not found' ? 404 : 500,
-      statusText: error.message 
+    throw new Response("Daten konnten nicht geladen werden", {
+      status: error.message === "Release notes not found" ? 404 : 500,
+      statusText: error.message,
     });
   }
 };
