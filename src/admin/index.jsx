@@ -34,8 +34,6 @@ export default function Admin() {
 
       const newTimestamp = new Date(data.updated.seconds * 1000).getTime();
 
-      console.log(new Date(lastLogin).toLocaleString());
-
       if (newTimestamp > new Date(lastLogin).getTime()) {
         snackbar({
           message:
