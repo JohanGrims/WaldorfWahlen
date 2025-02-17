@@ -36,13 +36,16 @@ export default function Login() {
         setLoading(false);
         if (error.code === "auth/invalid-credential") {
           snackbar({
-            message: "Entweder Email oder Passwort ist falsch.",
+            message: "Ungültige Anmeldeinformationen.",
           });
           return;
         }
         if (error.code === "auth/too-many-requests") {
-          snackbar({
-            message: "Zu viele Anfragen. Bitte versuchen Sie es später erneut.",
+          alert({
+            icon: "hourglass_disabled",
+            headline: "Zu viele Anfragen",
+            description:
+              "Zu viele Anfragen. Bitte versuchen Sie es später erneut.",
           });
           return;
         }
@@ -53,9 +56,19 @@ export default function Login() {
           return;
         }
 
+        if (error.code === "auth/user-disabled") {
+          alert({
+            icon: "remove_moderator",
+            headline: "Account deaktiviert",
+            description:
+              "Ihr Account ist deaktiviert. Dies bedeutet, dass Sie nicht auf das System zugreifen können. Bitte kontaktieren Sie einen Administrator.",
+          });
+          return;
+        }
+
         snackbar({
           message:
-            "Ein Fehler ist aufgetreten. Bitte kontaktieren Sie den Administrator.",
+            "Ein Fehler ist aufgetreten. Bitte kontaktieren Sie einen Administrator.",
         });
       });
   };
