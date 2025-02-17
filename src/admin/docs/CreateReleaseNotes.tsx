@@ -1,32 +1,39 @@
-import { doc, setDoc } from "firebase/firestore";
+import { doc, serverTimestamp, setDoc, Timestamp } from "firebase/firestore";
 import { snackbar } from "mdui";
 import React from "react";
 import Markdown from "react-markdown";
 import { useLoaderData, useNavigate } from "react-router-dom";
-import { db } from "../firebase";
+import { auth, db } from "../../firebase";
 
-export default function CreateHelp() {
-  const { helpContent } = useLoaderData() as {
-    helpContent: { content: string };
+export default function CreateReleaseNotes() {
+  const { releaseNotes } = useLoaderData() as {
+    releaseNotes: { content: string; updated?: Timestamp; updatedBy?: string };
   };
-  const [content, setContent] = React.useState(helpContent.content);
+  const [content, setContent] = React.useState(releaseNotes.content);
 
   const [publishing, setPublishing] = React.useState(false);
 
   const navigate = useNavigate();
 
-  async function publishHelpContent() {
+  async function publishReleaseNotes() {
     setPublishing(true);
-    setDoc(doc(db, "docs", "help"), { content })
+    setDoc(doc(db, "docs", "release-notes"), {
+      content,
+      updated: serverTimestamp(),
+      updatedBy: auth.currentUser?.email,
+    })
       .then(() => {
         snackbar({ message: "Veröffentlicht" });
         setPublishing(false);
+        navigate("/admin/changelog");
       })
-      .catch(() => {
+      .catch((e) => {
         snackbar({ message: "Fehler beim Speichern" });
+        console.error(e);
         setPublishing(false);
       });
   }
+
   return (
     <div className="mdui-prose">
       <mdui-tabs value="edit">
@@ -63,7 +70,7 @@ export default function CreateHelp() {
             Veröffentlichen
           </mdui-fab>
         ) : (
-          <mdui-fab icon="public" extended onClick={publishHelpContent}>
+          <mdui-fab icon="public" extended onClick={publishReleaseNotes}>
             Veröffentlichen
           </mdui-fab>
         )}

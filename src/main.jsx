@@ -190,7 +190,7 @@ const routes = [
                 lazy: async () => {
                   const module = await import(
                     /* webpackChunkName: "Help" */
-                    "./admin/Help"
+                    "./admin/docs/Help"
                   );
                   return {
                     loader: module.default.loader,
@@ -203,11 +203,11 @@ const routes = [
                 lazy: async () => {
                   const loaderModule = await import(
                     /* webpackChunkName: "Help" */
-                    "./admin/Help"
+                    "./admin/docs/Help"
                   );
                   const componentModule = await import(
                     /* webpackChunkName: "CreateHelp" */
-                    "./admin/CreateHelp"
+                    "./admin/docs/CreateHelp"
                   );
                   return {
                     loader: loaderModule.default.loader,
@@ -220,7 +220,7 @@ const routes = [
                 lazy: async () => {
                   const module = await import(
                     /* webpackChunkName: "ReleaseNotes" */
-                    "./admin/ReleaseNotes"
+                    "./admin/docs/ReleaseNotes"
                   );
                   return {
                     loader: module.default.loader,
@@ -233,11 +233,11 @@ const routes = [
                 lazy: async () => {
                   const loaderModule = await import(
                     /* webpackChunkName: "ReleaseNotes" */
-                    "./admin/ReleaseNotes"
+                    "./admin/docs/ReleaseNotes"
                   );
                   const componentModule = await import(
                     /* webpackChunkName: "CreateReleaseNotes" */
-                    "./admin/CreateReleaseNotes"
+                    "./admin/docs/CreateReleaseNotes"
                   );
                   return {
                     loader: loaderModule.default.loader,

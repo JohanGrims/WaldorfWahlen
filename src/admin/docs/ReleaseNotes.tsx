@@ -1,5 +1,5 @@
 import { doc, getDoc, Timestamp } from "firebase/firestore";
-import { db } from "../firebase";
+import { db } from "../../firebase";
 
 import React from "react";
 import Markdown from "react-markdown";
@@ -7,7 +7,7 @@ import { useLoaderData, useNavigate } from "react-router-dom";
 
 export default function ReleaseNotes() {
   const { releaseNotes } = useLoaderData() as {
-    releaseNotes: { content: string; updated?: Timestamp };
+    releaseNotes: { content: string; updated?: Timestamp; updatedBy?: string };
   };
 
   const navigate = useNavigate();
@@ -42,7 +42,8 @@ export default function ReleaseNotes() {
                 dateStyle: "medium",
               }
             )
-          : "Unbekannt"}
+          : "-"}{" "}
+        von {releaseNotes.updatedBy || "-"}
       </i>
     </div>
   );
