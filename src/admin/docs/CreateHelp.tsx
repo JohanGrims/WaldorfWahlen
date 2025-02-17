@@ -69,9 +69,15 @@ export default function CreateHelp() {
             Veröffentlichen
           </mdui-fab>
         ) : (
-          <mdui-fab icon="public" extended onClick={publishHelpContent}>
-            Veröffentlichen
-          </mdui-fab>
+          <mdui-tooltip
+            variant="rich"
+            headline="Veröffentlichen"
+            content="Veröffentlicht die Änderungen, sodass sie für alle Benutzer sichtbar sind. Diese Aktion kann nicht rückgängig gemacht. Ihre E-Mail-Adresse wird als Autor gespeichert."
+          >
+            <mdui-fab icon="public" extended onClick={publishHelpContent}>
+              Veröffentlichen
+            </mdui-fab>
+          </mdui-tooltip>
         )}
       </div>
     </div>
