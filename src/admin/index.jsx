@@ -32,7 +32,6 @@ export default function Admin() {
         new Date(localStorage.getItem("lastReleaseNotes")).getTime() !==
           new Date(response.data().updated.seconds * 1000).getTime()
       ) {
-        console.log(localStorage.getItem("lastReleaseNotes"));
         snackbar({
           message:
             "Es gibt neue Features! Klicken Sie hier, um mehr zu erfahren. 🎉",
@@ -47,10 +46,8 @@ export default function Admin() {
           new Date(response.data().updated.seconds * 1000)
         );
       } else {
-        console.log("No new features");
       }
     } else {
-      console.log("Release notes not found");
     }
   }
 
