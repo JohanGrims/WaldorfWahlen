@@ -11,8 +11,6 @@ export default function CreateReleaseNotes() {
   };
   const [content, setContent] = React.useState(releaseNotes.content);
 
-  const [updated, setUpdated] = React.useState(releaseNotes.updated);
-
   const [publishing, setPublishing] = React.useState(false);
 
   const navigate = useNavigate();

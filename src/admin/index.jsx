@@ -27,26 +27,32 @@ export default function Admin() {
     const response = await getDoc(doc(db, "docs", "release-notes"));
 
     if (response.exists()) {
-      if (
-        response.data() &&
-        new Date(localStorage.getItem("lastReleaseNotes")).getTime() !==
-          new Date(response.data().updated.seconds * 1000).getTime()
-      ) {
-        snackbar({
-          message:
-            "Es gibt neue Features! Klicken Sie hier, um mehr zu erfahren. 🎉",
-          action: "Mehr erfahren",
-          onActionClick: () => {
-            navigate("/admin/changelog");
-          },
-          closeable: true,
-        });
-        localStorage.setItem(
-          "lastReleaseNotes",
-          new Date(response.data().updated.seconds * 1000)
-        );
-      } else {
-      }
+     const data = response.data();
+     if (!data?.updated?.seconds) return;
+
+     const lastCheck = localStorage.getItem("lastReleaseNotes");
+     const newTimestamp = new Date(data.updated.seconds * 1000).getTime();
+
+     if (!lastCheck || new Date(lastCheck).getTime() !== newTimestamp) {
+       snackbar({
+         message:
+           "Es gibt neue Features! Klicken Sie hier, um mehr zu erfahren. 🎉",
+         action: "Mehr erfahren",
+         onActionClick: () => {
+           navigate("/admin/changelog");
+         },
+         closeable: true,
+       });
+       try {
+         localStorage.setItem(
+           "lastReleaseNotes",
+           new Date(response.data().updated.seconds * 1000)
+         );
+       } catch (e) {
+         console.error(e);
+       }
+     } else {
+     }
     } else {
     }
   }
