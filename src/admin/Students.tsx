@@ -1,4 +1,5 @@
 import {
+  addDoc,
   collection,
   deleteDoc,
   doc,
@@ -8,7 +9,12 @@ import {
 } from "firebase/firestore";
 import { confirm, prompt } from "mdui";
 import React, { useRef } from "react";
-import { useLoaderData, useNavigate, useParams } from "react-router-dom";
+import {
+  useLoaderData,
+  useNavigate,
+  useParams,
+  useRevalidator,
+} from "react-router-dom";
 import { db } from "../firebase";
 import { Class, Student } from "../types";
 
@@ -19,6 +25,8 @@ export default function Students() {
   const { classId, edit } = useParams();
 
   const navigate = useNavigate();
+
+  const revalidator = useRevalidator();
 
   const sortedClasses = classes.sort((a, b) => a.grade - b.grade);
 
@@ -65,8 +73,11 @@ export default function Students() {
   }
 
   async function addClass() {
-    const classDoc = await setDoc(doc(collection(db, "class")), newClass);
-    location.reload();
+    const classDocRef = await addDoc(collection(db, "class"), newClass);
+
+    revalidator.revalidate();
+
+    navigate(`/admin/students/${classDocRef.id}`);
   }
 
   async function removeClass(classId: string) {
@@ -80,7 +91,9 @@ export default function Students() {
       onConfirm: async () => {
         const ref = doc(db, "class", classId);
         await deleteDoc(ref);
-        location.reload();
+        revalidator.revalidate();
+
+        navigate(`/admin/students/new-class`);
       },
     });
   }
@@ -118,7 +131,7 @@ export default function Students() {
             })
           );
 
-          location.reload();
+          revalidator.revalidate();
         },
       })
     )
