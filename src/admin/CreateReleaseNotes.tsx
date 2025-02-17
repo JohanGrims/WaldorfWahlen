@@ -1,4 +1,4 @@
-import { doc, setDoc } from "firebase/firestore";
+import { doc, serverTimestamp, setDoc, Timestamp } from "firebase/firestore";
 import { snackbar } from "mdui";
 import React from "react";
 import Markdown from "react-markdown";
@@ -7,9 +7,11 @@ import { db } from "../firebase";
 
 export default function CreateReleaseNotes() {
   const { releaseNotes } = useLoaderData() as {
-    releaseNotes: { content: string };
+    releaseNotes: { content: string; updated: Timestamp };
   };
   const [content, setContent] = React.useState(releaseNotes.content);
+
+  const [updated, setUpdated] = React.useState(releaseNotes.updated);
 
   const [publishing, setPublishing] = React.useState(false);
 
@@ -17,10 +19,14 @@ export default function CreateReleaseNotes() {
 
   async function publishReleaseNotes() {
     setPublishing(true);
-    setDoc(doc(db, "docs", "release-notes"), { content })
+    setDoc(doc(db, "docs", "release-notes"), {
+      content,
+      updated: serverTimestamp(),
+    })
       .then(() => {
         snackbar({ message: "Veröffentlicht" });
         setPublishing(false);
+        navigate("/admin/changelog");
       })
       .catch(() => {
         snackbar({ message: "Fehler beim Speichern" });
