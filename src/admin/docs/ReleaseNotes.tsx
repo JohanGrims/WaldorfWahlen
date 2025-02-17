@@ -1,13 +1,13 @@
-import { doc, getDoc } from "firebase/firestore";
-import { db } from "../firebase";
+import { doc, getDoc, Timestamp } from "firebase/firestore";
+import { db } from "../../firebase";
 
 import React from "react";
 import Markdown from "react-markdown";
-import { Link, useLoaderData, useNavigate } from "react-router-dom";
+import { useLoaderData, useNavigate } from "react-router-dom";
 
 export default function ReleaseNotes() {
   const { releaseNotes } = useLoaderData() as {
-    releaseNotes: { content: string };
+    releaseNotes: { content: string; updated?: Timestamp; updatedBy?: string };
   };
 
   const navigate = useNavigate();
@@ -27,6 +27,24 @@ export default function ReleaseNotes() {
       </div>
       <Markdown className="help">{releaseNotes.content}</Markdown>
       <p />
+      <i
+        style={{
+          display: "block",
+          textAlign: "right",
+          fontSize: "0.8em",
+        }}
+      >
+        zuletzt aktualisiert am{" "}
+        {releaseNotes.updated
+          ? new Date(releaseNotes.updated.seconds * 1000).toLocaleString(
+              "de-DE",
+              {
+                dateStyle: "medium",
+              }
+            )
+          : "-"}{" "}
+        von {releaseNotes.updatedBy || "-"}
+      </i>
     </div>
   );
 }
@@ -34,11 +52,11 @@ ReleaseNotes.loader = async function loader() {
   try {
     const releaseNotesData = await getDoc(doc(db, "docs", "release-notes"));
     if (!releaseNotesData.exists()) {
-      throw new Error('Release notes not found');
+      throw new Error("Release notes not found");
     }
     const data = releaseNotesData.data();
     if (!data?.content) {
-      throw new Error('Invalid release notes format');
+      throw new Error("Invalid release notes format");
     }
     return { releaseNotes: data };
   } catch (error) {

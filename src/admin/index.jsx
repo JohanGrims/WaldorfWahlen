@@ -1,7 +1,7 @@
 import { onAuthStateChanged } from "firebase/auth";
 import React from "react";
 import { Outlet, useRevalidator } from "react-router-dom";
-import { auth } from "../firebase";
+import { auth, db } from "../firebase";
 
 import "./admin.css";
 
@@ -9,6 +9,7 @@ import { confirm, snackbar } from "mdui";
 import { useNavigate } from "react-router-dom";
 import Login from "./auth/Login";
 import DrawerList from "./navigation/DrawerList";
+import { doc, getDoc } from "firebase/firestore";
 
 export default function Admin() {
   const mobile = window.innerWidth < 840;
@@ -22,11 +23,39 @@ export default function Admin() {
 
   const revalidator = useRevalidator();
 
+  async function checkForReleaseNotes() {
+    const response = await getDoc(doc(db, "docs", "release-notes"));
+
+    if (response.exists()) {
+      const data = response.data();
+      if (!data?.updated?.seconds) return;
+
+      const lastLogin = auth.currentUser.metadata.lastSignInTime;
+
+      const newTimestamp = new Date(data.updated.seconds * 1000).getTime();
+
+      if (newTimestamp > new Date(lastLogin).getTime()) {
+        snackbar({
+          message:
+            "Es gibt neue Features! Klicken Sie hier, um mehr zu erfahren. 🎉",
+          action: "Mehr erfahren",
+          onActionClick: () => {
+            navigate("/admin/changelog");
+          },
+          closeable: true,
+        });
+     }
+    } else {
+      console.warn("Release notes document does not exist.");
+    }
+  }
+
   React.useEffect(() => {
     const listen = onAuthStateChanged(auth, (user) => {
       if (user) {
         setAuthUser(user);
         setLoading(false);
+        checkForReleaseNotes();
       } else {
         setAuthUser(false);
         setLoading(false);
