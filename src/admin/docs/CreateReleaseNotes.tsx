@@ -59,8 +59,39 @@ export default function CreateReleaseNotes() {
           ></mdui-text-field>
         </mdui-tab-panel>
         <mdui-tab-panel slot="panel" value="preview">
-          <p />
-          <Markdown className={"help"}>{content}</Markdown>
+          <div className="mdui-prose">
+            <p />
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "center",
+                alignItems: "start",
+              }}
+            >
+              <h1>Neuigkeiten 🎉</h1>
+            </div>
+            <p />
+            <Markdown className="help">{content}</Markdown>
+            <p />
+            <i
+              style={{
+                display: "block",
+                textAlign: "right",
+                fontSize: "0.8em",
+              }}
+            >
+              zuletzt aktualisiert am{" "}
+              {releaseNotes.updated
+                ? new Date(releaseNotes.updated.seconds * 1000).toLocaleString(
+                    "de-DE",
+                    {
+                      dateStyle: "medium",
+                    }
+                  )
+                : "-"}{" "}
+              von {releaseNotes.updatedBy || "-"}
+            </i>
+          </div>
         </mdui-tab-panel>
       </mdui-tabs>
 
