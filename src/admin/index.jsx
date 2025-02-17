@@ -27,33 +27,26 @@ export default function Admin() {
     const response = await getDoc(doc(db, "docs", "release-notes"));
 
     if (response.exists()) {
-     const data = response.data();
-     if (!data?.updated?.seconds) return;
+      const data = response.data();
+      if (!data?.updated?.seconds) return;
 
-     const lastCheck = localStorage.getItem("lastReleaseNotes");
-     const newTimestamp = new Date(data.updated.seconds * 1000).getTime();
+      const lastLogin = authUser.metadata.lastSignInTime;
 
-     if (!lastCheck || new Date(lastCheck).getTime() !== newTimestamp) {
-       snackbar({
-         message:
-           "Es gibt neue Features! Klicken Sie hier, um mehr zu erfahren. 🎉",
-         action: "Mehr erfahren",
-         onActionClick: () => {
-           navigate("/admin/changelog");
-         },
-         closeable: true,
-       });
-       try {
-         localStorage.setItem(
-           "lastReleaseNotes",
-           new Date(response.data().updated.seconds * 1000)
-         );
-       } catch (e) {
-         console.error(e);
-       }
-     } else {
+      const newTimestamp = new Date(data.updated.seconds * 1000).getTime();
+
+      if (newTimestamp > new Date(lastLogin).getTime()) {
+        snackbar({
+          message:
+            "Es gibt neue Features! Klicken Sie hier, um mehr zu erfahren. 🎉",
+          action: "Mehr erfahren",
+          onActionClick: () => {
+            navigate("/admin/changelog");
+          },
+          closeable: true,
+        });
      }
     } else {
+      console.warn("Release notes document does not exist.");
     }
   }
 
