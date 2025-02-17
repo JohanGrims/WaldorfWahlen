@@ -48,10 +48,6 @@ export default function Vote() {
 
   const [sending, setSending] = React.useState(false);
 
-  React.useEffect(() => {
-    document.title = title;
-  }, [title]);
-
   const preview = urlParams.get("preview");
 
   const submitDisabled = () => {

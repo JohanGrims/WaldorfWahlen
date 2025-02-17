@@ -10,7 +10,7 @@ Gateway.loader = async function loader({ params }) {
   const { id } = params;
   const vote = await getDoc(doc(db, `/votes/${id}`));
   if (!vote.exists()) {
-    new Response("Seite nicht gefunden", {
+    throw new Response("Seite nicht gefunden", {
       status: 404,
       statusText: "Wahl nicht gefunden",
     });

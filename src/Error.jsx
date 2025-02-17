@@ -1,8 +1,8 @@
 import { useRouteError } from "react-router-dom";
+import { useEffect } from "react";
 
 export default function ErrorPage() {
   let error = useRouteError();
-  document.title = "Oops! " + (error?.status || "Unknown Error");
 
   console.error(error);
   return (
