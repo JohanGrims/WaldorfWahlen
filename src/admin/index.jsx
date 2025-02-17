@@ -30,9 +30,11 @@ export default function Admin() {
       const data = response.data();
       if (!data?.updated?.seconds) return;
 
-      const lastLogin = authUser.metadata.lastSignInTime;
+      const lastLogin = auth.currentUser.metadata.lastSignInTime;
 
       const newTimestamp = new Date(data.updated.seconds * 1000).getTime();
+
+      console.log(new Date(lastLogin).toLocaleString());
 
       if (newTimestamp > new Date(lastLogin).getTime()) {
         snackbar({
