@@ -2,7 +2,10 @@
 import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
-
+import {
+  initializeAppCheck,
+  ReCaptchaEnterpriseProvider,
+} from "firebase/app-check";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDfrC6kukq1s9OifxVJpI72G08KO-hkiEA",
@@ -16,8 +19,22 @@ const firebaseConfig = {
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
+
+// Create a ReCaptchaEnterpriseProvider instance using your reCAPTCHA Enterprise
+// site key and pass it to initializeAppCheck().
+
+if (window.location.hostname === "localhost") {
+  window.FIREBASE_APPCHECK_DEBUG_TOKEN = true;
+}
+
+const appCheck = initializeAppCheck(app, {
+  provider: new ReCaptchaEnterpriseProvider(
+    "6LfNXNoqAAAAABF77vNghbzVpS2ROyICcK0AJ7Zb"
+  ),
+  isTokenAutoRefreshEnabled: true, // Set to true to allow auto-refresh.
+});
+
 const db = getFirestore(app);
 const auth = getAuth(app);
 
 export { auth, db };
-
