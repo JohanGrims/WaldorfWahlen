@@ -1,6 +1,6 @@
 import { doc, getDoc } from "firebase/firestore";
 import moment from "moment-timezone";
-import { redirect, replace } from "react-router-dom";
+import { replace } from "react-router-dom";
 import { db } from "./firebase";
 export default function Gateway() {
   return null;

@@ -1,7 +1,7 @@
 import firebase_admin
 import pulp
 from firebase_admin import auth, credentials, app_check
-from flask import Flask, jsonify, request, send_file, abort
+from flask import Flask, jsonify, request, abort
 from flask_cors import CORS
 
 app = Flask(__name__)
@@ -32,7 +32,7 @@ def before_request():
         return "", 200
     app_check_token = request.headers.get("X-Firebase-AppCheck", default="")
     try:
-        app_check_claims = app_check.verify_token(app_check_token)
+        _ = app_check.verify_token(app_check_token)
         # If verify_token() succeeds, okay to continue to route handler.
 
     except Exception as e:
