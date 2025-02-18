@@ -7,6 +7,12 @@ import {
   ReCaptchaEnterpriseProvider,
 } from "firebase/app-check";
 
+declare global {
+  interface Window {
+    FIREBASE_APPCHECK_DEBUG_TOKEN?: boolean;
+  }
+}
+
 const firebaseConfig = {
   apiKey: "AIzaSyDfrC6kukq1s9OifxVJpI72G08KO-hkiEA",
   authDomain: "waldorfwahlen.firebaseapp.com",
@@ -37,4 +43,4 @@ const appCheck = initializeAppCheck(app, {
 const db = getFirestore(app);
 const auth = getAuth(app);
 
-export { auth, db };
+export { auth, db, appCheck };

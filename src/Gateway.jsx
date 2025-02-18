@@ -1,6 +1,6 @@
 import { doc, getDoc } from "firebase/firestore";
 import moment from "moment-timezone";
-import { redirect } from "react-router-dom";
+import { replace } from "react-router-dom";
 import { db } from "./firebase";
 export default function Gateway() {
   return null;
@@ -26,17 +26,33 @@ Gateway.loader = async function loader({ params }) {
       moment.unix(voteData.endTime.seconds).tz("Europe/Berlin")
     )
   ) {
-    return redirect(`/r/${id}`);
+    /* 
+    if the vote is not active or the current time is after the end time of the vote,
+    redirect to the results page
+    */
+    return replace(`/r/${id}`);
   }
   if (
     berlinTime.isBefore(
       moment.unix(voteData.startTime.seconds).tz("Europe/Berlin")
     )
   ) {
-    return redirect(`/s/${id}`);
+    /*
+    if the current time is before the start time of the vote,
+    redirect to the scheduled page
+    */
+    return replace(`/s/${id}`);
   }
   if (localStorage.getItem(id)) {
-    return redirect(`/x/${id}`);
+    /*
+    if the user has already voted in this vote,
+    redirect to the already voted page
+    */
+    return replace(`/x/${id}`);
   }
-  return redirect(`/v/${id}`);
+  /*
+  if none of the above conditions are met,
+  redirect to the vote page
+  */
+  return replace(`/v/${id}`);
 };

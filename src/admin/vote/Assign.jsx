@@ -112,9 +112,16 @@ export default function Assign() {
           body: JSON.stringify(requestObject),
           headers: {
             "Content-Type": "application/json",
+            "X-Firebase-AppCheck": await getToken(appCheck).then(
+              (res) => res.token
+            ),
           },
         }
       );
+
+      if (!response.ok) {
+        throw new Error("Network response was not ok");
+      }
 
       const data = await response.json();
 
