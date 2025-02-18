@@ -429,7 +429,8 @@ function showCaptcha() {
   alert({
     icon: "error",
     headline: "Sicherheitsüberprüfung fehlgeschlagen",
-    description: "Bitte verifizieren Sie sich als Mensch, um fortzufahren.",
+    description:
+      "Bitte verifizieren Sie sich als Mensch, um fortzufahren. Dies ist notwendig, um die Anwendung vor Missbrauch zu schützen.",
     confirmText: "Verifizieren",
     onConfirm: async () => {
       try {
