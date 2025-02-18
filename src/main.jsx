@@ -473,10 +473,13 @@ script.src =
   "https://www.google.com/recaptcha/enterprise.js?render=6LfNXNoqAAAAABF77vNghbzVpS2ROyICcK0AJ7Zb";
 script.async = true;
 script.defer = true;
+
+script.onload = () => {
+  verifyAppCheck();
+};
+
 document.body.appendChild(script);
 
-// App Check direkt beim Start überprüfen
-verifyAppCheck();
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <div className="wrapper">
