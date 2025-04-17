@@ -403,9 +403,9 @@ export default function Assign() {
           )}
 
           {rules.some((rule) => rule.apply === "grade=12") ? (
-            <label>12. Klässler priorisieren</label>
+            <label>12. Klässler werden priorisieret</label>
           ) : (
-            <label>12. Klässler nicht priorisieren</label>
+            <label>12. Klässler werden nicht priorisiert</label>
           )}
         </div>
         <mdui-card
