@@ -2,7 +2,8 @@ import { collection, doc, getDoc, getDocs, setDoc } from "firebase/firestore";
 import { confirm, snackbar } from "mdui";
 import React from "react";
 import { useBlocker, useLoaderData, useNavigate } from "react-router-dom";
-import { auth, db } from "../../firebase";
+import { appCheck, auth, db } from "../../firebase";
+import { getToken } from "firebase/app-check";
 
 export default function Assign() {
   const { vote, choices, options, results: cloudResults } = useLoaderData();
