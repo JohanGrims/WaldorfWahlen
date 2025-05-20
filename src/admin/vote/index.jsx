@@ -9,6 +9,12 @@ export default function AdminVote() {
 
   const navigate = useNavigate();
 
+  const pendingProposals = proposals.filter(
+    (proposal) =>
+      options.some((option) => option.id === proposal.id) ||
+      options.some((option) => option.title === proposal.title)
+  );
+
   return (
     <div className="mdui-prose">
       <div
@@ -37,14 +43,14 @@ export default function AdminVote() {
         </mdui-chip>
       </div>
       <p />
-      {proposals.length > 0 && (
+      {pendingProposals.length > 0 && (
         <mdui-card
           variant="filled"
           style={{ padding: "20px", marginBottom: "20px", width: "100%" }}
           clickable
           onClick={() => navigate(`/admin/${vote.id}/edit`)}
         >
-          <h3>{proposals.length} Vorschläge für Optionen</h3>
+          <h3>{pendingProposals.length} Vorschläge für Optionen</h3>
         </mdui-card>
       )}
       <div
