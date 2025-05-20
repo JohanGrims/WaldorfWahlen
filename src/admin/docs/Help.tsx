@@ -1,12 +1,12 @@
-import { doc, getDoc } from "firebase/firestore";
+import { doc, getDoc, Timestamp } from "firebase/firestore";
 import React from "react";
 import Markdown from "react-markdown";
 import { Link, useLoaderData, useNavigate } from "react-router-dom";
-import { db } from "../firebase";
+import { db } from "../../firebase";
 
 export default function Help() {
   const { helpContent } = useLoaderData() as {
-    helpContent: { content: string };
+    helpContent: { content: string; updated?: Timestamp; updatedBy?: string };
   };
 
   const navigate = useNavigate();
@@ -26,13 +26,24 @@ export default function Help() {
       </div>
       <Markdown className="help">{helpContent.content}</Markdown>
       <p />
-      <mdui-divider />
-      <p />
-      <div style={{ display: "flex", justifyContent: "center" }}>
-        <Link style={{ color: "white", fontSize: "12px" }} to="edit">
-          Bearbeiten
-        </Link>
-      </div>
+      <i
+        style={{
+          display: "block",
+          textAlign: "right",
+          fontSize: "0.8em",
+        }}
+      >
+        zuletzt aktualisiert am{" "}
+        {helpContent.updated
+          ? new Date(helpContent.updated.seconds * 1000).toLocaleString(
+              "de-DE",
+              {
+                dateStyle: "medium",
+              }
+            )
+          : "-"}{" "}
+        von {helpContent.updatedBy || "-"}
+      </i>
     </div>
   );
 }

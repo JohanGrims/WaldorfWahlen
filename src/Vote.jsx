@@ -48,10 +48,6 @@ export default function Vote() {
 
   const [sending, setSending] = React.useState(false);
 
-  React.useEffect(() => {
-    document.title = title;
-  }, [title]);
-
   const preview = urlParams.get("preview");
 
   const submitDisabled = () => {
@@ -159,7 +155,7 @@ export default function Vote() {
 
   return (
     <div className="container">
-      <mdui-dialog open={confirmDialog} headline="Bestätigen">
+      <mdui-dialog open={confirmDialog} headline="Bestätigen" icon="check">
         <div className="mdui-prose">
           <p>
             Bitte überprüfen Sie Ihre Eingaben. Sie können diese nach dem
@@ -377,6 +373,7 @@ export default function Vote() {
             icon="refresh"
             onClick={() => {
               confirm({
+                icon: "refresh",
                 headline: "Zurücksetzen",
                 description: "Möchten Sie wirklich alle Eingaben zurücksetzen?",
                 onConfirm: () => {

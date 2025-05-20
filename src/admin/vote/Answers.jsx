@@ -9,7 +9,7 @@ import {
 } from "firebase/firestore";
 import { confirm, prompt, snackbar } from "mdui";
 import React from "react";
-import { useLoaderData, useNavigate } from "react-router-dom";
+import { useLoaderData, useNavigate, useRevalidator } from "react-router-dom";
 import { db } from "../../firebase";
 
 export default function Answers() {
@@ -21,6 +21,8 @@ export default function Answers() {
   const search = searchParams.get("search");
   const grade = searchParams.get("grade");
   const listIndex = searchParams.get("listIndex");
+
+  const revalidator = useRevalidator();
 
   const [mode, setMode] = React.useState(
     search || grade || listIndex ? "by-name" : "by-option"
@@ -425,7 +427,8 @@ export default function Answers() {
                         onClick={() => {
                           let data = JSON.stringify(answer, null, 2);
                           prompt({
-                            placeholder: "JSON-2Daten",
+                            icon: "edit",
+                            placeholder: "JSON-Daten",
                             confirmText: "Speichern",
                             cancelText: "Abbrechen",
                             headline: "Antwort bearbeiten",
@@ -467,6 +470,7 @@ export default function Answers() {
                         }}
                         onClick={() => {
                           confirm({
+                            icon: "delete",
                             headline: "Löschen",
                             description:
                               "Sind Sie sicher, dass Sie diese Antwort löschen möchten?",
@@ -483,7 +487,7 @@ export default function Answers() {
                                   message: "Antwort erfolgreich gelöscht.",
                                   timeout: 5000,
                                 });
-                                window.location.reload();
+                                revalidator.revalidate();
                               });
                             },
                           });

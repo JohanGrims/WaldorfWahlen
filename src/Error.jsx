@@ -1,12 +1,16 @@
 import { useRouteError } from "react-router-dom";
+import { useEffect } from "react";
 
 export default function ErrorPage() {
   let error = useRouteError();
-  document.title = "Oops! " + (error?.status || "Unknown Error");
 
   console.error(error);
   return (
-    <mdui-dialog open headline={`Fehler ${error?.status || "400"}`}>
+    <mdui-dialog
+      open
+      headline={`Fehler ${error?.status || "400"}`}
+      icon="error"
+    >
       <div className="mdui-prose">
         <p>{error?.statusText || error?.data || "Unknown Error Message"}</p>
         <p>

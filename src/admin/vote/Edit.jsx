@@ -77,6 +77,7 @@ export default function Edit() {
       );
       removedOptions.map((opt) =>
         confirm({
+          icon: "delete",
           headline: "Option löschen",
           description: `Sind Sie sicher, dass Sie die Option "${opt.title}" löschen möchten? Wenn SchülerInnen diese Option bereits gewählt haben, kann das Dashboard abstürzen.`,
           cancelText: "Abbrechen",

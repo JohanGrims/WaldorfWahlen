@@ -266,6 +266,7 @@ export default function NewVote() {
           end-icon="expand_more"
           onClick={() => {
             prompt({
+              icon: "settings",
               headline: "ID der Wahl",
               description:
                 "Ändern Sie die ID der Wahl. Diese erscheint in der URL (waldorfwahlen.web.app/[ID]). Achten Sie darauf, dass die ID eindeutig ist und keine Sonderzeichen enthält.",
@@ -436,6 +437,7 @@ export default function NewVote() {
           icon="refresh"
           onClick={() => {
             confirm({
+              icon: "refresh",
               headline: "Zurücksetzen",
               description: "Möchten Sie wirklich alle Eingaben zurücksetzen?",
               onConfirm: () => {

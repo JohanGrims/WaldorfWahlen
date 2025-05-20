@@ -1,8 +1,9 @@
 import { collection, doc, getDoc, getDocs, setDoc } from "firebase/firestore";
 import { confirm, snackbar } from "mdui";
 import React from "react";
-import { useLoaderData } from "react-router-dom";
-import { auth, db } from "../../firebase";
+import { useBlocker, useLoaderData, useNavigate } from "react-router-dom";
+import { appCheck, auth, db } from "../../firebase";
+import { getToken } from "firebase/app-check";
 
 export default function Assign() {
   const { vote, choices, options, results: cloudResults } = useLoaderData();
@@ -105,19 +106,31 @@ export default function Assign() {
         selectCount: vote.selectCount,
       };
 
-      const response = await fetch("https://api.chatwithsteiner.de/assign", {
-        method: "POST",
-        body: JSON.stringify(requestObject),
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
+      const response = await fetch(
+        "https://api.chatwithsteiner.de/waldorfwahlen/assign",
+        {
+          method: "POST",
+          body: JSON.stringify(requestObject),
+          headers: {
+            "Content-Type": "application/json",
+            "X-Firebase-AppCheck": await getToken(appCheck).then(
+              (res) => res.token
+            ),
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Network response was not ok");
+      }
 
       const data = await response.json();
 
       setResults(data);
       if (window.location.hostname === "localhost") {
+        // skip throttling on localhost
         setLoading(false);
+        return;
       }
       setTimeout(() => setLoading(false), 5000);
     } catch (error) {
@@ -126,6 +139,54 @@ export default function Assign() {
       setLoading(false);
     }
   }
+
+  const switchRef = React.useRef(null);
+
+  let blocker = useBlocker(
+    ({ currentLocation, nextLocation }) =>
+      currentLocation.pathname !== nextLocation.pathname && results
+  );
+  const navigate = useNavigate();
+
+  React.useEffect(() => {
+    const handleToggle = () => {
+      // if there are rules with grade=12, remove them, if not, add them
+
+      const grade12RuleIndex = rules.findIndex(
+        (rule) => rule.apply === "grade=12"
+      );
+      if (grade12RuleIndex !== -1) {
+        const newRules = [...rules];
+        newRules.splice(grade12RuleIndex, 1);
+        setRules(newRules);
+
+        snackbar({
+          message: "12. Klässler werden nicht bevorzugt",
+          action: "Regeln ansehen",
+          onActionClick: () => {
+            setEditRules(true);
+          },
+        });
+      } else {
+        setRules([...rules, { apply: "grade=12", scores: [1, 5, 10] }]);
+        snackbar({
+          message: "12. Klässler werden bevorzugt",
+          action: "Regeln ansehen",
+          onActionClick: () => {
+            setEditRules(true);
+          },
+        });
+      }
+    };
+
+    switchRef.current.addEventListener("change", handleToggle);
+
+    return () => {
+      if (switchRef.current) {
+        switchRef.current.removeEventListener("change", handleToggle);
+      }
+    };
+  }, [rules]);
 
   if (loading) {
     return (
@@ -156,6 +217,7 @@ export default function Assign() {
   if (!results) {
     return (
       <div className="mdui-prose">
+        {blocker.state === "blocked" && blocker.proceed()}
         <mdui-dialog
           open={editRules}
           onClosed={() => setEditRules(false)}
@@ -325,6 +387,28 @@ export default function Assign() {
             </div>
           </mdui-card>
         )}
+
+        <p />
+        <div
+          style={{
+            display: "flex",
+            gap: "10px",
+            alignItems: "center",
+            padding: "10px",
+          }}
+        >
+          {rules.some((rule) => rule.apply === "grade=12") ? (
+            <mdui-switch ref={switchRef} checked></mdui-switch>
+          ) : (
+            <mdui-switch ref={switchRef}></mdui-switch>
+          )}
+
+          {rules.some((rule) => rule.apply === "grade=12") ? (
+            <label>12. Klässler werden priorisieret</label>
+          ) : (
+            <label>12. Klässler werden nicht priorisiert</label>
+          )}
+        </div>
         <mdui-card
           variant="filled"
           style={{ width: "100%", padding: "20px" }}
@@ -412,12 +496,34 @@ export default function Assign() {
 
   function saveResults() {
     sortedResults.forEach(([key, value]) => {
-      setDoc(doc(db, `/votes/${vote.id}/results/${key}`), {
-        result: value,
-        comments: [],
-      });
+      setDoc(
+        doc(db, `/votes/${vote.id}/results/${key}`),
+        {
+          result: value,
+        },
+        {
+          merge: true,
+        }
+      );
     });
-    snackbar({ message: "Ergebnisse gespeichert." });
+    confirm({
+      headline: "Ergebnisse gespeichert",
+      description:
+        "Die Ergebnisse wurden erfolgreich gespeichert. Sie können diese URL mit anderen Lehrern teilen.",
+      icon: "done",
+      cancelText: "URL kopieren",
+      onCancel: (e) => {
+        navigator.clipboard.writeText(window.location.href);
+        snackbar({ message: "URL kopiert." });
+
+        return false;
+      },
+      confirmText: "Weiter",
+      onConfirm: () => {
+        setResults(null);
+        navigate(`/admin/${vote.id}/results`);
+      },
+    });
   }
 
   const filteredResults = () => {
@@ -477,6 +583,27 @@ export default function Assign() {
 
   return (
     <div className="mdui-prose">
+      <mdui-dialog
+        open={blocker.state === "blocked"}
+        headline={"Änderungen verwerfen?"}
+        icon="warning"
+      >
+        <div className="mdui-prose">
+          <p>
+            Sie haben Änderungen vorgenommen. Wenn Sie fortfahren, gehen diese
+            verloren.
+          </p>
+        </div>
+        <p />
+        <div className="button-container">
+          <mdui-button onClick={() => blocker.reset()} variant="text">
+            Zurück
+          </mdui-button>
+          <mdui-button onClick={() => blocker.proceed()}>
+            Fortfahren
+          </mdui-button>
+        </div>
+      </mdui-dialog>
       <div
         style={{
           display: "flex",
@@ -492,6 +619,7 @@ export default function Assign() {
               icon="history"
               onClick={() => {
                 confirm({
+                  icon: "history",
                   headline: "Zurücksetzen?",
                   description:
                     "Dadurch werden die Ergebnisse zurückgesetzt und müssen erneut berechnet werden.",

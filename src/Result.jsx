@@ -2,6 +2,7 @@ import { collection, doc, getDoc, getDocs } from "firebase/firestore";
 import React from "react";
 import { useLoaderData, useNavigate, useParams } from "react-router-dom";
 import { db } from "./firebase";
+import { confirm } from "mdui";
 
 export default function Result() {
   let { id } = useParams();
@@ -22,7 +23,7 @@ export default function Result() {
 
   if (!result) {
     return (
-      <mdui-dialog open headline="Die Wahl ist beendet">
+      <mdui-dialog open headline="Die Wahl ist beendet" icon="done">
         <div className="mdui-prose">
           <p>
             Die Wahl ist beendet. Es sind (noch) keine Ergebnisse online
@@ -45,7 +46,7 @@ export default function Result() {
 
   if (!voteResult) {
     return (
-      <mdui-dialog open headline="Das Wahlergebnis ist da!">
+      <mdui-dialog open headline="Das Wahlergebnis ist da!" icon="done">
         <div className="mdui-prose">
           <p>
             Es sieht so aus, als hätten Sie aber nicht von diesem Gerät
@@ -62,7 +63,7 @@ export default function Result() {
   }
 
   return (
-    <mdui-dialog open headline="Das Wahlergebnis ist da!">
+    <mdui-dialog open headline="Das Wahlergebnis ist da!" icon="done">
       <div className="mdui-prose">
         <p>Es sieht so aus, als wären Sie im Projekt...</p>
         <p>...Trommelwirbel...</p>
@@ -71,6 +72,53 @@ export default function Result() {
         </b>
       </div>
       <p />
+      {voteResult.comments && voteResult.comments.length > 0 && (
+        <mdui-list>
+          {voteResult.comments.map((comment, index) => (
+            <mdui-list-item
+              rounded
+              style={{
+                width: "100%",
+                padding: "20px",
+              }}
+              key={index}
+              onClick={() => {
+                confirm({
+                  icon: "mail",
+                  headline: "E-Mail senden",
+                  description: `Möchten Sie eine E-Mail an ${comment.from} senden?`,
+                  onConfirm: () => {
+                    window.open(`mailto:${comment.from}`);
+                  },
+                  confirmText: "Ja",
+                  cancelText: "Nein",
+                });
+              }}
+            >
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  gap: "20px",
+                }}
+              >
+                <mdui-avatar slot="icon">
+                  {comment.from
+                    .split(/[@.]/)
+                    .slice(0, 2)
+                    .map((part) => part.charAt(0).toUpperCase())
+                    .join("")}
+                </mdui-avatar>
+
+                {comment.text}
+
+                <mdui-icon name="comment"></mdui-icon>
+              </div>
+            </mdui-list-item>
+          ))}
+        </mdui-list>
+      )}
+      {voteResult.comments && <p />}
       <div className="button-container">
         <mdui-button onClick={() => navigate("/")}>Startseite</mdui-button>
       </div>

@@ -1,4 +1,5 @@
 import {
+  addDoc,
   collection,
   deleteDoc,
   doc,
@@ -8,7 +9,12 @@ import {
 } from "firebase/firestore";
 import { confirm, prompt } from "mdui";
 import React, { useRef } from "react";
-import { useLoaderData, useNavigate, useParams } from "react-router-dom";
+import {
+  useLoaderData,
+  useNavigate,
+  useParams,
+  useRevalidator,
+} from "react-router-dom";
 import { db } from "../firebase";
 import { Class, Student } from "../types";
 
@@ -19,6 +25,8 @@ export default function Students() {
   const { classId, edit } = useParams();
 
   const navigate = useNavigate();
+
+  const revalidator = useRevalidator();
 
   const sortedClasses = classes.sort((a, b) => a.grade - b.grade);
 
@@ -65,12 +73,16 @@ export default function Students() {
   }
 
   async function addClass() {
-    const classDoc = await setDoc(doc(collection(db, "class")), newClass);
-    location.reload();
+    const classDocRef = await addDoc(collection(db, "class"), newClass);
+
+    revalidator.revalidate();
+
+    navigate(`/admin/students/${classDocRef.id}`);
   }
 
   async function removeClass(classId: string) {
     confirm({
+      icon: "warning",
       headline: "Klasse löschen",
       description:
         "Möchten Sie wirklich diese Klasse löschen? Diese Aktion kann nicht rückgängig gemacht werden.",
@@ -79,7 +91,9 @@ export default function Students() {
       onConfirm: async () => {
         const ref = doc(db, "class", classId);
         await deleteDoc(ref);
-        location.reload();
+        revalidator.revalidate();
+
+        navigate(`/admin/students/new-class`);
       },
     });
   }
@@ -99,6 +113,7 @@ export default function Students() {
   async function upgradeClasses() {
     if (
       !confirm({
+        icon: "warning",
         headline: "Schuljahr wechseln",
         description:
           "Möchten Sie wirklich das Schuljahr wechseln? Alle Klassen werden hochgestuft. Diese Aktion kann nicht rückgängig gemacht werden.",
@@ -116,7 +131,7 @@ export default function Students() {
             })
           );
 
-          location.reload();
+          revalidator.revalidate();
         },
       })
     )
@@ -236,7 +251,8 @@ export default function Students() {
       </div>
       <mdui-tabs
         value={
-          classId || (sortedClasses.length < 1 ? "new-class" : sortedClasses[0].id)
+          classId ||
+          (sortedClasses.length < 1 ? "new-class" : sortedClasses[0].id)
         }
         style={{ width: "100%", overflowX: "auto" }}
       >
@@ -283,6 +299,7 @@ export default function Students() {
                 icon="edit"
                 onClick={() => {
                   const newGrade = prompt({
+                    icon: "edit",
                     headline: "Klassenstufe ändern",
                     description: "Bitte geben Sie die neue Klassenstufe ein.",
                     confirmText: "Speichern",

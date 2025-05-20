@@ -25,7 +25,7 @@ export default function Delete() {
   return (
     <>
       <AdminVote />
-      <mdui-dialog open={true} headline="Wahl löschen">
+      <mdui-dialog open={true} headline="Wahl löschen" icon="delete">
         <p>
           Wollen Sie diese Wahl wirklich löschen? Sie können Sie danach nicht
           mehr aufrufen. Antworten können nur noch über die API abgerufen

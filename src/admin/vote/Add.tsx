@@ -8,7 +8,7 @@ import {
 } from "firebase/firestore";
 import { snackbar } from "mdui";
 import React from "react";
-import { useLoaderData } from "react-router-dom";
+import { useLoaderData, useRevalidator } from "react-router-dom";
 import { db } from "../../firebase";
 import { Choice, Class, Option, Vote } from "../../types";
 
@@ -23,6 +23,8 @@ export default function Add() {
   const [suggestedStudents, setSuggestedStudents] = React.useState<
     { name: string; grade: number; listIndex: string }[]
   >([]);
+
+  const revalidator = useRevalidator();
 
   React.useEffect(() => {
     const newSuggestedStudents: {
@@ -60,7 +62,7 @@ export default function Add() {
       setGrade(grade);
       setListIndex(Number(listIndex));
     }
-  }, []);
+  }, [choices, classes]);
 
   const [showSuggestions, setShowSuggestions] = React.useState(false);
 
@@ -107,6 +109,7 @@ export default function Add() {
         snackbar({
           message: "Wahl hinzugefügt",
         });
+        revalidator.revalidate();
         setSaving(false);
       })
       .catch((error) => {
@@ -327,7 +330,7 @@ Add.loader = async function loader({ params }) {
   const { id } = params;
   const vote = await getDoc(doc(db, `/votes/${id}`));
   if (!vote.exists()) {
-    throw new Response("Vote not found", { status: 404 });
+    throw new Response("Seite nicht gefunden", { status: 404 });
   }
   const voteData = { id: vote.id, ...vote.data() };
 

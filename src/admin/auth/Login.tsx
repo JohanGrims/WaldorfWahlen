@@ -36,13 +36,16 @@ export default function Login() {
         setLoading(false);
         if (error.code === "auth/invalid-credential") {
           snackbar({
-            message: "Entweder Email oder Passwort ist falsch.",
+            message: "Ungültige Anmeldeinformationen.",
           });
           return;
         }
         if (error.code === "auth/too-many-requests") {
-          snackbar({
-            message: "Zu viele Anfragen. Bitte versuchen Sie es später erneut.",
+          alert({
+            icon: "hourglass_disabled",
+            headline: "Zu viele Anfragen",
+            description:
+              "Zu viele Anfragen. Bitte versuchen Sie es später erneut.",
           });
           return;
         }
@@ -53,22 +56,33 @@ export default function Login() {
           return;
         }
 
+        if (error.code === "auth/user-disabled") {
+          alert({
+            icon: "remove_moderator",
+            headline: "Account deaktiviert",
+            description:
+              "Ihr Account ist deaktiviert. Dies bedeutet, dass Sie nicht auf das System zugreifen können. Bitte kontaktieren Sie einen Administrator.",
+          });
+          return;
+        }
+
         snackbar({
           message:
-            "Ein Fehler ist aufgetreten. Bitte kontaktieren Sie den Administrator.",
+            "Ein Fehler ist aufgetreten. Bitte kontaktieren Sie einen Administrator.",
         });
       });
   };
 
   const handlePasswordReset = () => {
     prompt({
+      icon: "lock",
       headline: "Passwort zurücksetzen",
       description: "Bitte geben Sie Ihre Email-Adresse ein.",
       confirmText: "Senden",
       cancelText: "Abbrechen",
       closeOnOverlayClick: true,
       textFieldOptions: {
-        placeholder: "user@example.com",
+        placeholder: "nutzer@waldorfschule-potsdam.de",
         type: "email",
         label: "Email",
       },
@@ -77,6 +91,7 @@ export default function Login() {
         sendPasswordResetEmail(auth, email)
           .then(() => {
             alert({
+              icon: "check",
               headline: "Email gesendet",
               description: "Bitte überprüfen Sie Ihren Posteingang.",
             });
@@ -85,6 +100,7 @@ export default function Login() {
           .catch((error) => {
             console.error(error);
             alert({
+              icon: "error",
               headline: "Fehler",
               description: error.message,
             });
@@ -112,7 +128,7 @@ export default function Login() {
         <form onSubmit={handleLogin}>
           <mdui-text-field
             type="email"
-            placeholder="user@example.com"
+            placeholder="nutzer@waldorfschule-potsdam.de"
             label="Email"
             name="email"
             required

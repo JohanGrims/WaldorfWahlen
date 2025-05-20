@@ -5,11 +5,18 @@ import { db } from "../../firebase";
 export default function AdminVote() {
   const { vote, choices, options, results, proposals } = useLoaderData();
 
+  const mobile = window.innerWidth < 840;
+
   const navigate = useNavigate();
 
   return (
     <div className="mdui-prose">
-      <div style={{ display: "flex", justifyContent: "space-between" }}>
+      <div
+        style={{
+          display: mobile ? "block" : "flex",
+          justifyContent: "space-between",
+        }}
+      >
         <h2>{vote.title}</h2>
         <mdui-chip onClick={() => navigate("./schedule")}>
           {!vote.active
@@ -41,7 +48,11 @@ export default function AdminVote() {
         </mdui-card>
       )}
       <div
-        style={{ display: "flex", gap: "20px", justifyContent: "space-around" }}
+        style={{
+          display: "grid",
+          gap: "20px",
+          gridTemplateColumns: mobile ? "1fr 1fr" : "1fr 1fr 1fr 1fr",
+        }}
       >
         <mdui-card
           variant="filled"
@@ -91,11 +102,6 @@ export default function AdminVote() {
             </span>
           </p>
         </mdui-card>
-      </div>
-      <p />
-      <div
-        style={{ display: "flex", gap: "20px", justifyContent: "space-around" }}
-      >
         <mdui-card
           variant="filled"
           style={{ padding: "20px", flex: 1 }}
@@ -155,7 +161,7 @@ AdminVote.loader = async function loader({ params }) {
   const { id } = params;
   const vote = await getDoc(doc(db, `/votes/${id}`));
   if (!vote.exists()) {
-    throw new Response("Vote not found", { status: 404 });
+    throw new Response("Seite nicht gefunden", { status: 404 });
   }
   const voteData = { id: vote.id, ...vote.data() };
 

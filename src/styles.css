@@ -41,6 +41,7 @@ a {
   text-decoration: none;
   color: #1b4485;
   font-weight: bold;
+  border-bottom: 1px solid transparent;
 }
 
 a:hover {
@@ -94,9 +95,9 @@ button:not(:disabled):hover {
   background-color: #f89e24;
 }
 
-.break{
-    flex-basis: 100%;
-    height: 0;
+.break {
+  flex-basis: 100%;
+  height: 0;
 }
 
 .vote {
@@ -159,7 +160,7 @@ button:not(:disabled):hover {
   justify-content: space-between;
 }
 
-.option-card .teacher{
+.option-card .teacher {
   font-size: 14px;
   font-style: italic;
   display: flex;
@@ -491,7 +492,7 @@ button:not(:disabled):hover {
     font-size: 30px !important;
   }
 
-    .vote {
+  .vote {
     width: 100%;
     margin: 0;
   }
@@ -509,5 +510,4 @@ button:not(:disabled):hover {
   .grade {
     width: calc(100% - 20px);
   }
-
 }
