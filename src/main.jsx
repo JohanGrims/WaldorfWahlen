@@ -6,6 +6,7 @@ import "./styles.css";
 import "mdui";
 import { alert, setColorScheme, setTheme } from "mdui";
 import "mdui/mdui.css";
+import path from "path";
 import { getToken } from "firebase/app-check";
 import { appCheck } from "./firebase";
 
@@ -101,6 +102,23 @@ const routes = [
           const componentModule = await import(
             /* webpackChunkName: "Scheduled" */
             "./Scheduled"
+          );
+          return {
+            loader: loaderModule.default.loader,
+            Component: componentModule.default,
+          };
+        },
+      },
+      {
+        path: "/propose/:id",
+        lazy: async () => {
+          const loaderModule = await import(
+            /* webpackChunkName: "Vote" */
+            "./Vote"
+          );
+          const componentModule = await import(
+            /* webpackChunkName: "Propose" */
+            "./Propose"
           );
           return {
             loader: loaderModule.default.loader,
