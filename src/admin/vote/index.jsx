@@ -3,7 +3,7 @@ import { useLoaderData, useNavigate } from "react-router-dom";
 import { db } from "../../firebase";
 
 export default function AdminVote() {
-  const { vote, choices, options, results } = useLoaderData();
+  const { vote, choices, options, results, proposals } = useLoaderData();
 
   const navigate = useNavigate();
 
@@ -30,6 +30,16 @@ export default function AdminVote() {
         </mdui-chip>
       </div>
       <p />
+      {proposals.length > 0 && (
+        <mdui-card
+          variant="filled"
+          style={{ padding: "20px", marginBottom: "20px", width: "100%" }}
+          clickable
+          onClick={() => navigate(`/admin/${vote.id}/edit`)}
+        >
+          <h3>{proposals.length} Vorschläge für Optionen</h3>
+        </mdui-card>
+      )}
       <div
         style={{ display: "flex", gap: "20px", justifyContent: "space-around" }}
       >
@@ -157,10 +167,17 @@ AdminVote.loader = async function loader({ params }) {
 
   const results = await getDocs(collection(db, `/votes/${id}/results`));
   const resultData = results.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+
+  const proposals = await getDocs(collection(db, `/votes/${id}/proposals`));
+  const proposalData = proposals.docs.map((doc) => ({
+    id: doc.id,
+    ...doc.data(),
+  }));
   return {
     vote: voteData,
     choices: choiceData,
     options: optionData,
     results: resultData,
+    proposals: proposalData,
   };
 };

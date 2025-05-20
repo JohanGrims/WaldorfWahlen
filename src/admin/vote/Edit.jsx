@@ -16,7 +16,7 @@ import { useNavigate } from "react-router-dom";
 import { deepEqual, generateRandomHash } from "../utils";
 
 export default function Edit() {
-  const { vote, options: loadedOptions } = useLoaderData();
+  const { vote, options: loadedOptions, proposals } = useLoaderData();
 
   const [title, setTitle] = React.useState(vote.title);
   const [description, setDescription] = React.useState(vote.description);
@@ -126,7 +126,6 @@ export default function Edit() {
         result[key] = [vote[key], newVote[key]];
       }
       return result;
-
     }, {});
 
     if (Object.keys(changes).length > 0) {
@@ -299,6 +298,52 @@ export default function Edit() {
       <p />
       <mdui-divider></mdui-divider>
       <p />
+      {proposals.length > 0 && (
+        <mdui-card variant="filled" style={{ width: "100%", padding: "20px" }}>
+          <div className="mdui-prose">
+            <h2>Vorschläge</h2>
+            <div className="description">
+              Hier sind die Vorschläge, die von den Projektanbietenden
+              eingereicht wurden. Klicken Sie auf einen Vorschlag, um ihn zu
+              bearbeiten und zu den Optionen hinzuzufügen.
+            </div>
+
+            <p />
+            {proposals
+              .sort((a, b) => a.id.localeCompare(b.id))
+              .map((e, i) => (
+                <mdui-card
+                  key={e.id}
+                  class="option-preview"
+                  clickable
+                  disabled={
+                    options.some((option) => option.id === e.id) ||
+                    options.some((option) => option.title === e.title)
+                  }
+                  style={{
+                    cursor: "pointer",
+                    marginBottom: "5px",
+                  }}
+                  variant={"outlined"}
+                  onClick={() => {
+                    setName(e.name);
+                    setTeacher(e.teacher);
+                    setOptionDescription(e.description);
+                    setMax(e.max);
+                    setOptionId(e.id);
+                  }}
+                >
+                  <b>{e.name}</b>
+                  <div className="teacher">{e.teacher}</div>
+                  <div className="description">{e.description}</div>
+                  <div className="max">max. {e.max} SchülerInnen</div>
+                </mdui-card>
+              ))}
+          </div>
+        </mdui-card>
+      )}
+
+      <p />
       <mdui-card variant="filled" style={{ width: "100%", padding: "20px" }}>
         <div className="mdui-prose">
           Bitte beachten Sie: das Löschen von Optionen kann zum Absturz des
@@ -419,9 +464,16 @@ Edit.loader = async function loader({ params }) {
       ...doc.data(),
     }));
 
+    const proposals = await getDocs(collection(db, `/votes/${id}/proposals`));
+    const proposalData = proposals.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    }));
+
     return {
       vote: voteData,
       options: optionData,
+      proposals: proposalData,
     };
   } catch (error) {
     console.error("Failed to load vote:", error);

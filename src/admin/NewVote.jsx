@@ -1,5 +1,5 @@
 import { addDoc, collection, doc, setDoc, Timestamp } from "firebase/firestore";
-import { confirm, prompt, snackbar } from "mdui";
+import { alert, confirm, prompt, snackbar } from "mdui";
 import moment from "moment-timezone";
 import React from "react";
 import { useNavigate } from "react-router-dom";
@@ -15,6 +15,8 @@ export default function NewVote() {
   const [extraFields, setExtraFields] = React.useState([]);
 
   const [options, setOptions] = React.useState([]);
+
+  const [proposals, setProposals] = React.useState(false);
 
   const [name, setName] = React.useState("");
   const [teacher, setTeacher] = React.useState("");
@@ -63,24 +65,48 @@ export default function NewVote() {
         active: true,
         version: 3,
         extraFields: extraFields,
+        proposals: proposals,
       });
-      const option = options.map(async (e) => {
-        return addDoc(collection(db, `/votes/${id}/options`), {
-          title: e.title,
-          max: e.max,
-          teacher: e.teacher,
-          description: e.description,
+
+      if (proposals) {
+        confirm({
+          headline: "Hinzufügen der Vorschläge",
+          description:
+            "Projektanbietende können unter dem Link Vorschläge eintragen: " +
+            `https://waldorfwahlen.web.app/propose/${id}`,
+          confirmText: "Link kopieren",
+          cancelText: "Zur Wahl",
+          onConfirm: (e) => {
+            navigator.clipboard.writeText(
+              `https://waldorfwahlen.web.app/propose/${id}`
+            );
+            snackbar({
+              message: "Link in die Zwischenablage kopiert.",
+              timeout: 5000,
+            });
+            navigate(`/admin/${id}`);
+          },
         });
-      });
+      }
+      if (!proposals) {
+        const option = options.map(async (e) => {
+          return addDoc(collection(db, `/votes/${id}/options`), {
+            title: e.title,
+            max: e.max,
+            teacher: e.teacher,
+            description: e.description,
+          });
+        });
 
-      await Promise.all(option);
+        await Promise.all(option);
 
-      snackbar({
-        message: "Wahl erfolgreich erstellt.",
-        timeout: 5000,
-      });
+        snackbar({
+          message: "Wahl erfolgreich erstellt.",
+          timeout: 5000,
+        });
 
-      navigate(`/admin/${id}`);
+        navigate(`/admin/${id}`);
+      }
     } catch (e) {
       console.error(e);
       snackbar({
@@ -96,7 +122,7 @@ export default function NewVote() {
       !selectCount ||
       !startTime ||
       !endTime ||
-      options.length === 0
+      (options.length === 0 && !proposals)
     ) {
       return true;
     }
@@ -262,94 +288,147 @@ export default function NewVote() {
       <p />
       <mdui-divider></mdui-divider>
       <p />
-      <div className="options-container">
-        <div className="options-list">
-          {options.length === 0 && (
-            <mdui-card class="option-preview" disabled>
-              <b>Keine Optionen</b>
-              <div className="description">
-                Fügen Sie rechts eine neue Option hinzu.
-              </div>
-            </mdui-card>
-          )}
-          {options.map((e, i) => (
-            <mdui-card
-              key={i}
-              class="option-preview"
-              clickable
+
+      <div className="flex-gap">
+        <mdui-card
+          variant={proposals ? "outlined" : "filled"}
+          style={{ width: "100%", padding: "20px" }}
+          clickable
+          onClick={() => setProposals(false)}
+        >
+          <div
+            className="mdui-prose"
+            style={{ width: "100%", userSelect: "none" }}
+          >
+            <div
               style={{
-                cursor: "pointer",
-              }}
-              variant={"outlined"}
-              onClick={() => {
-                editOption(i);
+                display: "flex",
+                textWrap: "nowrap",
+                gap: "10px",
               }}
             >
-              <b>{e.title}</b>
-              <div className="teacher">{e.teacher}</div>
-              <div className="description">{e.description}</div>
-              <div className="max">max. {e.max} SchülerInnen</div>
-            </mdui-card>
-          ))}
-        </div>
-        <div className="new-option">
-          <mdui-text-field
-            label="Titel"
-            placeholder="Programmieren: KI"
-            maxlength={25}
-            counter
-            value={name}
-            onInput={(e) => setName(e.target.value)}
-          ></mdui-text-field>
-          <mdui-text-field
-            label="max. SchülerInnen"
-            type="number"
-            placeholder="15"
-            min={1}
-            value={max}
-            onInput={(e) => setMax(e.target.value)}
-          ></mdui-text-field>
-          <p />
-          <br />
-          <mdui-text-field
-            label="Lehrer (optional)"
-            placeholder="Hr. Mustermann"
-            maxlength={25}
-            counter
-            value={teacher}
-            onInput={(e) => setTeacher(e.target.value)}
-          ></mdui-text-field>
-          <mdui-text-field
-            label="Beschreibung (optional)"
-            placeholder="Was ist Programmieren? Was ist KI? Diesen Themen wollen wir uns in dieser Projektwoche nähern."
-            rows={3}
-            maxlength={100}
-            counter
-            value={optionDescription}
-            onInput={(e) => setOptionDescription(e.target.value)}
-          ></mdui-text-field>
-          {addOptionDisabled() ? (
-            <mdui-button
-              variant="tonal"
-              icon="add"
-              style={{ width: "100%" }}
-              onClick={addOption}
-              disabled
+              <h2>Optionen anlegen</h2>
+              <mdui-icon name="add"></mdui-icon>
+            </div>
+            Legen Sie die Optionen manuell an.
+          </div>
+        </mdui-card>
+        <mdui-card
+          variant={proposals ? "filled" : "outlined"}
+          style={{ width: "100%", padding: "20px" }}
+          clickable
+          onClick={() => setProposals(true)}
+        >
+          <div
+            className="mdui-prose"
+            style={{ width: "100%", userSelect: "none" }}
+          >
+            <div
+              style={{
+                display: "flex",
+                textWrap: "nowrap",
+                gap: "10px",
+              }}
             >
-              Hinzufügen
-            </mdui-button>
-          ) : (
-            <mdui-button
-              variant="tonal"
-              icon="add"
-              style={{ width: "100%" }}
-              onClick={addOption}
-            >
-              Hinzufügen
-            </mdui-button>
-          )}
-        </div>
+              <h2>Link teilen</h2>
+              <mdui-icon name="share"></mdui-icon>
+            </div>
+            Lassen Sie die Projektanbietenden ihre Vorschläge eintragen.
+          </div>
+        </mdui-card>
       </div>
+
+      <p />
+      {!proposals && (
+        <div className="options-container">
+          <div className="options-list">
+            {options.length === 0 && (
+              <mdui-card class="option-preview" disabled>
+                <b>Keine Optionen</b>
+                <div className="description">
+                  Fügen Sie rechts eine neue Option hinzu.
+                </div>
+              </mdui-card>
+            )}
+            {options.map((e, i) => (
+              <mdui-card
+                key={i}
+                class="option-preview"
+                clickable
+                style={{
+                  cursor: "pointer",
+                }}
+                variant={"outlined"}
+                onClick={() => {
+                  editOption(i);
+                }}
+              >
+                <b>{e.title}</b>
+                <div className="teacher">{e.teacher}</div>
+                <div className="description">{e.description}</div>
+                <div className="max">max. {e.max} SchülerInnen</div>
+              </mdui-card>
+            ))}
+          </div>
+          <div className="new-option">
+            <mdui-text-field
+              label="Titel"
+              placeholder="Programmieren: KI"
+              maxlength={25}
+              counter
+              value={name}
+              onInput={(e) => setName(e.target.value)}
+            ></mdui-text-field>
+            <mdui-text-field
+              label="max. SchülerInnen"
+              type="number"
+              placeholder="15"
+              min={1}
+              value={max}
+              onInput={(e) => setMax(e.target.value)}
+            ></mdui-text-field>
+            <p />
+            <br />
+            <mdui-text-field
+              label="Lehrer (optional)"
+              placeholder="Hr. Mustermann"
+              maxlength={25}
+              counter
+              value={teacher}
+              onInput={(e) => setTeacher(e.target.value)}
+            ></mdui-text-field>
+            <mdui-text-field
+              label="Beschreibung (optional)"
+              placeholder="Was ist Programmieren? Was ist KI? Diesen Themen wollen wir uns in dieser Projektwoche nähern."
+              rows={3}
+              maxlength={100}
+              counter
+              value={optionDescription}
+              onInput={(e) => setOptionDescription(e.target.value)}
+            ></mdui-text-field>
+            {addOptionDisabled() ? (
+              <mdui-button
+                variant="tonal"
+                icon="add"
+                style={{ width: "100%" }}
+                onClick={addOption}
+                disabled
+              >
+                Hinzufügen
+              </mdui-button>
+            ) : (
+              <mdui-button
+                variant="tonal"
+                icon="add"
+                style={{ width: "100%" }}
+                onClick={addOption}
+              >
+                Hinzufügen
+              </mdui-button>
+            )}
+          </div>
+        </div>
+      )}
       <p />
       <div className="button-container">
         <mdui-button
