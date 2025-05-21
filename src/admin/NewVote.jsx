@@ -73,12 +73,12 @@ export default function NewVote() {
           headline: "Hinzufügen der Vorschläge",
           description:
             "Projektanbietende können unter dem Link Vorschläge eintragen: " +
-            `https://waldorfwahlen.web.app/propose/${id}`,
+            `https://waldorfwahlen.web.app/p/${id}`,
           confirmText: "Link kopieren",
           cancelText: "Zur Wahl",
           onConfirm: (e) => {
             navigator.clipboard.writeText(
-              `https://waldorfwahlen.web.app/propose/${id}`
+              `https://waldorfwahlen.web.app/p/${id}`
             );
             snackbar({
               message: "Link in die Zwischenablage kopiert.",

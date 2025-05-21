@@ -110,7 +110,7 @@ const routes = [
         },
       },
       {
-        path: "/propose/:id",
+        path: "/p/:id",
         lazy: async () => {
           const loaderModule = await import(
             /* webpackChunkName: "Vote" */
