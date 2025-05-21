@@ -48,4 +48,4 @@ WaldorfWahlen wurde von [@JohanGrims](https://github.com/johangrims) entwickelt.
 
 ## Status
 
-[![Deploy to Firebase Hosting on Commit](https://github.com/JohanGrims/WaldorfWahlen/actions/workflows/firebase-hosting-commit.yml/badge.svg)](https://github.com/JohanGrims/WaldorfWahlen/actions/workflows/firebase-hosting-commit.yml)
+[![Firebase Hosting](https://github.com/JohanGrims/WaldorfWahlen/actions/workflows/firebase-hosting-commit.yml/badge.svg)](https://github.com/JohanGrims/WaldorfWahlen/actions/workflows/firebase-hosting-commit.yml)
