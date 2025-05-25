@@ -161,7 +161,7 @@ export default function Edit() {
   };
 
   const submitDisabled = () => {
-    if (!title || !selectCount || options.length === 0 || isVoteUnchanged()) {
+    if (!title || !selectCount || isVoteUnchanged()) {
       return true;
     }
 
@@ -306,7 +306,9 @@ export default function Edit() {
             <div className="description">
               Hier sind die Vorschläge, die von den Projektanbietenden
               eingereicht wurden. Klicken Sie auf einen Vorschlag, um ihn zu
-              bearbeiten und zu den Optionen hinzuzufügen.
+              bearbeiten und zu den Optionen hinzuzufügen. Teilen Sie den Link
+              https://waldorfwahlen.web.app/p/{vote.id} mit den
+              Projektanbietenden für Vorschläge.
             </div>
 
             <p />
@@ -319,7 +321,7 @@ export default function Edit() {
                   clickable
                   disabled={
                     options.some((option) => option.id === e.id) ||
-                    options.some((option) => option.title === e.title)
+                    options.some((option) => option.title === e.name)
                   }
                   style={{
                     cursor: "pointer",
@@ -332,9 +334,17 @@ export default function Edit() {
                     setOptionDescription(e.description);
                     setMax(e.max);
                     setOptionId(e.id);
+
+                    document
+                      .querySelector("#add-option-button")
+                      .scrollIntoView({
+                        behavior: "smooth",
+                      });
                   }}
                 >
-                  <b>{e.name}</b>
+                  <b>
+                    {e.name} <i>(#{e.id})</i>
+                  </b>
                   <div className="teacher">{e.teacher}</div>
                   <div className="description">{e.description}</div>
                   <div className="max">max. {e.max} SchülerInnen</div>
@@ -379,7 +389,9 @@ export default function Edit() {
                   editOption(i);
                 }}
               >
-                <b>{e.title}</b>
+                <b>
+                  {e.title} <i>(#{e.id})</i>
+                </b>
                 <div className="teacher">{e.teacher}</div>
                 <div className="description">{e.description}</div>
                 <div className="max">max. {e.max} SchülerInnen</div>
@@ -429,6 +441,7 @@ export default function Edit() {
               style={{ width: "100%" }}
               onClick={addOption}
               disabled
+              id="add-option-button"
             >
               Hinzufügen
             </mdui-button>
@@ -438,6 +451,7 @@ export default function Edit() {
               icon="add"
               style={{ width: "100%" }}
               onClick={addOption}
+              id="add-option-button"
             >
               Hinzufügen
             </mdui-button>

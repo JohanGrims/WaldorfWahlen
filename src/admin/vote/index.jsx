@@ -11,8 +11,9 @@ export default function AdminVote() {
 
   const pendingProposals = proposals.filter(
     (proposal) =>
-      options.some((option) => option.id === proposal.id) ||
-      options.some((option) => option.title === proposal.title)
+      !options.some(
+        (option) => option.id === proposal.id || option.name === proposal.name
+      )
   );
 
   return (

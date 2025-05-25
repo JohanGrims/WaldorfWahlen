@@ -26,11 +26,11 @@ export default function Propose() {
     })
       .then(() => {
         setLoading(false);
-        confirm({
+        alert({
+          icon: "check_circle",
           headline: "Vorschlag eingereicht",
           description: "Dein Vorschlag wurde erfolgreich eingereicht.",
           confirmText: "Zurück zur Übersicht",
-          cancelText: "",
           onConfirm: () => {
             navigate(`/`);
           },
@@ -39,6 +39,7 @@ export default function Propose() {
       .catch((error) => {
         setLoading(false);
         alert({
+          icon: "error",
           headline: "Fehler",
           description: `Es gab ein Problem beim Einreichen: ${error.message}`,
         });
@@ -59,6 +60,25 @@ export default function Propose() {
 
     return false;
   };
+
+  React.useEffect(() => {
+    alert({
+      icon: "info",
+      headline: "Vorschlag einreichen",
+      description:
+        "Hallo. Du bist dabei, einen Vorschlag für ein Projekt einzureichen. Danke! Das erleichert den Administratoren die Übersicht über die Daten und stellt sicher, dass alles so ist, wie es sein soll. Stelle sicher, dass Du die Felder so ausfüllst, wie sie am Ende aussehen sollen. Unten siehst Du eine Vorschau deines Projekts. Die Zeichenlimits sind layoutbedingt und können nicht überschritten werden. ",
+      confirmText: "Verstanden",
+      onConfirm: () => {
+        alert({
+          icon: "warning",
+          headline: "Hinweis",
+          description:
+            "Der Titel sollte kurz und prägnant sein. Die Beschreibung sollte das Projekt gut umreißen und eventuelle Beschränkungen erwähnen. Trage die maximale Anzahl an SchülerInnen so ein, wie es bei der Anmeldung abgesprochen wurde. Alle Vorschläge werden manuell von den Administratoren geprüft und freigeschaltet.",
+          confirmText: "Loslegen",
+        });
+      },
+    });
+  }, []);
 
   return (
     <div className="mdui-prose">
@@ -84,7 +104,7 @@ export default function Propose() {
       <p />
       <br />
       <mdui-text-field
-        label="Lehrer (optional)"
+        label="Lehrer / Anbietende (optional)"
         placeholder="Hr. Mustermann"
         maxlength={25}
         counter
@@ -101,15 +121,49 @@ export default function Propose() {
         onInput={(e) => setDescription(e.target.value)}
       ></mdui-text-field>
 
-      {submitDisabled() || loading ? (
-        <mdui-button raised disabled>
-          Vorschlag einreichen
-        </mdui-button>
-      ) : (
-        <mdui-button raised onClick={submit}>
-          Vorschlag einreichen
-        </mdui-button>
-      )}
+      <mdui-divider></mdui-divider>
+      <mdui-card
+        clickable
+        style={{
+          cursor: "pointer",
+          width: "100%",
+        }}
+        class={`option-card`}
+        variant={"elevated"}
+      >
+        <b className="title">
+          {name || "Programmieren: KI"}
+          <mdui-badge
+            style={{
+              backgroundColor: "transparent",
+              color: "white",
+            }}
+          >
+            <mdui-icon name="group"></mdui-icon>
+            {max || 15}
+          </mdui-badge>
+        </b>
+        {teacher && (
+          <div className="teacher">
+            <mdui-icon name="person"></mdui-icon>
+            {teacher}
+          </div>
+        )}
+        {description && <div className="description">{description}</div>}
+      </mdui-card>
+      <p />
+
+      <div style={{ display: "flex", justifyContent: "end" }}>
+        {submitDisabled() || loading ? (
+          <mdui-fab extended disabled icon="send">
+            Vorschlag einreichen
+          </mdui-fab>
+        ) : (
+          <mdui-fab extended onClick={submit} icon="send">
+            Vorschlag einreichen
+          </mdui-fab>
+        )}
+      </div>
     </div>
   );
 }
