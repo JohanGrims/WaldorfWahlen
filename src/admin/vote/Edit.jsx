@@ -299,7 +299,7 @@ export default function Edit() {
       <p />
       <mdui-divider></mdui-divider>
       <p />
-      {proposals.length > 0 && (
+      {(proposals.length > 0 || options.length === 0) && (
         <mdui-card variant="filled" style={{ width: "100%", padding: "20px" }}>
           <div className="mdui-prose">
             <h2>Vorschläge</h2>
