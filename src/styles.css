@@ -511,3 +511,201 @@ button:not(:disabled):hover {
     width: calc(100% - 20px);
   }
 }
+
+/* Carousel container styles */
+.carousel-container {
+  display: flex;
+  overflow-x: auto;
+  /* Scroll snap for smoother carousel-like behavior */
+  scroll-snap-type: x mandatory;
+  /* Hide scrollbar for a cleaner look */
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+  padding: 10px 0; /* Add some padding for better visual spacing */
+  gap: 10px; /* Gap between items in the carousel */
+}
+
+.carousel-container::-webkit-scrollbar {
+  display: none; /* Webkit browsers */
+}
+
+/* Individual items in the carousel */
+.option-card-in-carousel {
+  scroll-snap-align: start; /* Snap to the start of each item */
+  flex-shrink: 0; /* Prevent items from shrinking */
+}
+
+/* General card styling for consistency within the Vote page steps */
+.vote-step-card {
+  margin-bottom: 20px;
+  padding: 24px !important; /* Overriding default .card padding if necessary */
+}
+
+/* Responsive flex row for input fields */
+.responsive-flex-row {
+  display: flex;
+  flex-wrap: wrap; /* Allow items to wrap on smaller screens */
+  gap: 16px; /* Consistent gap between items */
+}
+
+.responsive-flex-row > mdui-text-field {
+  flex-grow: 1; /* Allow fields to grow */
+  min-width: calc(50% - 8px); /* Aim for two items per row on larger screens, accounting for gap */
+}
+
+@media (max-width: 600px) {
+  .responsive-flex-row > mdui-text-field {
+    min-width: 100%; /* Full width on smaller screens */
+  }
+}
+
+
+/* Ensure titles within steps are clear */
+.step-title {
+  text-align: center;
+  margin-bottom: 1.5rem !important; /* Increased margin */
+  font-size: 1.75em !important; /* Make step titles prominent */
+  font-weight: 500;
+}
+
+.step-subtitle {
+  margin-top: 1rem;
+  font-size: 1.2em;
+  color: #333;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 0.5em;
+  margin-bottom: 1em;
+}
+
+
+/* Consistent button container styling */
+.step-button-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 2rem !important; /* Space above buttons */
+}
+
+.step-button-container.end-aligned {
+    justify-content: flex-end;
+}
+
+/* Specific styling for option cards within the vote selection carousel */
+.vote-option-card {
+  min-width: 280px; /* Slightly larger min-width for options */
+  max-width: 320px; /* Max width */
+  display: flex !important; /* Important to override potential mdui-card styles */
+  flex-direction: column !important;
+  justify-content: space-between !important;
+  height: auto !important; /* Auto height based on content */
+  padding: 16px !important; /* Standardized padding */
+}
+
+.vote-option-card .title {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: bold; /* MDUI might override, ensure it's bold */
+  font-size: 1.1em;
+}
+
+.vote-option-card .teacher {
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  font-size: 0.95em;
+  color: #555;
+}
+
+.vote-option-card .teacher mdui-icon {
+  margin-right: 6px; /* Increased margin */
+}
+
+.vote-option-card .description {
+  padding: 0 0 8px 0; /* Adjusted padding */
+  margin-top: auto;
+  font-size: 0.9em;
+  opacity: 0.8;
+  line-height: 1.4;
+}
+
+/* Ensure the main content container in Vote.jsx has some breathing room */
+.vote-container {
+  padding: 0px; /* Removed padding from here, apply to children if needed */
+  width: 100%;
+  max-width: 800px; /* Max width for the form area */
+  margin: 0 auto; /* Center the form area */
+}
+
+/* Review step text styling */
+.review-section h3 {
+  margin-top: 1.5rem;
+  font-size: 1.1em;
+  color: #333; /* Darker color for section titles */
+  border-bottom: 1px solid #eee; /* Subtle separator */
+  padding-bottom: 0.3em;
+  margin-bottom: 0.8em;
+}
+
+.review-section p {
+  line-height: 1.7; /* Increased line height for readability */
+  margin-bottom: 0.5em;
+}
+
+.review-section .field-label {
+  font-weight: 500; /* Medium weight for labels */
+  color: #555;
+}
+
+.review-section .field-value {
+  color: #222;
+}
+
+.review-section .missing-value {
+  color: #d32f2f; /* Red color for missing values */
+  font-style: italic;
+}
+
+.preview-warning {
+  margin-top: 1.5rem;
+  color: #ef6c00; /* Material Orange 700 */
+  text-align: center;
+  font-weight: 500; /* Adjusted weight */
+  padding: 10px; /* Increased padding */
+  background-color: #fff3e0; /* Light orange background */
+  border-radius: 4px;
+  border: 1px solid #ffe0b2; /* Lighter orange border */
+  display: flex; /* For icon alignment */
+  align-items: center;
+  justify-content: center;
+}
+
+.preview-warning mdui-icon {
+  margin-right: 8px; /* Space between icon and text */
+}
+
+/* Make sure the main vote title and description are centered and look good */
+.vote-header-prose {
+  text-align: center;
+  margin-bottom: 20px;
+}
+.vote-header-prose .vote-title {
+  font-size: 2em !important; /* Larger title */
+  font-weight: 600;
+}
+.vote-header-prose .time-label {
+  font-size: 0.9em;
+  color: #666;
+}
+.vote-header-prose p { /* Description */
+  font-size: 1em;
+  color: #444;
+  margin-top: 10px;
+}
+
+/* Styling for "Keine Wahlen" message in App.jsx */
+.no-votes-message {
+  text-align: center;
+  padding: 20px;
+  font-size: 1.1em;
+  color: #757575; /* Material Grey 600 */
+}

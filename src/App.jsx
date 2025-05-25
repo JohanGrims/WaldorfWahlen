@@ -2,6 +2,8 @@ import { collection, getDocs } from "firebase/firestore";
 import moment from "moment-timezone";
 import { useLoaderData } from "react-router-dom";
 import { db } from "./firebase";
+import VoteCard from './VoteCard.jsx'; // Import VoteCard
+
 function App() {
   const { activeVotes, expiredVotes, scheduledVotes } = useLoaderData();
 
@@ -34,24 +36,27 @@ function App() {
         <a href="https://waldorfschule-potsdam.de/datenschutz/">Datenschutz</a>
       </div>
       <p />
-      <mdui-list>
-        {activeVotes.length < 1 && (
-          <mdui-list-item disabled>Keine Wahlen</mdui-list-item>
+      {/* Active Votes Section - Replaced with horizontal scrolling VoteCards */}
+      <div className="carousel-container" style={{ padding: '10px 0' }}> {/* Applied carousel-container class */}
+        {activeVotes.length < 1 ? (
+          <p className="no-votes-message" style={{ flexGrow: 1 }}>Keine Wahlen</p> // Applied class and ensured it can take full width
+        ) : (
+          activeVotes
+            .sort((a, b) => {
+              return b.startTime.seconds - a.startTime.seconds;
+            })
+            .map((vote) => (
+              <VoteCard
+                key={vote.id}
+                id={vote.id}
+                title={vote.title}
+                endTime={vote.endTime} // Pass endTime to VoteCard
+              />
+            ))
         )}
-        {activeVotes
-          .sort((a, b) => {
-            return b.startTime.seconds - a.startTime.seconds;
-          })
-          .map((vote) => (
-            <mdui-list-item
-              key={vote.id}
-              href={`/${vote.id}`}
-              rounded
-              end-icon="arrow_forward"
-            >
-              {vote.title}
-            </mdui-list-item>
-          ))}
+      </div>
+      {/* End of Active Votes Section */}
+      <mdui-list> {/* This list now only contains the collapse items */}
         <mdui-collapse>
           <mdui-collapse-item value="scheduled-votes">
             <mdui-list-item
@@ -143,12 +148,15 @@ App.loader = async function loader() {
           id: e.id,
           title: data.title,
           startTime: data.startTime,
+          endTime: data.endTime, // Add endTime to activeVotes objects
         });
       } else {
         expiredVotes.push({
           id: e.id,
           title: data.title,
           startTime: data.startTime,
+          // Optionally add endTime to expiredVotes if needed elsewhere
+          // endTime: data.endTime, 
         });
       }
       return;
@@ -157,6 +165,8 @@ App.loader = async function loader() {
       id: e.id,
       title: data.title,
       startTime: data.startTime,
+      // Optionally add endTime to scheduledVotes if needed elsewhere
+      // endTime: data.endTime,
     });
   });
 

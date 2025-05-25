@@ -47,10 +47,14 @@ export default function Vote() {
   const [confirmDialog, setConfirmDialog] = React.useState(false);
 
   const [sending, setSending] = React.useState(false);
+  const [currentStep, setCurrentStep] = React.useState(1); // Added currentStep state
+  const [currentSelectionIndex, setCurrentSelectionIndex] = React.useState(0); // Added currentSelectionIndex state
+
 
   const preview = urlParams.get("preview");
 
-  const submitDisabled = () => {
+  // Renamed from submitDisabled for clarity
+  const isSubmitDisabled = () => { 
     if (
       selected.includes("null") ||
       !firstName?.trim() ||
@@ -68,6 +72,17 @@ export default function Vote() {
     }
 
     return false;
+  };
+
+  // Helper function to validate Step 1 inputs
+  const isStep1Valid = () => {
+    return (
+      firstName?.trim() && firstName.length >= 2 &&
+      lastName?.trim() && lastName.length >= 2 &&
+      grade &&
+      listIndex &&
+      (!extraFields || (extraFieldsValues?.length === extraFields?.length && !extraFieldsValues?.some(value => !value?.trim())))
+    );
   };
 
   const select = (index, newValue) => {
@@ -154,7 +169,8 @@ export default function Vote() {
   };
 
   return (
-    <div className="container">
+    <div className="vote-container"> {/* Added vote-container class */}
+      {/* Confirmation Dialog remains at the top level */}
       <mdui-dialog open={confirmDialog} headline="Bestätigen" icon="check">
         <div className="mdui-prose">
           <p>
@@ -209,251 +225,269 @@ export default function Vote() {
           )}
         </div>
       </mdui-dialog>
-      <mdui-card
-        variant={breakpointCondition.up("md") ? "outlined" : "elevated"}
-        class="card"
-      >
-        <div className="mdui-prose">
-          <h1 className="vote-title">{title}</h1>
-          <div className="time-label">
-            Endet am{" "}
-            {moment
-              .tz(endTime.seconds * 1000, "Europe/Berlin")
-              .locale("de")
-              .format("dddd, D. MMMM YYYY, HH:mm")}
-          </div>
+
+      {/* Vote Title, Description, and End Time - Displayed above steps */}
+      <div className="vote-header-prose"> {/* Added vote-header-prose class */}
+        <h1 className="vote-title">{title}</h1>
+        <div className="time-label" style={{ marginTop: '0', marginBottom: '10px' }}> {/* Adjusted inline style */}
+          Endet am{" "}
+          {moment
+            .tz(endTime.seconds * 1000, "Europe/Berlin")
+            .locale("de")
+            .format("dddd, D. MMMM YYYY, HH:mm")}
         </div>
-        {vote.description && (
-          <div className="mdui-prose">
+        {description && (
+          <>
             <p />
             <p>{description}</p>
-          </div>
+          </>
         )}
-        <p />
-        <br />
-        <div className="flex-row">
-          <mdui-text-field
-            label="Vorname(n)"
-            placeholder="Max Erika"
-            value={firstName}
-            onInput={(e) => setFirstName(capitalizeWords(e.target.value))}
-            icon="person"
-          ></mdui-text-field>
-          <mdui-text-field
-            label="Nachname"
-            placeholder="Mustermann"
-            value={lastName}
-            onInput={(e) => setLastName(capitalizeWords(e.target.value))}
-            icon="badge"
-          ></mdui-text-field>
-        </div>
-        <p />
-        <div style={{ display: "flex", gap: "20px" }}>
-          <mdui-text-field
-            type="number"
-            label="Klasse"
-            placeholder="11"
-            value={grade}
-            onInput={(e) => setGrade(e.target.value)}
-            icon="school"
-          ></mdui-text-field>
-          <mdui-text-field
-            type="number"
-            label="Nummer"
-            placeholder="17"
-            value={listIndex}
-            onInput={(e) => setListIndex(e.target.value)}
-            icon="format_list_numbered"
-          ></mdui-text-field>
-        </div>
-        <p />
-        {extraFields?.map((e, i) => (
-          <div key={i}>
-            <mdui-text-field
-              label={e}
-              value={extraFieldsValues[i]}
-              onInput={(e) =>
-                handleInputChange(i, capitalizeWords(e.target.value))
-              }
-              icon="edit"
-            ></mdui-text-field>
-            <p />
+      </div>
+
+      {/* Step 1: User Information */}
+      {currentStep === 1 && (
+        <mdui-card
+          variant={breakpointCondition.up("md") ? "outlined" : "elevated"}
+          class="card vote-step-card" // Added vote-step-card
+        >
+          <div className="mdui-prose">
+            <h2 className="step-title">Schritt 1: Persönliche Angaben</h2> {/* Added step-title class */}
           </div>
-        ))}
-        <p />
-        <br />
-        <mdui-divider></mdui-divider>
-        <p />
-        {Array.from({ length: selectCount }).map((e, index) => (
-          <div key={index}>
-            <div className="mdui-prosa">
-              {selectCount > 1 && (
-                <h2
-                  style={{ textAlign: "center" }}
-                  ref={(el) => (refs.current[index] = el)}
-                >
-                  {index + 1}. Wahl
-                </h2>
-              )}
+          <div className="responsive-flex-row"> {/* Added responsive-flex-row class */}
+            <mdui-text-field
+              label="Vorname(n)"
+              placeholder="Max Erika"
+              value={firstName}
+              onInput={(e) => setFirstName(capitalizeWords(e.target.value))}
+              icon="person"
+            ></mdui-text-field>
+            <mdui-text-field
+              label="Nachname"
+              placeholder="Mustermann"
+              value={lastName}
+              onInput={(e) => setLastName(capitalizeWords(e.target.value))}
+              icon="badge"
+            ></mdui-text-field>
+          </div>
+          {/* <p /> Combined into responsive-flex-row gap */}
+          <div className="responsive-flex-row">  {/* Added responsive-flex-row class */}
+            <mdui-text-field
+              type="number"
+              label="Klasse"
+              placeholder="11"
+              value={grade}
+              onInput={(e) => setGrade(e.target.value)}
+              icon="school"
+            ></mdui-text-field>
+            <mdui-text-field
+              type="number"
+              label="Nummer"
+              placeholder="17"
+              value={listIndex}
+              onInput={(e) => setListIndex(e.target.value)}
+              icon="format_list_numbered"
+            ></mdui-text-field>
+          </div>
+          <p />
+          {extraFields?.map((e, i) => (
+            <div key={i}>
+              <mdui-text-field
+                label={e}
+                value={extraFieldsValues[i]}
+                onInput={(e) =>
+                  handleInputChange(i, capitalizeWords(e.target.value))
+                }
+                icon="edit"
+              ></mdui-text-field>
+              <p /> {/* This p tag might be excessive if gap is handled by responsive-flex-row */}
             </div>
-            <div className="flex-wrap">
-              {options.map((e) => (
+          ))}
+          {/* <p /> Handled by button container margin */}
+          <div className="step-button-container end-aligned"> {/* Added classes */}
+            <mdui-button
+              variant="filled" // Ensured filled variant
+              onClick={() => setCurrentStep(2)}
+              end-icon="arrow_forward"
+              disabled={!isStep1Valid()}
+            >
+              Weiter
+            </mdui-button>
+          </div>
+          <p />
+        </mdui-card>
+      )}
+
+      {/* Step 2: Vote Selection */}
+      {currentStep === 2 && (
+        <mdui-card
+          variant={breakpointCondition.up("md") ? "outlined" : "elevated"}
+          class="card vote-step-card" // Added vote-step-card
+        >
+          <div className="mdui-prose">
+            <h2 className="step-title"> {/* Added step-title class */}
+              {selectCount > 1 ? `${currentSelectionIndex + 1}. Wahl` : "Ihre Wahl"}
+            </h2>
+          </div>
+
+          <div className="carousel-container"> {/* Applied carousel-container class */}
+            {options.map((e) => {
+              const isSelectedForCurrent = selected[currentSelectionIndex] === e.id;
+              const isSelectedForOther = selected.includes(e.id) && selected[currentSelectionIndex] !== e.id;
+              const isDisabled = isSelectedForOther;
+
+              return (
                 <mdui-card
                   key={e.id}
-                  clickable={
-                    selected[index] !== e.id && !selected.includes(e.id)
-                  }
-                  style={{
-                    cursor:
-                      selected[index] !== e.id && selected.includes(e.id)
-                        ? "not-allowed"
-                        : "pointer",
-                    backgroundColor:
-                      selected[index] !== e.id &&
-                      selected.includes(e.id) &&
-                      "rgba(0, 0, 0, 0.1)",
+                  clickable={!isDisabled}
+                  // Inline styles related to sizing/flex are now in vote-option-card class
+                  style={{ 
+                    cursor: isDisabled ? 'not-allowed' : 'pointer',
+                    backgroundColor: isDisabled ? 'rgba(0, 0, 0, 0.07)' : undefined,
                   }}
-                  class={`option-card ${
-                    selected[index] === e.id ? "selected" : ""
-                  } ${
-                    selected[index] !== e.id && selected.includes(e.id)
-                      ? "disabled"
-                      : ""
-                  }`}
+                  className={`option-card-in-carousel vote-option-card ${isSelectedForCurrent ? "selected" : ""} ${isDisabled ? "disabled" : ""}`} // Added classes
                   variant={
-                    selected.includes(e.id)
-                      ? selected[index] === e.id
-                        ? "outlined"
-                        : "filled"
+                    isSelectedForCurrent
+                      ? "outlined"
+                      : isDisabled
+                      ? "filled" 
                       : "elevated"
                   }
                   onClick={() => {
-                    selected[index] === e.id
-                      ? select(index, "null")
-                      : !selected.includes(e.id) && select(index, e.id);
+                    if (isSelectedForCurrent) {
+                      select(currentSelectionIndex, "null"); // Deselect
+                    } else if (!isDisabled) {
+                      select(currentSelectionIndex, e.id); // Select
+                    }
                   }}
                 >
-                  <b className="title">
-                    {e.title}
-                    <mdui-badge
-                      style={{
-                        backgroundColor: "transparent",
-                        color: "white",
-                      }}
+                  <div style={{ padding: '0px' }}> {/* Padding handled by vote-option-card or specific elements */}
+                    <b className="title"> {/* Removed inline styles, handled by CSS */}
+                      {e.title}
+                      <mdui-badge style={{ marginLeft: '8px', backgroundColor: 'transparent', color: 'inherit' }}>
+                        <mdui-icon name="group"></mdui-icon>
+                        {e.max}
+                      </mdui-badge>
+                    </b>
+                    {e.teacher && (
+                      <div className="teacher"> {/* Removed inline styles, handled by CSS */}
+                        <mdui-icon name="person"></mdui-icon> {/* Removed inline style */}
+                        {e.teacher}
+                      </div>
+                    )}
+                  </div>
+                  {e.description && (
+                    <div 
+                      className="description" // Styling handled by CSS
                     >
-                      <mdui-icon name="group"></mdui-icon>
-                      {e.max}
-                    </mdui-badge>
-                  </b>
-                  {e.teacher && (
-                    <div className="teacher">
-                      <mdui-icon name="person"></mdui-icon>
-                      {e.teacher}
+                      {e.description}
                     </div>
                   )}
-                  {e.description && (
-                    <div className="description">{e.description}</div>
-                  )}
                 </mdui-card>
-              ))}
-            </div>
-            <p />
-            <mdui-divider></mdui-divider>
+              );
+            })}
           </div>
-        ))}
-        <p />
-        <br />
-
-        <div
-          className="button-container"
-          ref={(el) => (refs.current[selectCount] = el)}
-        >
-          <mdui-button
-            variant="text"
-            icon="refresh"
-            onClick={() => {
-              confirm({
-                icon: "refresh",
-                headline: "Zurücksetzen",
-                description: "Möchten Sie wirklich alle Eingaben zurücksetzen?",
-                onConfirm: () => {
-                  setSelected(
-                    Array.from({ length: selectCount }, () => "null")
-                  );
-                  setFirstName("");
-                  setLastName("");
-                  setGrade("");
-                  setListIndex("");
-                  setExtraFieldsValues([]);
-                },
-                confirmText: "Zurücksetzen",
-                cancelText: "Abbrechen",
-              });
-            }}
-          >
-            Zurücksetzen
-          </mdui-button>
-          {preview && (
-            <mdui-tooltip
-              variant="rich"
-              headline="Vorschau"
-              content="Sie sehen eine Vorschau, da Sie den Link mit dem Parameter ?preview=true geöffnet haben. Es werden keine Daten gespeichert."
-            >
-              <mdui-button icon="visibility" disabled variant="text">
-                Sie sehen eine Vorschau
+          {/* <p /> Handled by button container margin */}
+          <div className="step-button-container" style={{ padding: '0' }}> {/* Added class, removed specific padding from here */}
+            {/* Previous Button */}
+            {currentSelectionIndex > 0 ? (
+              <mdui-button variant="text" onClick={() => setCurrentSelectionIndex(currentSelectionIndex - 1)} start-icon="arrow_back">
+                Vorherige Wahl
               </mdui-button>
-            </mdui-tooltip>
-          )}
-          {submitDisabled() ? (
-            <mdui-button disabled end-icon="arrow_forward">
-              Überprüfen
-            </mdui-button>
-          ) : (
-            <mdui-button onClick={confirmSubmit} end-icon="arrow_forward">
-              Überprüfen
-            </mdui-button>
-          )}
-        </div>
-        <p />
-        <div
-          className="checks"
-          style={{
-            display: "flex",
-            flexWrap: "wrap",
-            justifyContent: "center",
-          }}
+            ) : (
+              <mdui-button variant="text" onClick={() => setCurrentStep(1)} start-icon="arrow_back">
+                Persönliche Angaben
+              </mdui-button>
+            )}
+
+            {/* Next Button */}
+            {currentSelectionIndex < selectCount - 1 ? (
+              <mdui-button 
+                variant="filled" // Ensured filled variant
+                onClick={() => {
+                  // Optional: Auto-scroll to the top of the card or carousel if needed
+                  setCurrentSelectionIndex(currentSelectionIndex + 1);
+                }} 
+                end-icon="arrow_forward"
+                disabled={selected[currentSelectionIndex] === "null"}
+              >
+                Nächste Wahl
+              </mdui-button>
+            ) : (
+              <mdui-button 
+                variant="filled" // Ensured filled variant
+                onClick={() => setCurrentStep(3)} 
+                end-icon="playlist_add_check"
+                disabled={selected[currentSelectionIndex] === "null"}
+              >
+                Überprüfen
+              </mdui-button>
+            )}
+          </div>
+          {/* <p/> Handled by card padding */}
+        </mdui-card>
+      )}
+
+      {/* Step 3: Review */}
+      {currentStep === 3 && (
+        <mdui-card
+          variant={breakpointCondition.up("md") ? "outlined" : "elevated"}
+          class="card vote-step-card" // Added vote-step-card
         >
-          <CheckItem
-            label={"Vorname(n)"}
-            checked={firstName?.trim() && firstName.length >= 2}
-          />
-          <CheckItem
-            label={"Nachname"}
-            checked={lastName?.trim() && lastName.length >= 2}
-          />
-          <div className="break" />
-          <CheckItem label={"Klasse"} checked={grade} />
-          <CheckItem label={"Klassenlistennr."} checked={listIndex} />
-          <div className="break" />
-          {extraFields?.map((e, i) => (
-            <>
-              <CheckItem
-                key={i}
-                label={e}
-                checked={extraFieldsValues[i]?.trim()}
-              />
-              <div className="break" />
-            </>
-          ))}
-          {Array.from({ length: selectCount }).map((e, index) => (
-            <CheckItem
-              key={index}
-              label={`${index + 1}. Wahl`}
-              checked={selected[index] !== "null"}
-            />
-          ))}
-        </div>
-      </mdui-card>
+          <div className="mdui-prose review-section"> {/* Added review-section class */}
+            <h2 className="step-title">Schritt 3: Überprüfung Ihrer Eingaben</h2> {/* Added step-title */}
+            
+            <h3 className="step-subtitle">Persönliche Angaben:</h3> {/* Added step-subtitle */}
+            <p> {/* Removed inline style */}
+              <span className="field-label">Vorname:</span> <span className="field-value">{firstName}</span><br />
+              <span className="field-label">Nachname:</span> <span className="field-value">{lastName}</span><br />
+              <span className="field-label">Klasse:</span> <span className="field-value">{grade}</span><br />
+              <span className="field-label">Klassenlistennr.:</span> <span className="field-value">{listIndex}</span><br />
+              {extraFields?.map((field, i) => (
+                <span key={i}><span className="field-label">{field}:</span> {extraFieldsValues[i] ? <span className="field-value">{extraFieldsValues[i]}</span> : <span className="missing-value">Nicht angegeben</span>}<br /></span>
+              ))}
+            </p>
+
+            <h3 className="step-subtitle">Ihre Wahlen:</h3> {/* Added step-subtitle */}
+            {selected.map((selectionId, index) => (
+              <p key={index} style={{ margin: '0.2rem 0' }}> {/* Adjusted margin slightly */}
+                <span className="field-label">{selectCount > 1 ? `${index + 1}. Wahl: ` : "Auswahl: "}</span>
+                {options.find(o => o.id === selectionId)?.title ? 
+                  <span className="field-value">{options.find(o => o.id === selectionId)?.title}</span> : 
+                  <span className="missing-value">Keine Wahl getroffen</span>}
+              </p>
+            ))}
+            
+            {preview && (
+              <div className="preview-warning"> {/* Added class */}
+                <mdui-icon name="visibility"></mdui-icon> {/* Removed inline styles */}
+                Sie sehen eine Vorschau. Es werden keine Daten gespeichert.
+              </div>
+            )}
+
+            <div className="step-button-container"> {/* Added class */}
+              <mdui-button 
+                variant="text" // Ensured text variant
+                onClick={() => {
+                  setCurrentSelectionIndex(selectCount > 0 ? selectCount - 1 : 0);
+                  setCurrentStep(2);
+                }} 
+                start-icon="arrow_back"
+              >
+                Wahlen bearbeiten
+              </mdui-button>
+              <mdui-button 
+                variant="filled" // Ensured filled variant
+                onClick={confirmSubmit} 
+                end-icon="send"
+                disabled={isSubmitDisabled() || sending || preview}
+                loading={sending}
+              >
+                {sending ? "Wird gesendet..." : "Absenden"}
+              </mdui-button>
+            </div>
+          </div>
+        </mdui-card>
+      )}
     </div>
   );
 }
