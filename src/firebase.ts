@@ -11,6 +11,13 @@ declare global {
   interface Window {
     FIREBASE_APPCHECK_DEBUG_TOKEN?: boolean;
   }
+
+  interface ImportMeta {
+    env: {
+      [key: string]: string | boolean | undefined;
+      VITE_APP_CHECK_DEBUG_TOKEN_FROM_CI?: string;
+    };
+  }
 }
 
 const firebaseConfig = {
@@ -33,6 +40,10 @@ if (window.location.hostname === "localhost") {
   window.FIREBASE_APPCHECK_DEBUG_TOKEN = true;
 }
 
+if (import.meta.env.VITE_APP_CHECK_DEBUG_TOKEN_FROM_CI) {
+  window.FIREBASE_APPCHECK_DEBUG_TOKEN =
+    import.meta.env.VITE_APP_CHECK_DEBUG_TOKEN_FROM_CI;
+}
 const appCheck = initializeAppCheck(app, {
   provider: new ReCaptchaEnterpriseProvider(
     "6LfNXNoqAAAAABF77vNghbzVpS2ROyICcK0AJ7Zb"

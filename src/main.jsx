@@ -6,7 +6,6 @@ import "./styles.css";
 import "mdui";
 import { alert, setColorScheme, setTheme } from "mdui";
 import "mdui/mdui.css";
-import path from "path";
 import { getToken } from "firebase/app-check";
 import { appCheck } from "./firebase";
 
