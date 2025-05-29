@@ -44,6 +44,8 @@ export default function Vote() {
   );
   const [extraFieldsValues, setExtraFieldsValues] = React.useState([]);
 
+  const [accepted, setAccepted] = React.useState(false);
+
   const [confirmDialog, setConfirmDialog] = React.useState(false);
 
   const [sending, setSending] = React.useState(false);
@@ -62,7 +64,8 @@ export default function Vote() {
       (extraFields &&
         (extraFieldsValues?.length !== extraFields?.length ||
           extraFieldsValues?.some((value) => !value?.trim()))) ||
-      preview
+      preview ||
+      !accepted
     ) {
       return true;
     }
@@ -363,6 +366,22 @@ export default function Vote() {
         ))}
         <p />
         <br />
+        <mdui-checkbox
+          checked={accepted}
+          onChange={(e) => setAccepted(e.target.checked)}
+        >
+          Ich willige ein, dass mein Vorname, der erste Buchstabe meines
+          Nachnamens, meine Klasse sowie meine Position in der Klassenliste
+          zusammen mit meinen Wahlentscheidungen zum Zweck der Durchführung und
+          Auswertung der Projektwahl gespeichert und verarbeitet werden. Die
+          Daten werden in einer abgesicherten Datenbank von Google Firestore
+          innerhalb der EU gespeichert und sind ausschließlich für berechtigte
+          Lehrkräfte zugänglich. Die Nutzung dieser Plattform ist freiwillig.
+          Wenn ich nicht möchte, dass meine Daten online verarbeitet werden,
+          kann ich meine Wahl stattdessen direkt bei den verantwortlichen
+          Lehrer:innen abgeben.
+        </mdui-checkbox>
+        <p />
 
         <div
           className="button-container"
@@ -385,6 +404,7 @@ export default function Vote() {
                   setGrade("");
                   setListIndex("");
                   setExtraFieldsValues([]);
+                  setAccepted(false);
                 },
                 confirmText: "Zurücksetzen",
                 cancelText: "Abbrechen",
