@@ -9,19 +9,23 @@ import React from "react";
 export default function CheckItem({
   label,
   checked,
+  checkedIcon = "done",
+  uncheckedIcon = "close",
 }: {
   label: string;
   checked: boolean;
+  checkedIcon?: string;
+  uncheckedIcon?: string;
 }) {
   if (checked) {
     return (
-      <mdui-checkbox disabled checked checked-icon="done">
+      <mdui-checkbox disabled checked checked-icon={checkedIcon}>
         {label}
       </mdui-checkbox>
     );
   }
   return (
-    <mdui-checkbox disabled unchecked-icon="close">
+    <mdui-checkbox disabled unchecked-icon={uncheckedIcon}>
       {label}
     </mdui-checkbox>
   );

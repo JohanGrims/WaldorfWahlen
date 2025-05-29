@@ -356,7 +356,11 @@ export default function Results() {
         style={{ width: "100%", padding: "20px" }}
         clickable
         disabled={vote.result || !results.length}
-        onClick={publishResults}
+        onClick={() => {
+          if (!vote.result && results.length) {
+            publishResults();
+          }
+        }}
       >
         <div
           className="mdui-prose"

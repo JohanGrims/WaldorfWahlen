@@ -37,6 +37,8 @@ export default function Answers() {
     let isFirstLoad = true;
     let answersLoad = [];
 
+    console.log("Loading answers for vote:", vote.id);
+
     const unsubscribe = onSnapshot(
       collection(db, `/votes/${vote.id}/choices`),
       (snapshot) => {
@@ -128,6 +130,30 @@ export default function Answers() {
 
   if (loading) {
     return <mdui-linear-progress />;
+  }
+
+  if (answers.length === 0 || options.length === 0) {
+    return (
+      <div
+        className="mdui-prose"
+        style={{ display: "flex", justifyContent: "center", marginTop: 40 }}
+      >
+        <mdui-card
+          variant="filled"
+          style={{ maxWidth: 420, padding: 32, textAlign: "center" }}
+        >
+          <mdui-icon
+            name="sentiment_dissatisfied"
+            style={{ fontSize: 64, color: "var(--mdui-color-primary)" }}
+          />
+          <h2 style={{ marginTop: 16 }}>Keine Antworten gefunden</h2>
+          <p />
+          <mdui-button icon="refresh" onClick={() => revalidator.revalidate()}>
+            Antworten aktualisieren
+          </mdui-button>
+        </mdui-card>
+      </div>
+    );
   }
 
   return (
