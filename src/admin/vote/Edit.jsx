@@ -16,7 +16,11 @@ import { useNavigate } from "react-router-dom";
 import { deepEqual, generateRandomHash } from "../utils";
 
 export default function Edit() {
-  const { vote, options: loadedOptions, proposals } = useLoaderData();
+  const {
+    vote,
+    options: loadedOptions,
+    proposals: loadedProposals,
+  } = useLoaderData();
 
   const [title, setTitle] = React.useState(vote.title);
   const [description, setDescription] = React.useState(vote.description);
@@ -25,6 +29,7 @@ export default function Edit() {
   const [extraFields, setExtraFields] = React.useState(vote.extraFields || []);
 
   const [options, setOptions] = React.useState(loadedOptions);
+  const [proposals, setProposals] = React.useState(loadedProposals);
 
   const [name, setName] = React.useState("");
   const [teacher, setTeacher] = React.useState("");
@@ -182,6 +187,36 @@ export default function Edit() {
     setExtraFields((extraFields) => extraFields.filter((_, i) => i !== index));
   }
 
+  async function deleteProposal(proposal) {
+    confirm({
+      icon: "delete",
+      headline: "Vorschlag löschen",
+      description: `Sind Sie sicher, dass Sie den Vorschlag "${proposal.name}" löschen möchten?`,
+      cancelText: "Abbrechen",
+      confirmText: "Löschen",
+      onConfirm: async () => {
+        try {
+          await deleteDoc(
+            doc(db, `/votes/${vote.id}/proposals/${proposal.id}`)
+          );
+          setProposals((proposals) =>
+            proposals.filter((p) => p.id !== proposal.id)
+          );
+          snackbar({
+            message: "Vorschlag erfolgreich gelöscht.",
+            timeout: 5000,
+          });
+        } catch (error) {
+          console.error("Failed to delete proposal:", error);
+          snackbar({
+            message: "Fehler beim Löschen des Vorschlags.",
+            timeout: 5000,
+          });
+        }
+      },
+    });
+  }
+
   return (
     <div className="mdui-prose">
       <h2>Bearbeiten</h2>
@@ -306,8 +341,9 @@ export default function Edit() {
             <div className="description">
               Hier sind die Vorschläge, die von den Projektanbietenden
               eingereicht wurden. Klicken Sie auf einen Vorschlag, um ihn zu
-              bearbeiten und zu den Optionen hinzuzufügen. Teilen Sie den Link
-              https://waldorfwahlen.web.app/p/{vote.id} mit den
+              bearbeiten und zu den Optionen hinzuzufügen. Sie können auch
+              Vorschläge löschen, indem Sie auf das Löschsymbol klicken. Teilen
+              Sie den Link https://waldorfwahlen.web.app/p/{vote.id} mit den
               Projektanbietenden für Vorschläge.
             </div>
 
@@ -342,12 +378,32 @@ export default function Edit() {
                       });
                   }}
                 >
-                  <b>
-                    {e.name} <i>(#{e.id})</i>
-                  </b>
-                  <div className="teacher">{e.teacher}</div>
-                  <div className="description">{e.description}</div>
-                  <div className="max">max. {e.max} SchülerInnen</div>
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "flex-start",
+                    }}
+                  >
+                    <div>
+                      <b>
+                        {e.name} <i>(#{e.id})</i>
+                      </b>
+                      <div className="teacher">{e.teacher}</div>
+                      <div className="description">{e.description}</div>
+                      <div className="max">max. {e.max} SchülerInnen</div>
+                    </div>
+                    <mdui-tooltip content="Vorschlag löschen">
+                      <mdui-button-icon
+                        icon="delete"
+                        style={{ color: "var(--mdui-color-error)" }}
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          deleteProposal(e);
+                        }}
+                      />
+                    </mdui-tooltip>
+                  </div>
                 </mdui-card>
               ))}
           </div>
@@ -434,28 +490,44 @@ export default function Edit() {
             value={optionDescription}
             onInput={(e) => setOptionDescription(e.target.value)}
           ></mdui-text-field>
-          {addOptionDisabled() ? (
+          <div className="fields-row">
             <mdui-button
-              variant="tonal"
-              icon="add"
-              style={{ width: "100%" }}
-              onClick={addOption}
-              disabled
-              id="add-option-button"
+              full-width
+              variant="outlined"
+              icon="refresh"
+              onClick={() => {
+                setName("");
+                setTeacher("");
+                setOptionDescription("");
+                setMax("");
+                setOptionId(generateRandomHash(20));
+              }}
             >
-              Hinzufügen
+              Zurücksetzen
             </mdui-button>
-          ) : (
-            <mdui-button
-              variant="tonal"
-              icon="add"
-              style={{ width: "100%" }}
-              onClick={addOption}
-              id="add-option-button"
-            >
-              Hinzufügen
-            </mdui-button>
-          )}
+            {addOptionDisabled() ? (
+              <mdui-button
+                full-width
+                variant="tonal"
+                icon="add"
+                onClick={addOption}
+                disabled
+                id="add-option-button"
+              >
+                Hinzufügen
+              </mdui-button>
+            ) : (
+              <mdui-button
+                full-width
+                variant="tonal"
+                icon="add"
+                onClick={addOption}
+                id="add-option-button"
+              >
+                Hinzufügen
+              </mdui-button>
+            )}
+          </div>
         </div>
       </div>
       <p />

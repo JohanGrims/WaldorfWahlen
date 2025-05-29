@@ -85,22 +85,34 @@ export default function Propose() {
   }
 
   React.useEffect(() => {
-    alert({
-      icon: "info",
-      headline: "Vorschlag einreichen",
-      description:
-        "Hallo. Du bist dabei, einen Vorschlag für ein Projekt einzureichen. Danke! Das erleichert den Administratoren die Übersicht über die Daten und stellt sicher, dass alles so ist, wie es sein soll. Stelle sicher, dass Du die Felder so ausfüllst, wie sie am Ende aussehen sollen. Unten siehst Du eine Vorschau deines Projekts. Die Zeichenlimits sind layoutbedingt und können nicht überschritten werden. ",
-      confirmText: "Verstanden",
-      onConfirm: () => {
-        alert({
-          icon: "warning",
-          headline: "Hinweis",
-          description:
-            "Der Titel sollte kurz und prägnant sein. Die Beschreibung sollte das Projekt gut umreißen und eventuelle Beschränkungen erwähnen. Trage die maximale Anzahl an SchülerInnen so ein, wie es bei der Anmeldung abgesprochen wurde. Alle Vorschläge werden manuell von den Administratoren geprüft und freigeschaltet.",
-          confirmText: "Loslegen",
-        });
-      },
-    });
+    if (vote.proposals) {
+      alert({
+        icon: "info",
+        headline: "Vorschlag einreichen",
+        description:
+          "Sie sind dabei, einen Vorschlag für ein Projekt einzureichen. Vielen Dank! Das erleichtert den Administratoren die Übersicht über die Daten und stellt sicher, dass alles so ist, wie es sein soll. Bitte stellen Sie sicher, dass Sie die Felder so ausfüllen, wie sie am Ende aussehen sollen. Unten sehen Sie eine Vorschau Ihres Projekts. Die Zeichenlimits sind layoutbedingt und können nicht überschritten werden.",
+        confirmText: "Verstanden",
+        onConfirm: () => {
+          alert({
+            icon: "warning",
+            headline: "Hinweis",
+            description:
+              "Der Titel sollte kurz und prägnant sein. Die Beschreibung sollte das Projekt gut umreißen und eventuelle Beschränkungen erwähnen. Tragen Sie die maximale Anzahl an SchülerInnen so ein, wie es bei der Anmeldung abgesprochen wurde. Alle Vorschläge werden manuell von den Administratoren geprüft und freigeschaltet.",
+            confirmText: "Loslegen",
+          });
+        },
+      });
+    } else {
+      alert({
+        icon: "error",
+        headline: "Vorschläge deaktiviert",
+        description: "Es sind keine Vorschläge für dieses Projekt möglich.",
+        confirmText: "Zurück zur Übersicht",
+        onConfirm: () => {
+          navigate(`/`);
+        },
+      });
+    }
   }, []);
 
   return (
@@ -156,7 +168,6 @@ export default function Propose() {
       >
         <div className="mdui-prose">
           <h1 className="vote-title">{vote.title}</h1>
-          <p>Projektvorschlag einreichen</p>
         </div>
 
         <p />
