@@ -249,19 +249,6 @@ export default function Edit() {
 
       <p />
       <mdui-divider />
-      <p></p>
-      <div className="button-container">
-        <div></div>
-        {submitDisabled() ? (
-          <mdui-button disabled end-icon="publish">
-            Aktualisieren
-          </mdui-button>
-        ) : (
-          <mdui-button onClick={update} end-icon="publish">
-            Aktualisieren
-          </mdui-button>
-        )}
-      </div>
       <p />
 
       <mdui-text-field
@@ -529,6 +516,19 @@ export default function Edit() {
             )}
           </div>
         </div>
+      <p></p>
+      <div className="button-container">
+        <div></div>
+        {submitDisabled() ? (
+          <mdui-button disabled end-icon="publish">
+            Aktualisieren
+          </mdui-button>
+        ) : (
+          <mdui-button onClick={update} end-icon="publish">
+            Aktualisieren
+          </mdui-button>
+        )}
+      </div>
       </div>
       <p />
     </div>
