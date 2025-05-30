@@ -148,14 +148,6 @@ export default function NewVote() {
     <div className="mdui-prose">
       <div className="button-container">
         <h2>Neue Wahl</h2>
-
-        <mdui-tooltip
-          variant="rich"
-          headline="Excel-Import"
-          content="Noch nicht verfügbar"
-        >
-          <mdui-button-icon icon="upload_file"></mdui-button-icon>
-        </mdui-tooltip>
       </div>
       <mdui-text-field
         label="Titel"
