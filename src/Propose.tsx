@@ -183,7 +183,7 @@ export default function Propose() {
         ></mdui-text-field>
         <p />
         <mdui-text-field
-          label="Lehrer / Anbietende (optional)"
+          label="Leitung"
           placeholder="Hr. Mustermann"
           maxlength={25}
           counter
@@ -193,7 +193,7 @@ export default function Propose() {
         ></mdui-text-field>
         <p />
         <mdui-text-field
-          label="Beschreibung (optional)"
+          label="Beschreibung"
           placeholder="Was ist Programmieren? Was ist KI? Diesen Themen wollen wir uns in dieser Projektwoche nähern."
           rows={3}
           maxlength={100}
