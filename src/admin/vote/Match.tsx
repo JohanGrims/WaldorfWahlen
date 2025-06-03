@@ -32,6 +32,13 @@ interface DuplicateStudent {
   students: Student[]; // Multiple students with same name in same class
 }
 
+/**
+ * React component for reconciling and reviewing student data between the database and user-submitted choices.
+ *
+ * Displays mismatches, duplicate entries, and provides tools for correcting or reviewing inconsistencies between the official student database and submitted answers. Offers both a database-centric and answer-centric view for efficient data validation and correction.
+ *
+ * @returns The rendered reconciliation interface for student and answer data.
+ */
 export default function Match() {
   const { choices, classes } = useLoaderData() as {
     classes: Class[];
