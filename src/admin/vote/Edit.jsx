@@ -6,14 +6,14 @@ import {
   getDocs,
   setDoc,
 } from "firebase/firestore";
-import { useLoaderData } from "react-router-dom";
+import { useLoaderData, useRevalidator } from "react-router-dom";
 import { db } from "../../firebase";
-
 
 import { confirm, snackbar } from "mdui";
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { deepEqual, generateRandomHash } from "../utils";
+import { re } from "mathjs";
 
 export default function Edit() {
   const {
@@ -38,6 +38,7 @@ export default function Edit() {
   const [optionId, setOptionId] = React.useState(generateRandomHash(20));
 
   const navigate = useNavigate();
+  const revalidator = useRevalidator();
 
   function addOption() {
     setOptions((options) => [
@@ -219,7 +220,73 @@ export default function Edit() {
 
   return (
     <div className="mdui-prose">
-      <h2>Bearbeiten</h2>
+      <h2
+        style={{
+          margin: "0px",
+        }}
+      >
+        Bearbeiten
+      </h2>
+
+      <p />
+      <mdui-card
+        style={{
+          position: "sticky",
+          top: "0px",
+          zIndex: "1000",
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          padding: "5px",
+          borderRadius: "0px",
+        }}
+      >
+        <div>
+          {isVoteUnchanged() ? "keine Änderungen" : "neue Änderungen"} an der
+          Wahl "{vote.title}" ({vote.id})
+        </div>
+        <div>
+          {isVoteUnchanged() ? (
+            <mdui-button-icon icon="replay" disabled></mdui-button-icon>
+          ) : (
+            <mdui-button-icon
+              icon="replay"
+              onClick={() => {
+                confirm({
+                  icon: "replay",
+                  headline: "Änderungen verwerfen",
+                  description:
+                    "Sind Sie sicher, dass Sie alle Änderungen verwerfen möchten? Alle ungespeicherten Änderungen gehen verloren.",
+                  cancelText: "Abbrechen",
+                  confirmText: "Verwerfen",
+                  onConfirm: () => {
+                    setTitle(vote.title);
+                    setDescription(vote.description);
+                    setExtraFields(vote.extraFields || []);
+                    setOptions(loadedOptions);
+                    setProposals(loadedProposals);
+                    setName("");
+                    setTeacher("");
+                    setOptionDescription("");
+                    setMax("");
+                    setOptionId(generateRandomHash(20));
+                    revalidator.revalidate();
+                  },
+                });
+              }}
+            ></mdui-button-icon>
+          )}
+          {submitDisabled() ? (
+            <mdui-button disabled end-icon="publish">
+              Aktualisieren
+            </mdui-button>
+          ) : (
+            <mdui-button onClick={update} end-icon="publish">
+              Aktualisieren
+            </mdui-button>
+          )}
+        </div>
+      </mdui-card>
       <p></p>
       <mdui-card
         variant="filled"
@@ -249,19 +316,6 @@ export default function Edit() {
 
       <p />
       <mdui-divider />
-      <p></p>
-      <div className="button-container">
-        <div></div>
-        {submitDisabled() ? (
-          <mdui-button disabled end-icon="publish">
-            Aktualisieren
-          </mdui-button>
-        ) : (
-          <mdui-button onClick={update} end-icon="publish">
-            Aktualisieren
-          </mdui-button>
-        )}
-      </div>
       <p />
 
       <mdui-text-field
@@ -445,12 +499,43 @@ export default function Edit() {
                   editOption(i);
                 }}
               >
-                <b>
-                  {e.title} <i>(#{e.id})</i>
-                </b>
-                <div className="teacher">{e.teacher}</div>
-                <div className="description">{e.description}</div>
-                <div className="max">max. {e.max} SchülerInnen</div>
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "flex-start",
+                  }}
+                >
+                  <div>
+                    <b>
+                      {e.name} <i>(#{e.id})</i>
+                    </b>
+                    <div className="teacher">{e.teacher}</div>
+                    <div className="description">{e.description}</div>
+                    <div className="max">max. {e.max} SchülerInnen</div>
+                  </div>
+                  <mdui-tooltip content="Vorschlag löschen">
+                    <mdui-button-icon
+                      icon="delete"
+                      style={{ color: "var(--mdui-color-error)" }}
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        setOptions((options) =>
+                          options.filter((option) => option.id !== e.id)
+                        );
+                        snackbar({
+                          message: `Option "${e.title}" wurde gelöscht.`,
+                          timeout: 5000,
+                          action: "Änderungen verwerfen",
+                          onActionClick: () => {
+                            setOptions(loadedOptions);
+                            revalidator.revalidate();
+                          },
+                        });
+                      }}
+                    />
+                  </mdui-tooltip>
+                </div>
               </mdui-card>
             ))}
         </div>

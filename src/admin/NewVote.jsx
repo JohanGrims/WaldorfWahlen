@@ -130,6 +130,22 @@ export default function NewVote() {
     return false;
   };
 
+  const isChanged = () => {
+    if (
+      title ||
+      description ||
+      selectCount !== 3 ||
+      startTime ||
+      endTime ||
+      extraFields.length > 0 ||
+      options.length > 0 ||
+      proposals
+    ) {
+      return true;
+    }
+    return false;
+  };
+
   function addOptionDisabled() {
     return !name || !max;
   }
@@ -146,17 +162,68 @@ export default function NewVote() {
 
   return (
     <div className="mdui-prose">
-      <div className="button-container">
-        <h2>Neue Wahl</h2>
+      <h2>Neue Wahl</h2>
+      <p />
+      <mdui-card
+        style={{
+          position: "sticky",
+          top: "0px",
+          zIndex: "1000",
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          padding: "5px",
+          borderRadius: "0px",
+        }}
+      >
+        <div>
+          Wahl {title ? `"${title}"` : "erstellen"} ({id}){" "}
+        </div>
+        <div>
+          {isChanged() ? (
+            <mdui-button-icon
+              icon="replay"
+              onClick={() => {
+                confirm({
+                  icon: "replay",
+                  headline: "Änderungen verwerfen?",
+                  description: "Möchten Sie die Änderungen verwerfen?",
+                  confirmText: "Verwerfen",
+                  cancelText: "Abbrechen",
+                  onConfirm: () => {
+                    setTitle("");
+                    setDescription("");
+                    setSelectCount(3);
+                    setStartTime("");
+                    setEndTime("");
+                    setExtraFields([]);
+                    setOptions([]);
+                    setProposals(false);
+                    setName("");
+                    setTeacher("");
+                    setOptionDescription("");
+                    setMax("");
+                    setId(generateRandomHash());
+                  },
+                });
+              }}
+            ></mdui-button-icon>
+          ) : (
+            <mdui-button-icon disabled icon="replay"></mdui-button-icon>
+          )}
+          {submitDisabled() ? (
+            <mdui-button disabled end-icon="send">
+              Erstellen
+            </mdui-button>
+          ) : (
+            <mdui-button onClick={publish} end-icon="send">
+              Erstellen
+            </mdui-button>
+          )}
+        </div>
+      </mdui-card>
 
-        <mdui-tooltip
-          variant="rich"
-          headline="Excel-Import"
-          content="Noch nicht verfügbar"
-        >
-          <mdui-button-icon icon="upload_file"></mdui-button-icon>
-        </mdui-tooltip>
-      </div>
+      <p />
       <mdui-text-field
         label="Titel"
         placeholder="Schülerprojektwoche 2024"
@@ -430,38 +497,6 @@ export default function NewVote() {
           </div>
         </div>
       )}
-      <p />
-      <div className="button-container">
-        <mdui-button
-          variant="elevated"
-          icon="refresh"
-          onClick={() => {
-            confirm({
-              icon: "refresh",
-              headline: "Zurücksetzen",
-              description: "Möchten Sie wirklich alle Eingaben zurücksetzen?",
-              onConfirm: () => {
-                setTitle("");
-                setSelectCount("");
-                setStartTime("");
-                setEndTime("");
-                setOptions([]);
-              },
-            });
-          }}
-        >
-          Zurücksetzen
-        </mdui-button>
-        {submitDisabled() ? (
-          <mdui-button disabled end-icon="send">
-            Erstellen
-          </mdui-button>
-        ) : (
-          <mdui-button onClick={publish} end-icon="send">
-            Erstellen
-          </mdui-button>
-        )}
-      </div>
     </div>
   );
 }
