@@ -5,6 +5,7 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 import { db } from "../firebase";
 import { generateRandomHash } from "./utils";
+import { Helmet } from "react-helmet";
 export default function NewVote() {
   const [title, setTitle] = React.useState("");
   const [description, setDescription] = React.useState("");
@@ -162,6 +163,9 @@ export default function NewVote() {
 
   return (
     <div className="mdui-prose">
+      <Helmet>
+        <title>Neue Wahl - WaldorfWahlen</title>
+      </Helmet>
       <h2>Neue Wahl</h2>
       <p />
       <mdui-card

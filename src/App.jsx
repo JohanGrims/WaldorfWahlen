@@ -3,12 +3,16 @@ import moment from "moment-timezone";
 import { useLoaderData } from "react-router-dom";
 import { db } from "./firebase";
 import VoteCard from './VoteCard.jsx'; // Import VoteCard
+import { Helmet } from "react-helmet";
 
 function App() {
   const { activeVotes, expiredVotes, scheduledVotes } = useLoaderData();
 
   return (
     <div className="mdui-prose">
+      <Helmet>
+        <title>WaldorfWahlen - Start</title>
+      </Helmet>
       <div style={{ position: "fixed", top: 0, left: 0, padding: "1rem" }}>
         <mdui-button-icon icon="admin_panel_settings" href="/admin" />
       </div>
@@ -37,9 +41,13 @@ function App() {
       </div>
       <p />
       {/* Active Votes Section - Replaced with horizontal scrolling VoteCards */}
-      <div className="carousel-container" style={{ padding: '10px 0' }}> {/* Applied carousel-container class */}
+      <div className="carousel-container" style={{ padding: "10px 0" }}>
+        {" "}
+        {/* Applied carousel-container class */}
         {activeVotes.length < 1 ? (
-          <p className="no-votes-message" style={{ flexGrow: 1 }}>Keine Wahlen</p> // Applied class and ensured it can take full width
+          <p className="no-votes-message" style={{ flexGrow: 1 }}>
+            Keine Wahlen
+          </p> // Applied class and ensured it can take full width
         ) : (
           activeVotes
             .sort((a, b) => {
@@ -56,7 +64,9 @@ function App() {
         )}
       </div>
       {/* End of Active Votes Section */}
-      <mdui-list> {/* This list now only contains the collapse items */}
+      <mdui-list>
+        {" "}
+        {/* This list now only contains the collapse items */}
         <mdui-collapse>
           <mdui-collapse-item value="scheduled-votes">
             <mdui-list-item

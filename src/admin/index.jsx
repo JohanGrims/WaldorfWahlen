@@ -10,6 +10,7 @@ import { useNavigate } from "react-router-dom";
 import Login from "./auth/Login";
 import DrawerList from "./navigation/DrawerList";
 import { doc, getDoc } from "firebase/firestore";
+import { Helmet } from "react-helmet";
 
 export default function Admin() {
   const mobile = window.innerWidth < 840;
@@ -44,7 +45,7 @@ export default function Admin() {
           },
           closeable: true,
         });
-     }
+      }
     } else {
       console.warn("Release notes document does not exist.");
     }
@@ -77,6 +78,9 @@ export default function Admin() {
 
   return (
     <mdui-layout style={{ width: "100vw", height: "100vh" }}>
+      <Helmet>
+        <title>Admin - WaldorfWahlen</title>
+      </Helmet>
       {open && (
         <DrawerList
           onClose={() => {

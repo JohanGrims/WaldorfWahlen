@@ -16,6 +16,7 @@ import { breakpoint, confirm, snackbar } from "mdui";
 import { redirect } from "react-router-dom";
 import { capitalizeWords } from "./admin/utils";
 import CheckItem from "./CheckItem";
+import { Helmet } from "react-helmet";
 export default function Vote() {
   const refs = useRef([]);
   const urlParams = new URLSearchParams(window.location.search);
@@ -158,6 +159,10 @@ export default function Vote() {
 
   return (
     <div className="container">
+      <Helmet>
+        <title>{title} - Projektwahl</title>
+        <meta name="description" content={description} />
+      </Helmet>
       <mdui-dialog open={confirmDialog} headline="Bestätigen" icon="check">
         <div className="mdui-prose">
           <p>

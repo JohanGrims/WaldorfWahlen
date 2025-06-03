@@ -4,6 +4,7 @@ import React from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { db } from "../../firebase";
 import { DrawerItem } from "./components";
+import { Helmet } from "react-helmet";
 
 export default function VoteDrawer({ onClose = () => {} }) {
   const [loading, setLoading] = React.useState(true);
@@ -67,6 +68,9 @@ export default function VoteDrawer({ onClose = () => {} }) {
 
   return (
     <mdui-navigation-drawer open>
+      <Helmet>
+        <title>{data.title} - Admin</title>
+      </Helmet>
       <mdui-list
         style={{
           margin: "0 0.5rem",

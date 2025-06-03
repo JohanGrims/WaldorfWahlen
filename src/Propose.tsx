@@ -4,6 +4,7 @@ import { db } from "./firebase";
 import { useLoaderData, useNavigate, useParams } from "react-router-dom";
 import { alert, confirm, breakpoint, snackbar } from "mdui";
 import CheckItem from "./CheckItem";
+import { Helmet } from "react-helmet";
 
 export default function Propose() {
   let { id } = useParams();
@@ -117,6 +118,9 @@ export default function Propose() {
 
   return (
     <div className="container">
+      <Helmet>
+        <title>{vote.title} - Projektvorschlag</title>
+      </Helmet>
       <mdui-dialog open={confirmDialog} headline="Bestätigen" icon="check">
         <div className="mdui-prose">
           <p>Bitte überprüfen Sie Ihre Eingaben für den Projektvorschlag.</p>

@@ -19,6 +19,7 @@ import { db } from "../firebase";
 import { Class, Student } from "../types";
 
 import * as XLSX from "xlsx";
+import { Helmet } from "react-helmet";
 export default function Students() {
   const { classes } = useLoaderData() as { classes: Class[] };
 
@@ -157,6 +158,9 @@ export default function Students() {
   if (edit === "true") {
     return (
       <div className="mdui-prose">
+        <Helmet>
+          <title>Klasse bearbeiten - WaldorfWahlen</title>
+        </Helmet>
         <h2>
           {classes.find((c) => c.id === classId)?.grade}. Klasse bearbeiten
         </h2>
@@ -237,6 +241,9 @@ export default function Students() {
 
   return (
     <div className="mdui-prose">
+      <Helmet>
+        <title>SchülerInnen - WaldorfWahlen</title>
+      </Helmet>
       <div className="flex-gap justify-between">
         <h2>SchülerInnen</h2>
         <mdui-tooltip

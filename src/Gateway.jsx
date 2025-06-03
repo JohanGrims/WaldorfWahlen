@@ -2,8 +2,13 @@ import { doc, getDoc } from "firebase/firestore";
 import moment from "moment-timezone";
 import { replace } from "react-router-dom";
 import { db } from "./firebase";
+import { Helmet } from "react-helmet";
 export default function Gateway() {
-  return null;
+  return (
+    <Helmet>
+      <title>Sie werden weitergeleitet...</title>
+    </Helmet>
+  );
 }
 
 Gateway.loader = async function loader({ params }) {
