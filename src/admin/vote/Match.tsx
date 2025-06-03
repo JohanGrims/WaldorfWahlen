@@ -42,54 +42,61 @@ export default function Match() {
 
   const sortedClasses = classes.sort((a, b) => a.grade - b.grade);
 
-  // Find all students with non-matching names who have choices
+  // Find all choices with non-matching names against the database
   const mismatchedStudents = React.useMemo(() => {
     const result: MismatchedStudent[] = [];
 
-    sortedClasses.forEach((classItem) => {
-      classItem.students.forEach((student) => {
-        const matchingChoices = choices.filter(
-          (choice) =>
-            choice.listIndex == student.listIndex &&
-            choice.grade == classItem.grade
-        );
+    // Start from choices and check against database
+    choices.forEach((choice) => {
+      // Find the corresponding class
+      const classItem = sortedClasses.find(
+        (c) => Number(c.grade) === Number(choice.grade)
+      );
 
-        if (matchingChoices.length > 0) {
-          const firstChoice = matchingChoices[0];
-          if (!matchName(student.name, firstChoice.name)) {
-            // Look for all students in the same class with matching names
-            const possibleMatches: PossibleMatch[] = [];
+      if (!classItem) {
+        return; // Skip if class not found
+      }
 
-            // Check for all students with matching names in the same class
-            classItem.students.forEach((potentialMatch) => {
-              // Skip the current student
-              if (potentialMatch.listIndex === student.listIndex) {
-                return;
-              }
+      // Find the student with matching listIndex in the database
+      const student = classItem.students.find(
+        (s) => Number(s.listIndex) === Number(choice.listIndex)
+      );
 
-              // Check if the name matches
-              if (matchName(potentialMatch.name, firstChoice.name)) {
-                // Calculate the offset (difference in list indices)
-                const offset =
-                  Number(potentialMatch.listIndex) - Number(student.listIndex);
-                possibleMatches.push({ student: potentialMatch, offset });
-              }
-            });
+      if (student) {
+        // Check if names don't match
+        if (!matchName(student.name, choice.name)) {
+          // Look for all students in the same class with matching names
+          const possibleMatches: PossibleMatch[] = [];
 
-            result.push({
-              student,
-              choice: firstChoice,
-              className: classItem.grade,
-              possibleMatches:
-                possibleMatches.length > 0
-                  ? possibleMatches.sort(
-                      (a, b) => Math.abs(a.offset) - Math.abs(b.offset)
-                    ) // Sort by closest distance
-                  : undefined,
-            });
-          }
+          // Check for all students with matching names in the same class
+          classItem.students.forEach((potentialMatch) => {
+            // Skip the current student
+            if (potentialMatch.listIndex === student.listIndex) {
+              return;
+            }
+
+            // Check if the name matches
+            if (matchName(potentialMatch.name, choice.name)) {
+              // Calculate the offset (difference in list indices)
+              const offset =
+                Number(potentialMatch.listIndex) - Number(student.listIndex);
+              possibleMatches.push({ student: potentialMatch, offset });
+            }
+          });
+
+          result.push({
+            student,
+            choice: choice,
+            className: classItem.grade,
+            possibleMatches:
+              possibleMatches.length > 0
+                ? possibleMatches.sort(
+                    (a, b) => Math.abs(a.offset) - Math.abs(b.offset)
+                  ) // Sort by closest distance
+                : undefined,
+          });
         }
-      });
+      }
     });
 
     return result;
@@ -474,30 +481,47 @@ export default function Match() {
                               </Link>
                             )}
 
-                            {matchName(
-                              s.name,
-                              choices.filter(
+                            {(() => {
+                              const matchingChoices = choices.filter(
                                 (choice) =>
                                   choice.listIndex == s.listIndex &&
                                   choice.grade == c.grade
-                              )[0]?.name
-                            ) ? (
-                              <mdui-icon
-                                style={{
-                                  color: "rgb(180, 255, 180)",
-                                  marginLeft: "10px",
-                                  translate: "0 5px",
-                                }}
-                                mdui-tooltip="title: Name stimmt überein"
-                              >
-                                done
-                              </mdui-icon>
-                            ) : (
-                              choices.filter(
-                                (choice) =>
-                                  choice.listIndex == s.listIndex &&
-                                  choice.grade == c.grade
-                              ).length > 0 && (
+                              );
+
+                              if (matchingChoices.length === 0) {
+                                return null;
+                              }
+
+                              if (matchingChoices.length > 1) {
+                                return (
+                                  <mdui-icon
+                                    style={{
+                                      color: "rgb(255, 150, 0)",
+                                      marginLeft: "10px",
+                                      translate: "0 5px",
+                                    }}
+                                    mdui-tooltip="title: Mehrere Antworten gefunden"
+                                  >
+                                    content_copy
+                                  </mdui-icon>
+                                );
+                              }
+
+                              return matchName(
+                                s.name,
+                                matchingChoices[0]?.name
+                              ) ? (
+                                <mdui-icon
+                                  style={{
+                                    color: "rgb(180, 255, 180)",
+                                    marginLeft: "10px",
+                                    translate: "0 5px",
+                                  }}
+                                  mdui-tooltip="title: Name stimmt überein"
+                                >
+                                  done
+                                </mdui-icon>
+                              ) : (
                                 <mdui-icon
                                   style={{
                                     color: "rgb(255, 100, 100)",
@@ -508,8 +532,8 @@ export default function Match() {
                                 >
                                   priority_high
                                 </mdui-icon>
-                              )
-                            )}
+                              );
+                            })()}
                           </td>
                         </tr>
                       ))}
