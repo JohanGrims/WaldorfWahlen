@@ -1,6 +1,4 @@
 import { useRouteError } from "react-router-dom";
-import { useEffect } from "react";
-import { Helmet } from "react-helmet";
 
 export default function ErrorPage() {
   let error = useRouteError();
