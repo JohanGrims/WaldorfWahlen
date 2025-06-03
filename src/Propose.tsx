@@ -126,7 +126,7 @@ export default function Propose() {
           <br />
           {teacher && (
             <>
-              Lehrer / Anbietende: {teacher}
+              Leitung: {teacher}
               <br />
             </>
           )}
@@ -284,7 +284,7 @@ export default function Propose() {
             checked={max && max >= 1 && max <= 100}
           />
           <CheckItem
-            label={"Lehrer / Anbietende"}
+            label={"Leitung"}
             checked={teacher && teacher.length <= 25}
             uncheckedIcon="toggle_off"
             checkedIcon="toggle_on"
