@@ -508,7 +508,7 @@ export default function Edit() {
                 >
                   <div>
                     <b>
-                      {e.name} <i>(#{e.id})</i>
+                      {e.title} <i>(#{e.id})</i>
                     </b>
                     <div className="teacher">{e.teacher}</div>
                     <div className="description">{e.description}</div>
