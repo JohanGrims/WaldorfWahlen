@@ -18,7 +18,7 @@ interface MismatchedStudent {
   possibleMatches?: PossibleMatch[]; // Nearby students with matching names
 }
 
-// Define interface for duplicate choices (multiple answers for same listIndex)
+// Define interface for duplicate choices (multiple answers for same listIndex and grade)
 interface DuplicateChoice {
   grade: number;
   listIndex: string;
@@ -95,6 +95,24 @@ export default function Match() {
     return result;
   }, [choices, sortedClasses]);
 
+  // Track choices that are already handled in mismatchedStudents
+  const handledChoiceIds = React.useMemo(() => {
+    const ids = new Set<string>();
+    mismatchedStudents.forEach((item) => {
+      ids.add(item.choice.id);
+    });
+    return ids;
+  }, [mismatchedStudents]);
+
+  // Track student list indices that are already handled in mismatchedStudents
+  const handledStudentKeys = React.useMemo(() => {
+    const keys = new Set<string>();
+    mismatchedStudents.forEach((item) => {
+      keys.add(`${item.className}-${item.student.listIndex}`);
+    });
+    return keys;
+  }, [mismatchedStudents]);
+
   // Find duplicate choices (multiple answers for same listIndex and grade)
   const duplicateChoices = React.useMemo(() => {
     const result: DuplicateChoice[] = [];
@@ -102,6 +120,11 @@ export default function Match() {
 
     // Group choices by listIndex+grade
     choices.forEach((choice) => {
+      // Skip choices that are already handled in mismatchedStudents
+      if (handledChoiceIds.has(choice.id)) {
+        return;
+      }
+
       const key = `${choice.grade}-${choice.listIndex}`;
       if (!choiceMap.has(key)) {
         choiceMap.set(key, []);
@@ -122,7 +145,7 @@ export default function Match() {
     });
 
     return result;
-  }, [choices]);
+  }, [choices, handledChoiceIds]);
 
   // Find duplicate students (multiple students with same name in the same class)
   const duplicateStudents = React.useMemo(() => {
@@ -133,6 +156,11 @@ export default function Match() {
 
       // Group students by name in each class
       classItem.students.forEach((student) => {
+        // Skip students that are already handled in mismatchedStudents
+        if (handledStudentKeys.has(`${classItem.grade}-${student.listIndex}`)) {
+          return;
+        }
+
         const normalizedName = student.name.toLowerCase().trim();
         if (!studentMap.has(normalizedName)) {
           studentMap.set(normalizedName, []);
@@ -153,7 +181,7 @@ export default function Match() {
     });
 
     return result;
-  }, [sortedClasses]);
+  }, [sortedClasses, handledStudentKeys]);
 
   function matchName(name1, name2) {
     if (!name1 || !name2) {
@@ -239,6 +267,11 @@ export default function Match() {
                                 marginLeft: "5px",
                                 translate: "0 5px",
                               }}
+                              mdui-tooltip={`title: ${
+                                match.offset > 0
+                                  ? "Weiter unten"
+                                  : "Weiter oben"
+                              } (${Math.abs(match.offset)} Positionen)`}
                             >
                               {match.offset > 0
                                 ? "arrow_downward" // If offset is positive, name is below (higher index)
@@ -455,6 +488,7 @@ export default function Match() {
                                   marginLeft: "10px",
                                   translate: "0 5px",
                                 }}
+                                mdui-tooltip="title: Name stimmt überein"
                               >
                                 done
                               </mdui-icon>
@@ -470,6 +504,7 @@ export default function Match() {
                                     marginLeft: "10px",
                                     translate: "0 5px",
                                   }}
+                                  mdui-tooltip="title: Name stimmt nicht überein"
                                 >
                                   priority_high
                                 </mdui-icon>
