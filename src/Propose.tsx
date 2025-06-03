@@ -184,7 +184,7 @@ export default function Propose() {
         <p />
         <mdui-text-field
           label="Leitung"
-          placeholder="Hr. Mustermann"
+          placeholder="Johan G. (11), Max M. (12)"
           maxlength={25}
           counter
           value={teacher}
