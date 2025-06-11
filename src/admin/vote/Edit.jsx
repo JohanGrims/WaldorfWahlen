@@ -15,6 +15,118 @@ import { useNavigate } from "react-router-dom";
 import { deepEqual, generateRandomHash } from "../utils";
 import { re } from "mathjs";
 
+// Component to handle individual propose field with proper switch ref handling
+function ProposeFieldCard({
+  field,
+  index,
+  editProposeField,
+  removeProposeField,
+}) {
+  const switchRef = React.useRef(null);
+
+  React.useEffect(() => {
+    if (switchRef.current) {
+      // Set initial checked state
+      switchRef.current.checked = field.required;
+
+      const handleToggle = () => {
+        editProposeField(index, { required: switchRef.current.checked });
+      };
+
+      switchRef.current.addEventListener("change", handleToggle);
+
+      // Cleanup
+      return () => {
+        if (switchRef.current) {
+          switchRef.current.removeEventListener("change", handleToggle);
+        }
+      };
+    }
+  }, [field.required, index, editProposeField]);
+
+  return (
+    <div
+      style={{
+        border: "1px solid var(--mdui-color-outline)",
+        borderRadius: "8px",
+        padding: "16px",
+        marginBottom: "16px",
+      }}
+    >
+      <div className="fields-row">
+        <mdui-text-field
+          label="Feld-Label"
+          value={field.label}
+          onInput={(e) => editProposeField(index, { label: e.target.value })}
+          placeholder="z.B. Telefonnummer"
+        />
+        <mdui-select
+          label="Feldtyp"
+          value={field.type}
+          onChange={(e) => editProposeField(index, { type: e.target.value })}
+        >
+          <mdui-menu-item value="text">Text (kurz)</mdui-menu-item>
+          <mdui-menu-item value="textarea">Text (lang)</mdui-menu-item>
+          <mdui-menu-item value="number">Zahl</mdui-menu-item>
+          <mdui-menu-item value="email">E-Mail</mdui-menu-item>
+          <mdui-menu-item value="tel">Telefon</mdui-menu-item>
+        </mdui-select>
+      </div>
+
+      <div className="fields-row">
+        <mdui-text-field
+          label="Platzhalter"
+          value={field.placeholder}
+          onInput={(e) =>
+            editProposeField(index, { placeholder: e.target.value })
+          }
+          placeholder={
+            field.type === "email" ? "beispiel@mail.com" :
+            field.type === "tel" ? "+49 123 456789" :
+            field.type === "number" ? "42" :
+            field.type === "textarea" ? "Längerer Text..." :
+            "Kurzer Text"
+          }
+        />
+        <mdui-text-field
+          label="Max. Länge"
+          type="number"
+          value={field.maxLength}
+          onInput={(e) =>
+            editProposeField(index, {
+              maxLength: parseInt(e.target.value) || (field.type === "textarea" ? 500 : 50),
+            })
+          }
+          min={1}
+          max={field.type === "textarea" ? 2000 : 500}
+        />
+      </div>
+
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          marginTop: "10px",
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+          <mdui-switch
+            ref={switchRef}
+            checked={field.required}
+          ></mdui-switch>
+          <span>Pflichtfeld</span>
+        </div>
+        <mdui-button-icon
+          icon="delete"
+          onClick={() => removeProposeField(index)}
+          style={{ color: "var(--mdui-color-error)" }}
+        />
+      </div>
+    </div>
+  );
+}
+
 export default function Edit() {
   const {
     vote,
@@ -28,6 +140,21 @@ export default function Edit() {
 
   const [extraFields, setExtraFields] = React.useState(vote.extraFields || []);
 
+  // Proposal fields and dialog texts
+  const [proposeFields, setProposeFields] = React.useState(
+    vote.proposeFields || []
+  );
+  const [proposeTexts, setProposeTexts] = React.useState(
+    vote.proposeTexts || {
+      welcomeHeadline: "Vorschlag einreichen",
+      welcomeDescription:
+        "Sie sind dabei, einen Vorschlag für ein Projekt einzureichen. Vielen Dank! Das erleichtert den Administratoren die Übersicht über die Daten und stellt sicher, dass alles so ist, wie es sein soll. Bitte stellen Sie sicher, dass Sie die Felder so ausfüllen, wie sie am Ende aussehen sollen. Unten sehen Sie eine Vorschau Ihres Projekts. Die Zeichenlimits sind layoutbedingt und können nicht überschritten werden.",
+      hintHeadline: "Hinweis",
+      hintDescription:
+        "Der Titel sollte kurz und prägnant sein. Die Beschreibung sollte das Projekt gut umreißen und eventuelle Beschränkungen erwähnen. Tragen Sie die maximale Anzahl an SchülerInnen so ein, wie es bei der Anmeldung abgesprochen wurde. Alle Vorschläge werden manuell von den Administratoren geprüft und freigeschaltet.",
+    }
+  );
+
   const [options, setOptions] = React.useState(loadedOptions);
   const [proposals, setProposals] = React.useState(loadedProposals);
 
@@ -36,6 +163,10 @@ export default function Edit() {
   const [optionDescription, setOptionDescription] = React.useState("");
   const [max, setMax] = React.useState();
   const [optionId, setOptionId] = React.useState(generateRandomHash(20));
+
+  const [proposeTextsCardOpen, setProposeTextsCardOpen] = React.useState(false);
+  const [proposeFieldsCardOpen, setProposeFieldsCardOpen] =
+    React.useState(false);
 
   const navigate = useNavigate();
   const revalidator = useRevalidator();
@@ -75,6 +206,8 @@ export default function Edit() {
           title,
           description: description || "",
           extraFields: extraFields.length > 0 ? extraFields : [],
+          proposeFields: vote.proposals ? proposeFields : [],
+          proposeTexts: vote.proposals ? proposeTexts : {},
         },
         { merge: true }
       );
@@ -126,6 +259,8 @@ export default function Edit() {
       selectCount,
       version: 3,
       extraFields: extraFields.length > 0 ? extraFields : [],
+      proposeFields: vote.proposals ? proposeFields : [],
+      proposeTexts: vote.proposals ? proposeTexts : {},
     };
 
     const changes = Object.keys(newVote).reduce((result, key) => {
@@ -186,6 +321,41 @@ export default function Edit() {
 
   function removeExtraField(index) {
     setExtraFields((extraFields) => extraFields.filter((_, i) => i !== index));
+  }
+
+  function addProposeField() {
+    setProposeFields([
+      ...proposeFields,
+      {
+        id: generateRandomHash(10),
+        label: "",
+        type: "text",
+        required: false,
+        maxLength: 50,
+        placeholder: "",
+      },
+    ]);
+  }
+
+  function editProposeField(index, field) {
+    const newFields = [...proposeFields];
+    const updatedField = { ...newFields[index], ...field };
+
+    // Auto-adjust maxLength when type changes
+    if (field.type && field.type !== newFields[index].type) {
+      if (field.type === "textarea" && updatedField.maxLength <= 100) {
+        updatedField.maxLength = 500;
+      } else if (field.type !== "textarea" && updatedField.maxLength > 500) {
+        updatedField.maxLength = 50;
+      }
+    }
+
+    newFields[index] = updatedField;
+    setProposeFields(newFields);
+  }
+
+  function removeProposeField(index) {
+    setProposeFields(proposeFields.filter((_, i) => i !== index));
   }
 
   async function deleteProposal(proposal) {
@@ -263,6 +433,17 @@ export default function Edit() {
                     setTitle(vote.title);
                     setDescription(vote.description);
                     setExtraFields(vote.extraFields || []);
+                    setProposeFields(vote.proposeFields || []);
+                    setProposeTexts(
+                      vote.proposeTexts || {
+                        welcomeHeadline: "Vorschlag einreichen",
+                        welcomeDescription:
+                          "Sie sind dabei, einen Vorschlag für ein Projekt einzureichen. Vielen Dank! Das erleichtert den Administratoren die Übersicht über die Daten und stellt sicher, dass alles so ist, wie es sein soll. Bitte stellen Sie sicher, dass Sie die Felder so ausfüllen, wie sie am Ende aussehen sollen. Unten sehen Sie eine Vorschau Ihres Projekts. Die Zeichenlimits sind layoutbedingt und können nicht überschritten werden.",
+                        hintHeadline: "Hinweis",
+                        hintDescription:
+                          "Der Titel sollte kurz und prägnant sein. Die Beschreibung sollte das Projekt gut umreißen und eventuelle Beschränkungen erwähnen. Tragen Sie die maximale Anzahl an SchülerInnen so ein, wie es bei der Anmeldung abgesprochen wurde. Alle Vorschläge werden manuell von den Administratoren geprüft und freigeschaltet.",
+                      }
+                    );
                     setOptions(loadedOptions);
                     setProposals(loadedProposals);
                     setName("");
@@ -388,6 +569,141 @@ export default function Edit() {
       <p />
       <mdui-divider></mdui-divider>
       <p />
+
+      {/* Proposal Fields and Dialog Text Management - only show if proposals are enabled */}
+      {vote.proposals && (
+        <>
+          <mdui-card
+            variant="filled"
+            style={{ width: "100%", padding: "20px", marginBottom: "20px" }}
+          >
+            {proposeTextsCardOpen ? (
+              <mdui-button-icon
+                icon="expand_less"
+                onClick={() => setProposeTextsCardOpen(false)}
+              />
+            ) : (
+              <mdui-button-icon
+                icon="expand_more"
+                onClick={() => setProposeTextsCardOpen(true)}
+              />
+            )}
+
+            <div className="mdui-prose">
+              <h3>Dialog-Texte für Vorschlagsseite</h3>
+
+              {proposeTextsCardOpen && (
+                <>
+                  <p>
+                    Passen Sie die Texte in den Dialogen auf der Vorschlagsseite
+                    an.
+                  </p>
+
+                  <mdui-text-field
+                    label="Willkommen-Überschrift"
+                    value={proposeTexts.welcomeHeadline}
+                    onInput={(e) =>
+                      setProposeTexts({
+                        ...proposeTexts,
+                        welcomeHeadline: e.target.value,
+                      })
+                    }
+                    maxlength={50}
+                    counter
+                  />
+                  <mdui-text-field
+                    label="Willkommen-Beschreibung"
+                    rows={3}
+                    value={proposeTexts.welcomeDescription}
+                    onInput={(e) =>
+                      setProposeTexts({
+                        ...proposeTexts,
+                        welcomeDescription: e.target.value,
+                      })
+                    }
+                    maxlength={500}
+                    counter
+                  />
+                  <mdui-text-field
+                    label="Hinweis-Überschrift"
+                    value={proposeTexts.hintHeadline}
+                    onInput={(e) =>
+                      setProposeTexts({
+                        ...proposeTexts,
+                        hintHeadline: e.target.value,
+                      })
+                    }
+                    maxlength={50}
+                    counter
+                  />
+                  <mdui-text-field
+                    label="Hinweis-Beschreibung"
+                    rows={3}
+                    value={proposeTexts.hintDescription}
+                    onInput={(e) =>
+                      setProposeTexts({
+                        ...proposeTexts,
+                        hintDescription: e.target.value,
+                      })
+                    }
+                    maxlength={500}
+                    counter
+                  />
+                </>
+              )}
+            </div>
+          </mdui-card>
+
+          <mdui-card
+            variant="filled"
+            style={{ width: "100%", padding: "20px", marginBottom: "20px" }}
+          >
+            {proposeFieldsCardOpen ? (
+              <mdui-button-icon
+                icon="expand_less"
+                onClick={() => setProposeFieldsCardOpen(false)}
+              />
+            ) : (
+              <mdui-button-icon
+                icon="expand_more"
+                onClick={() => setProposeFieldsCardOpen(true)}
+              />
+            )}
+            <div className="mdui-prose">
+              <h3>Zusätzliche Felder für Vorschläge</h3>
+
+              {proposeFieldsCardOpen && (
+                <>
+                  <p>
+                    Verwalten Sie zusätzliche Felder, die beim Einreichen von
+                    Vorschlägen ausgefüllt werden sollen.
+                  </p>
+
+                  {proposeFields.map((field, index) => (
+                    <ProposeFieldCard
+                      key={field.id}
+                      field={field}
+                      index={index}
+                      editProposeField={editProposeField}
+                      removeProposeField={removeProposeField}
+                    />
+                  ))}
+
+                  <mdui-button
+                    icon="add"
+                    variant="outlined"
+                    onClick={addProposeField}
+                    style={{ width: "100%" }}
+                  >
+                    Neues Feld hinzufügen
+                  </mdui-button>
+                </>
+              )}
+            </div>
+          </mdui-card>
+        </>
+      )}
+
       {(proposals.length > 0 || options.length === 0) && (
         <mdui-card variant="filled" style={{ width: "100%", padding: "20px" }}>
           <div className="mdui-prose">
@@ -446,6 +762,39 @@ export default function Edit() {
                       <div className="teacher">{e.teacher}</div>
                       <div className="description">{e.description}</div>
                       <div className="max">max. {e.max} SchülerInnen</div>
+
+                      {/* Display custom field data */}
+                      {e.customFields &&
+                        vote.proposeFields &&
+                        Object.keys(e.customFields).length > 0 && (
+                          <div
+                            style={{
+                              marginTop: "8px",
+                              padding: "8px",
+                              backgroundColor: "rgba(0,0,0,0.05)",
+                              borderRadius: "4px",
+                            }}
+                          >
+                            <small>
+                              <strong>Zusätzliche Angaben:</strong>
+                            </small>
+                            {vote.proposeFields.map(
+                              (field) =>
+                                e.customFields[field.id] && (
+                                  <div
+                                    key={field.id}
+                                    style={{
+                                      fontSize: "0.9em",
+                                      marginTop: "2px",
+                                    }}
+                                  >
+                                    <strong>{field.label}:</strong>{" "}
+                                    {e.customFields[field.id]}
+                                  </div>
+                                )
+                            )}
+                          </div>
+                        )}
                     </div>
                     <mdui-tooltip content="Vorschlag löschen">
                       <mdui-button-icon

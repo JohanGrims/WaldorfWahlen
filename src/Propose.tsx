@@ -17,6 +17,11 @@ export default function Propose() {
   const [teacher, setTeacher] = useState("");
   const [max, setMax] = useState<number | undefined>();
 
+  // Custom field values
+  const [customFieldValues, setCustomFieldValues] = useState<
+    Record<string, string>
+  >({});
+
   const [loading, setLoading] = useState(false);
   const [confirmDialog, setConfirmDialog] = React.useState(false);
 
@@ -27,6 +32,7 @@ export default function Propose() {
       description: description,
       teacher: teacher,
       max: max,
+      customFields: customFieldValues,
     })
       .then(() => {
         setLoading(false);
@@ -62,6 +68,21 @@ export default function Propose() {
       return true;
     }
 
+    // Check custom field validation
+    if (vote.proposeFields) {
+      for (const field of vote.proposeFields) {
+        if (field.required && !customFieldValues[field.id]) {
+          return true;
+        }
+        if (
+          customFieldValues[field.id] &&
+          customFieldValues[field.id].length > field.maxLength
+        ) {
+          return true;
+        }
+      }
+    }
+
     return false;
   };
 
@@ -79,6 +100,7 @@ export default function Propose() {
         setDescription("");
         setTeacher("");
         setMax(undefined);
+        setCustomFieldValues({});
       },
       confirmText: "Zurücksetzen",
       cancelText: "Abbrechen",
@@ -87,18 +109,26 @@ export default function Propose() {
 
   React.useEffect(() => {
     if (vote.proposals) {
+      const welcomeText =
+        vote.proposeTexts?.welcomeHeadline || "Vorschlag einreichen";
+      const welcomeDesc =
+        vote.proposeTexts?.welcomeDescription ||
+        "Sie sind dabei, einen Vorschlag für ein Projekt einzureichen. Vielen Dank! Das erleichtert den Administratoren die Übersicht über die Daten und stellt sicher, dass alles so ist, wie es sein soll. Bitte stellen Sie sicher, dass Sie die Felder so ausfüllen, wie sie am Ende aussehen sollen. Unten sehen Sie eine Vorschau Ihres Projekts. Die Zeichenlimits sind layoutbedingt und können nicht überschritten werden.";
+      const hintHeadline = vote.proposeTexts?.hintHeadline || "Hinweis";
+      const hintDesc =
+        vote.proposeTexts?.hintDescription ||
+        "Der Titel sollte kurz und prägnant sein. Die Beschreibung sollte das Projekt gut umreißen und eventuelle Beschränkungen erwähnen. Tragen Sie die maximale Anzahl an SchülerInnen so ein, wie es bei der Anmeldung abgesprochen wurde. Alle Vorschläge werden manuell von den Administratoren geprüft und freigeschaltet.";
+
       alert({
         icon: "info",
-        headline: "Vorschlag einreichen",
-        description:
-          "Sie sind dabei, einen Vorschlag für ein Projekt einzureichen. Vielen Dank! Das erleichtert den Administratoren die Übersicht über die Daten und stellt sicher, dass alles so ist, wie es sein soll. Bitte stellen Sie sicher, dass Sie die Felder so ausfüllen, wie sie am Ende aussehen sollen. Unten sehen Sie eine Vorschau Ihres Projekts. Die Zeichenlimits sind layoutbedingt und können nicht überschritten werden.",
+        headline: welcomeText,
+        description: welcomeDesc,
         confirmText: "Verstanden",
         onConfirm: () => {
           alert({
             icon: "warning",
-            headline: "Hinweis",
-            description:
-              "Der Titel sollte kurz und prägnant sein. Die Beschreibung sollte das Projekt gut umreißen und eventuelle Beschränkungen erwähnen. Tragen Sie die maximale Anzahl an SchülerInnen so ein, wie es bei der Anmeldung abgesprochen wurde. Alle Vorschläge werden manuell von den Administratoren geprüft und freigeschaltet.",
+            headline: hintHeadline,
+            description: hintDesc,
             confirmText: "Loslegen",
           });
         },
@@ -140,6 +170,17 @@ export default function Propose() {
               <br />
             </>
           )}
+          {/* Show custom field values */}
+          {vote.proposeFields &&
+            vote.proposeFields.map(
+              (field) =>
+                customFieldValues[field.id] && (
+                  <React.Fragment key={field.id}>
+                    {field.label}: {customFieldValues[field.id]}
+                    <br />
+                  </React.Fragment>
+                )
+            )}
           <p />
           {!loading ? (
             <div className="button-container">
@@ -168,7 +209,7 @@ export default function Propose() {
 
       <mdui-card
         variant={breakpointCondition.up("md") ? "outlined" : "elevated"}
-        class="card"
+        className="card"
       >
         <div className="mdui-prose">
           <h1 className="vote-title">{vote.title}</h1>
@@ -182,7 +223,7 @@ export default function Propose() {
           maxlength={25}
           counter
           value={name}
-          onInput={(e) => setName(e.target.value)}
+          onInput={(e) => setName((e.target as HTMLInputElement).value)}
           icon="title"
         ></mdui-text-field>
         <p />
@@ -192,7 +233,7 @@ export default function Propose() {
           maxlength={25}
           counter
           value={teacher}
-          onInput={(e) => setTeacher(e.target.value)}
+          onInput={(e) => setTeacher((e.target as HTMLInputElement).value)}
           icon="person"
         ></mdui-text-field>
         <p />
@@ -203,7 +244,7 @@ export default function Propose() {
           maxlength={100}
           counter
           value={description}
-          onInput={(e) => setDescription(e.target.value)}
+          onInput={(e) => setDescription((e.target as HTMLInputElement).value)}
           icon="description"
         ></mdui-text-field>
         <p />
@@ -212,11 +253,76 @@ export default function Propose() {
           type="number"
           placeholder="15"
           min={1}
-          value={max}
-          onInput={(e) => setMax(e.target.value)}
+          value={max?.toString() || ""}
+          onInput={(e) =>
+            setMax(Number((e.target as HTMLInputElement).value) || undefined)
+          }
           icon="group"
         ></mdui-text-field>
         <p />
+
+        {/* Custom Fields */}
+        {vote.proposeFields && vote.proposeFields.length > 0 && (
+          <>
+            {vote.proposeFields.map((field) => {
+              const getFieldIcon = (type: string) => {
+                switch (type) {
+                  case "email":
+                    return "email";
+                  case "tel":
+                    return "phone";
+                  case "number":
+                    return "tag";
+                  case "textarea":
+                    return "description";
+                  default:
+                    return "text_fields";
+                }
+              };
+
+              return (
+                <React.Fragment key={field.id}>
+                  {field.type === "textarea" ? (
+                    <mdui-text-field
+                      label={field.label}
+                      placeholder={field.placeholder}
+                      maxlength={field.maxLength}
+                      counter
+                      required={field.required}
+                      value={customFieldValues[field.id] || ""}
+                      onInput={(e) =>
+                        setCustomFieldValues((prev) => ({
+                          ...prev,
+                          [field.id]: (e.target as HTMLInputElement).value,
+                        }))
+                      }
+                      icon={getFieldIcon(field.type)}
+                      rows={3}
+                    />
+                  ) : (
+                    <mdui-text-field
+                      label={field.label}
+                      type={field.type}
+                      placeholder={field.placeholder}
+                      maxlength={field.maxLength}
+                      counter
+                      required={field.required}
+                      value={customFieldValues[field.id] || ""}
+                      onInput={(e) =>
+                        setCustomFieldValues((prev) => ({
+                          ...prev,
+                          [field.id]: (e.target as HTMLInputElement).value,
+                        }))
+                      }
+                      icon={getFieldIcon(field.type)}
+                    />
+                  )}
+                  <p />
+                </React.Fragment>
+              );
+            })}
+          </>
+        )}
 
         <br />
         <mdui-divider></mdui-divider>
@@ -230,7 +336,7 @@ export default function Propose() {
             width: "100%",
             margin: "0 auto",
           }}
-          class={`option-card`}
+          className="option-card"
           variant={"filled"}
         >
           <b className="title">
@@ -281,11 +387,11 @@ export default function Propose() {
         >
           <CheckItem
             label={"Titel"}
-            checked={name && name.length >= 3 && name.length <= 25}
+            checked={!!(name && name.length >= 3 && name.length <= 25)}
           />
           <CheckItem
             label={"Max. SchülerInnen"}
-            checked={max && max >= 1 && max <= 100}
+            checked={!!(max && max >= 1 && max <= 100)}
           />
           <CheckItem
             label={"Leitung"}
@@ -295,10 +401,25 @@ export default function Propose() {
           />
           <CheckItem
             label={"Beschreibung"}
-            checked={description && description.length <= 100}
+            checked={description || description.length <= 100}
             uncheckedIcon="toggle_off"
             checkedIcon="toggle_on"
           />
+
+          {/* CheckItems for custom fields */}
+          {vote.proposeFields &&
+            vote.proposeFields.map((field) => (
+              <CheckItem
+                key={field.id}
+                label={field.label}
+                checked={
+                  customFieldValues[field.id] &&
+                  customFieldValues[field.id].length <= field.maxLength
+                }
+                uncheckedIcon={field.required ? "close" : "toggle_off"}
+                checkedIcon={field.required ? "check" : "toggle_on"}
+              />
+            ))}
         </div>
       </mdui-card>
     </div>
