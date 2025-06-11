@@ -201,7 +201,12 @@ export default function Vote() {
               >
                 Abbrechen
               </mdui-button>
-              <mdui-button onClick={submit} end-icon="send">
+              <mdui-button
+                onClick={submit}
+                end-icon="send"
+                data-umami-event="vote-submit"
+                data-umami-event-grade={grade}
+              >
                 Absenden
               </mdui-button>
             </div>

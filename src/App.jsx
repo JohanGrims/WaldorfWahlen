@@ -14,10 +14,15 @@ function App() {
         <title>WaldorfWahlen - Start</title>
       </Helmet>
       <div style={{ position: "fixed", top: 0, left: 0, padding: "1rem" }}>
-        <mdui-button-icon icon="admin_panel_settings" href="/admin" />
+        <mdui-button-icon
+          data-umami-event="admin-link"
+          icon="admin_panel_settings"
+          href="/admin"
+        />
       </div>
       <div style={{ position: "fixed", top: 0, right: 0, padding: "1rem" }}>
         <mdui-button-icon
+          data-umami-event="github-link"
           icon="code"
           href="https://github.com/johangrims/waldorfwahlen"
         />
@@ -36,8 +41,18 @@ function App() {
           justifyContent: "space-around",
         }}
       >
-        <a href="https://waldorfschule-potsdam.de/impressum/">Impressum</a>
-        <a href="https://waldorfschule-potsdam.de/datenschutz/">Datenschutz</a>
+        <a
+          href="https://waldorfschule-potsdam.de/impressum/"
+          data-umami-event="impressum-link"
+        >
+          Impressum
+        </a>
+        <a
+          href="https://waldorfschule-potsdam.de/datenschutz/"
+          data-umami-event="datenschutz-link"
+        >
+          Datenschutz
+        </a>
       </div>
       <p />
       {/* Active Votes Section - Replaced with horizontal scrolling VoteCards */}
