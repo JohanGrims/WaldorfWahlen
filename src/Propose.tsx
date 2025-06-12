@@ -234,7 +234,7 @@ export default function Propose() {
           counter
           value={teacher}
           onInput={(e) => setTeacher((e.target as HTMLInputElement).value)}
-          icon="person"
+          icon="person" 
         ></mdui-text-field>
         <p />
         <mdui-text-field
@@ -260,6 +260,13 @@ export default function Propose() {
           icon="group"
         ></mdui-text-field>
         <p />
+
+        {vote.proposeFields && (<>
+        <mdui-divider/>
+        <p>
+          Die folgenden Antworten sind nicht öffentlich und nur für Administratoren sichtbar.
+        </ p>
+        </>)}
 
         {/* Custom Fields */}
         {vote.proposeFields && vote.proposeFields.length > 0 && (
