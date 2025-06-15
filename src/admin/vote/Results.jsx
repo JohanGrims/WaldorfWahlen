@@ -479,7 +479,8 @@ export default function Results() {
                           ?.title
                       }
 
-                      {result.comments?.length < 1 ? (
+                      {result.comments !== undefined &&
+                      result.comments.length < 1 ? (
                         <mdui-button-icon
                           icon="comment"
                           onClick={() => addComment(result.id)}
@@ -487,11 +488,13 @@ export default function Results() {
                       ) : (
                         <mdui-dropdown placement="left">
                           <mdui-button-icon slot="trigger" icon="comment">
-                            <mdui-badge>{result.comments.length}</mdui-badge>
+                            <mdui-badge>
+                              {result.comments?.length || 0}
+                            </mdui-badge>
                           </mdui-button-icon>
                           <mdui-menu>
                             <mdui-list>
-                              {result.comments.map((comment, index) => (
+                              {result.comments?.map((comment, index) => (
                                 <mdui-list-item
                                   style={{
                                     maxWidth: "500px",
