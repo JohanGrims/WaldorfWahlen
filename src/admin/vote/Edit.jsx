@@ -158,6 +158,11 @@ export default function Edit() {
   const [options, setOptions] = React.useState(loadedOptions);
   const [proposals, setProposals] = React.useState(loadedProposals);
 
+  // Calculate total max value from all options
+  const [totalMax, setTotalMax] = React.useState(() =>
+    loadedOptions.reduce((sum, option) => sum + (parseInt(option.max) || 0), 0)
+  );
+
   const [name, setName] = React.useState("");
   const [teacher, setTeacher] = React.useState("");
   const [optionDescription, setOptionDescription] = React.useState("");
@@ -172,7 +177,7 @@ export default function Edit() {
   const revalidator = useRevalidator();
 
   function addOption() {
-    setOptions((options) => [
+    const newOptions = [
       ...options,
       {
         title: name,
@@ -181,7 +186,12 @@ export default function Edit() {
         description: optionDescription,
         id: optionId,
       },
-    ]);
+    ];
+    setOptions(newOptions);
+    // Update total max value
+    setTotalMax(
+      newOptions.reduce((sum, option) => sum + (parseInt(option.max) || 0), 0)
+    );
     setName("");
     setTeacher("");
     setOptionDescription("");
@@ -195,7 +205,12 @@ export default function Edit() {
     setOptionDescription(options[index].description);
     setMax(options[index].max);
     setOptionId(options[index].id);
-    setOptions((options) => options.filter((_, i) => i !== index));
+    const newOptions = options.filter((_, i) => i !== index);
+    setOptions(newOptions);
+    // Update total max when removing an option during edit
+    setTotalMax(
+      newOptions.reduce((sum, option) => sum + (parseInt(option.max) || 0), 0)
+    );
   }
 
   async function update() {
@@ -445,6 +460,12 @@ export default function Edit() {
                       }
                     );
                     setOptions(loadedOptions);
+                    setTotalMax(
+                      loadedOptions.reduce(
+                        (sum, option) => sum + (parseInt(option.max) || 0),
+                        0
+                      )
+                    );
                     setProposals(loadedProposals);
                     setName("");
                     setTeacher("");
@@ -825,6 +846,21 @@ export default function Edit() {
       <p />
       <div className="options-container">
         <div className="options-list">
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              marginBottom: "10px",
+              backgroundColor: "var(--mdui-color-surface-container-high)",
+              padding: "10px",
+              borderRadius: "8px",
+              fontWeight: "bold",
+            }}
+          >
+            <div>Optionen: {options.length}</div>
+            <div>Gesamt max. Plätze: {totalMax}</div>
+          </div>
           {options.length === 0 && (
             <mdui-card class="option-preview" disabled>
               <b>Keine Optionen</b>
@@ -869,15 +905,33 @@ export default function Edit() {
                       style={{ color: "var(--mdui-color-error)" }}
                       onClick={(event) => {
                         event.stopPropagation();
-                        setOptions((options) =>
-                          options.filter((option) => option.id !== e.id)
-                        );
+                        setOptions((prevOptions) => {
+                          const newOptions = prevOptions.filter(
+                            (option) => option.id !== e.id
+                          );
+                          // Update total max when removing an option
+                          setTotalMax(
+                            newOptions.reduce(
+                              (sum, option) =>
+                                sum + (parseInt(option.max) || 0),
+                              0
+                            )
+                          );
+                          return newOptions;
+                        });
                         snackbar({
                           message: `Option "${e.title}" wurde gelöscht.`,
                           timeout: 5000,
                           action: "Änderungen verwerfen",
                           onActionClick: () => {
                             setOptions(loadedOptions);
+                            setTotalMax(
+                              loadedOptions.reduce(
+                                (sum, option) =>
+                                  sum + (parseInt(option.max) || 0),
+                                0
+                              )
+                            );
                             revalidator.revalidate();
                           },
                         });
