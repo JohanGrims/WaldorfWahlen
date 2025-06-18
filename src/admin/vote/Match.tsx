@@ -190,11 +190,12 @@ export default function Match() {
     return result;
   }, [sortedClasses, handledStudentKeys]);
 
-  function matchName(name1, name2) {
+  function matchName(name1: string, name2: string): boolean {
     if (!name1 || !name2) {
       return false;
     }
-    const norm = (n) => {
+
+    const norm = (n: string): string => {
       if (n.includes(",")) {
         let [last, first] = n.split(",").map((s) => s.trim());
         return `${first} ${last}`.toLowerCase();
@@ -202,22 +203,44 @@ export default function Match() {
       return n.toLowerCase();
     };
 
-    const extract = (n) => {
+    const extract = (n: string) => {
       let parts = n.split(" ");
       let first = parts[0];
-      let last = /^[a-z]\.$/.test(parts.at(-1))
-        ? parts.at(-1)[0]
-        : parts.at(-1);
-      return { first, last };
+      let lastPart = parts.at(-1);
+      let last =
+        lastPart && /^[a-z]\.$/.test(lastPart) ? lastPart[0] : lastPart;
+      return { first, last, allParts: parts };
     };
 
     const n1 = extract(norm(name1));
     const n2 = extract(norm(name2));
 
-    return (
+    // Check if first names match and last names match (original logic)
+    const exactMatch =
       n1.first === n2.first &&
-      (n1.last === n2.last || n1.last[0] === n2.last[0])
-    );
+      (n1.last === n2.last ||
+        (n1.last && n2.last && n1.last[0] === n2.last[0]));
+
+    if (exactMatch) {
+      return true;
+    }
+
+    // Check if one name is a subset of the other (for cases like "Max" vs "Max Erika M.")
+    const isSubset = (shorter: string[], longer: string[]): boolean => {
+      return shorter.every((part) => longer.includes(part));
+    };
+
+    // Compare all parts to see if one is a subset of the other
+    if (n1.allParts.length !== n2.allParts.length) {
+      const shorter =
+        n1.allParts.length < n2.allParts.length ? n1.allParts : n2.allParts;
+      const longer =
+        n1.allParts.length > n2.allParts.length ? n1.allParts : n2.allParts;
+
+      return isSubset(shorter, longer);
+    }
+
+    return false;
   }
 
   return (
