@@ -42,6 +42,98 @@ export default function Match() {
 
   const sortedClasses = classes.sort((a, b) => a.grade - b.grade);
 
+  // Get available grades for filtering
+  const grades = [...new Set(sortedClasses.map((c) => c.grade))].sort(
+    (a, b) => a - b
+  );
+  const [selectedGrade, setSelectedGrade] = React.useState<number | "all">(
+    "all"
+  );
+  const [customMessage, setCustomMessage] = React.useState("");
+
+  // Function to print non-voters table (similar to Results.jsx)
+  function printNonVoters() {
+    // Generate HTML content directly from data
+    const title = `Nicht-Wähler ${
+      selectedGrade !== "all" ? `Klasse ${selectedGrade}` : ""
+    } (${filteredNonVoters.length})`;
+
+    const tableRows = editableNonVoters
+      .map(
+        (item) =>
+          `<tr>
+        <td>${item.className}</td>
+        <td>${item.student.listIndex}</td>
+        <td>${item.student.name}</td>
+      </tr>`
+      )
+      .join("");
+
+    const printContents = `
+      ${
+        customMessage
+          ? `<div style="margin-bottom: 20px; padding: 15px; background-color: #f5f5f5; border-left: 4px solid #2196F3;"><p style="margin: 0; font-style: italic;">${customMessage}</p></div>`
+          : ""
+      }
+      <h3>${title}</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Klasse</th>
+            <th>#</th>
+            <th>Name</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${tableRows}
+        </tbody>
+      </table>
+    `;
+
+    // Check if we have content to print
+    if (editableNonVoters.length === 0) {
+      alert("Keine Nicht-Wähler zum Drucken vorhanden.");
+      return;
+    }
+
+    // Create new iframe
+    const printFrame = document.createElement("iframe");
+    printFrame.style.position = "absolute";
+    printFrame.style.width = "0";
+    printFrame.style.height = "0";
+    printFrame.style.border = "none";
+    document.body.appendChild(printFrame);
+
+    const frameDoc = printFrame.contentWindow;
+    if (!frameDoc) return;
+
+    frameDoc.document.open();
+    frameDoc.document.write(`
+      <html>
+        <head>
+          <title>Nicht-Wähler</title>
+          <style>
+            body { font-family: Arial, sans-serif; }
+            table { width: 100%; border-collapse: collapse; }
+            th, td { border: 1px solid #000; padding: 8px; text-align: left; }
+            h3 { margin-bottom: 10px; }
+          </style>
+        </head>
+        <body>${printContents}</body>
+      </html>
+    `);
+    frameDoc.document.close();
+
+    // Use iframe's print function
+    frameDoc.focus();
+    frameDoc.print();
+
+    // Remove iframe after printing
+    setTimeout(() => {
+      document.body.removeChild(printFrame);
+    }, 1000);
+  }
+
   // Find all choices with non-matching names against the database
   const mismatchedStudents = React.useMemo(() => {
     const result: MismatchedStudent[] = [];
@@ -190,6 +282,86 @@ export default function Match() {
     return result;
   }, [sortedClasses, handledStudentKeys]);
 
+  // Find students who haven't voted
+  const nonVoters = React.useMemo(() => {
+    const result: Array<{ student: Student; className: number }> = [];
+
+    sortedClasses.forEach((classItem) => {
+      classItem.students.forEach((student) => {
+        // Check if this student has any votes
+        const hasVoted = choices.some(
+          (choice) =>
+            Number(choice.listIndex) === Number(student.listIndex) &&
+            Number(choice.grade) === Number(classItem.grade)
+        );
+
+        if (!hasVoted) {
+          result.push({
+            student,
+            className: classItem.grade,
+          });
+        }
+      });
+    });
+
+    return result.sort((a, b) => {
+      if (a.className === b.className) {
+        return Number(a.student.listIndex) - Number(b.student.listIndex);
+      }
+      return a.className - b.className;
+    });
+  }, [choices, sortedClasses]);
+
+  // Filter non-voters by selected grade
+  const filteredNonVoters = React.useMemo(() => {
+    if (selectedGrade === "all") {
+      return nonVoters;
+    }
+    return nonVoters.filter((item) => item.className === selectedGrade);
+  }, [nonVoters, selectedGrade]);
+
+  // State for managing editable non-voters list
+  const [editableNonVoters, setEditableNonVoters] = React.useState<
+    Array<{
+      student: Student;
+      className: number;
+    }>
+  >([]);
+
+  // Update editable list when filtered non-voters change
+  React.useEffect(() => {
+    setEditableNonVoters([...filteredNonVoters]);
+  }, [filteredNonVoters]);
+
+  // Functions for managing the editable list
+  const removeNonVoter = (index: number) => {
+    setEditableNonVoters((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const addNonVoter = () => {
+    const newEntry = {
+      student: { name: "", listIndex: "" },
+      className: sortedClasses[0]?.grade || 1,
+    };
+    setEditableNonVoters((prev) => [...prev, newEntry]);
+  };
+
+  const updateNonVoter = (index: number, field: string, value: any) => {
+    setEditableNonVoters((prev) =>
+      prev.map((item, i) =>
+        i === index
+          ? {
+              ...item,
+              [field === "name" || field === "listIndex" ? "student" : field]:
+                field === "name" || field === "listIndex"
+                  ? { ...item.student, [field]: value }
+                  : value,
+            }
+          : item
+      )
+    );
+  };
+
   function matchName(name1: string, name2: string): boolean {
     if (!name1 || !name2) {
       return false;
@@ -204,7 +376,7 @@ export default function Match() {
     };
 
     const extract = (n: string) => {
-      let parts = n.split(" ");
+      let parts = n.split(" ").filter((part) => part.length > 0);
       let first = parts[0];
       let lastPart = parts.at(-1);
       let last =
@@ -215,11 +387,34 @@ export default function Match() {
     const n1 = extract(norm(name1));
     const n2 = extract(norm(name2));
 
-    // Check if first names match and last names match (original logic)
+    // Helper function to check if two name parts match (handles initials)
+    const partsMatch = (part1: string, part2: string): boolean => {
+      if (part1 === part2) return true;
+
+      // Check if one is an initial of the other
+      if (part1.length === 2 && part1.endsWith(".") && part2.length > 1) {
+        return part1[0] === part2[0];
+      }
+      if (part2.length === 2 && part2.endsWith(".") && part1.length > 1) {
+        return part2[0] === part1[0];
+      }
+
+      // Check if one is just the first letter of the other (without dot)
+      if (part1.length === 1 && part2.length > 1) {
+        return part1[0] === part2[0];
+      }
+      if (part2.length === 1 && part1.length > 1) {
+        return part2[0] === part1[0];
+      }
+
+      return false;
+    };
+
+    // Check if first names match and last names match (enhanced logic)
     const exactMatch =
-      n1.first === n2.first &&
-      (n1.last === n2.last ||
-        (n1.last && n2.last && n1.last[0] === n2.last[0]));
+      partsMatch(n1.first, n2.first) &&
+      ((n1.last && n2.last && partsMatch(n1.last, n2.last)) ||
+        (!n1.last && !n2.last));
 
     if (exactMatch) {
       return true;
@@ -227,7 +422,9 @@ export default function Match() {
 
     // Check if one name is a subset of the other (for cases like "Max" vs "Max Erika M.")
     const isSubset = (shorter: string[], longer: string[]): boolean => {
-      return shorter.every((part) => longer.includes(part));
+      return shorter.every((shorterPart) =>
+        longer.some((longerPart) => partsMatch(shorterPart, longerPart))
+      );
     };
 
     // Compare all parts to see if one is a subset of the other
@@ -238,6 +435,13 @@ export default function Match() {
         n1.allParts.length > n2.allParts.length ? n1.allParts : n2.allParts;
 
       return isSubset(shorter, longer);
+    }
+
+    // If same number of parts, check if all parts match using enhanced matching
+    if (n1.allParts.length === n2.allParts.length) {
+      return n1.allParts.every((part1, index) =>
+        partsMatch(part1, n2.allParts[index])
+      );
     }
 
     return false;
@@ -438,6 +642,9 @@ export default function Match() {
         <mdui-radio value="answers" onClick={() => setMode("answers")}>
           Antworten
         </mdui-radio>
+        <mdui-radio value="non-voters" onClick={() => setMode("non-voters")}>
+          Nicht-Wähler
+        </mdui-radio>
       </mdui-radio-group>
 
       {mode === "database" && (
@@ -616,6 +823,147 @@ export default function Match() {
             </table>
           </div>
         </div>
+      )}
+
+      {mode === "non-voters" && (
+        <mdui-card
+          style={{ width: "100%", padding: "20px", marginBottom: "20px" }}
+          variant="filled"
+        >
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              marginBottom: "16px",
+            }}
+          >
+            <h3>Nicht-Wähler ({filteredNonVoters.length})</h3>
+            <mdui-button variant="outlined" onClick={printNonVoters}>
+              <mdui-icon slot="icon">print</mdui-icon>
+              Drucken
+            </mdui-button>
+          </div>
+
+          <div style={{ marginBottom: "16px" }}>
+            <mdui-radio-group value={String(selectedGrade)}>
+              <mdui-radio value="all" onClick={() => setSelectedGrade("all")}>
+                Alle Klassen
+              </mdui-radio>
+              {grades.map((grade) => (
+                <mdui-radio
+                  key={grade}
+                  value={String(grade)}
+                  onClick={() => setSelectedGrade(grade)}
+                >
+                  Klasse {grade}
+                </mdui-radio>
+              ))}
+            </mdui-radio-group>
+          </div>
+
+          <p>
+            Diese Schüler haben nicht an der Umfrage teilgenommen. Sie können
+            sie hier bearbeiten oder hinzufügen.
+          </p>
+
+          {/* Custom message for print */}
+          <div style={{ marginBottom: "20px" }}>
+            <label
+              style={{
+                display: "block",
+                marginBottom: "8px",
+                fontWeight: "bold",
+              }}
+            >
+              Benutzerdefinierte Nachricht für Ausdruck:
+            </label>
+            <mdui-text-field
+              value={customMessage}
+              onInput={(e) =>
+                setCustomMessage((e.target as HTMLInputElement).value)
+              }
+              placeholder="Optional: Nachricht, die oben auf der gedruckten Seite erscheint..."
+              style={{ width: "100%" }}
+              rows={2}
+              variant="outlined"
+            />
+          </div>
+
+          {/* Editing table - visible on screen */}
+          <h4>Bearbeitung ({editableNonVoters.length} Einträge)</h4>
+          <div className="mdui-table" style={{ marginBottom: "20px" }}>
+            <table>
+              <thead>
+                <tr>
+                  <th>Klasse</th>
+                  <th>#</th>
+                  <th>Name</th>
+                  <th>Aktion</th>
+                </tr>
+              </thead>
+              <tbody>
+                {editableNonVoters.map((item, index) => (
+                  <tr key={index}>
+                    <td>
+                      <mdui-text-field
+                        type="number"
+                        value={item.className}
+                        onChange={(e) =>
+                          updateNonVoter(
+                            index,
+                            "className",
+                            parseInt(e.target.value) || 1
+                          )
+                        }
+                        placeholder="Klasse"
+                      />
+                    </td>
+                    <td>
+                      <mdui-text-field
+                        type="text"
+                        value={item.student.listIndex}
+                        onChange={(e) =>
+                          updateNonVoter(index, "listIndex", e.target.value)
+                        }
+                        placeholder="#"
+                      />
+                    </td>
+                    <td>
+                      <mdui-text-field
+                        type="text"
+                        value={item.student.name}
+                        onChange={(e) =>
+                          updateNonVoter(index, "name", e.target.value)
+                        }
+                        placeholder="Name"
+                      />
+                    </td>
+                    <td>
+                      <mdui-button-icon
+                        icon="remove_circle"
+                        onClick={() => removeNonVoter(index)}
+                        style={{ color: "rgb(255, 100, 100)" }}
+                        mdui-tooltip={{ content: "Eintrag entfernen" }}
+                      ></mdui-button-icon>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <mdui-divider />
+
+          <mdui-button
+            variant="elevated"
+            color="primary"
+            onClick={addNonVoter}
+            style={{ width: "100%" }}
+          >
+            Nicht-Wähler hinzufügen
+          </mdui-button>
+        </mdui-card>
       )}
     </div>
   );
