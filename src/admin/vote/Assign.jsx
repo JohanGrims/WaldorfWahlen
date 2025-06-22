@@ -11,6 +11,7 @@ export default function Assign() {
   const [results, setResults] = React.useState(null);
   const [loading, setLoading] = React.useState(false);
   const [mode, setMode] = React.useState("by-option");
+  const [choicePoints, setChoicePoints] = React.useState({});
 
   const [search, setSearch] = React.useState("");
 
@@ -60,6 +61,7 @@ export default function Assign() {
       }
 
       const preferences = {};
+      const calculatedPoints = {};
 
       for (const choice of choices) {
         let points = [1, 2, 4];
@@ -86,6 +88,13 @@ export default function Assign() {
                 break;
               }
             }
+            if (
+              key === "name" &&
+              !choice.name.toLowerCase().includes(value.toLowerCase())
+            ) {
+              matches = false;
+              break;
+            }
           }
           if (matches) {
             points = rule.scores;
@@ -96,6 +105,7 @@ export default function Assign() {
           selected: choice.selected,
           points: points,
         };
+        calculatedPoints[choice.id] = points;
       }
 
       const requestObject = {
@@ -127,6 +137,7 @@ export default function Assign() {
       const data = await response.json();
 
       setResults(data);
+      setChoicePoints(calculatedPoints);
       if (window.location.hostname === "localhost") {
         // skip throttling on localhost
         setLoading(false);
@@ -340,6 +351,9 @@ export default function Assign() {
               </li>
               <li>
                 <code>selected</code>: IDs der Projekte, die gewählt wurden
+              </li>
+              <li>
+                <code>name</code>: Teil des Namens des Schülers
               </li>
             </ul>
             <p />
@@ -824,6 +838,9 @@ export default function Assign() {
                   <th>
                     <b>#</b>
                   </th>
+                  <th>
+                    <b>Punkte</b>
+                  </th>
                   {Array.from(
                     { length: vote.selectCount },
                     (_, i) => i + 1
@@ -841,6 +858,11 @@ export default function Assign() {
                     <td>{choices.find((choice) => choice.id === key).grade}</td>
                     <td>
                       {choices.find((choice) => choice.id === key).listIndex}
+                    </td>
+                    <td>
+                      {choicePoints[key]
+                        ? `[${choicePoints[key].join(", ")}]`
+                        : "[1, 2, 4]"}
                     </td>
                     {choices
                       .find((choice) => choice.id === key)
@@ -918,6 +940,9 @@ export default function Assign() {
                         <th>
                           <b>Klasse</b>
                         </th>
+                        <th>
+                          <b>Punkte</b>
+                        </th>
                         {Array.from(
                           { length: vote.selectCount },
                           (_, i) => i + 1
@@ -941,6 +966,11 @@ export default function Assign() {
                                 choices.find((choice) => choice.id === key)
                                   .grade
                               }
+                            </td>
+                            <td>
+                              {choicePoints[key]
+                                ? `[${choicePoints[key].join(", ")}]`
+                                : "[1, 2, 4]"}
                             </td>
                             {choices
                               .find((choice) => choice.id === key)
@@ -1109,6 +1139,9 @@ export default function Assign() {
                           <b>#</b>
                         </th>
                         <th>
+                          <b>Punkte</b>
+                        </th>
+                        <th>
                           <b>Projekt</b>
                         </th>
                         <th>
@@ -1148,6 +1181,11 @@ export default function Assign() {
                                 choices.find((choice) => choice.id === key)
                                   .listIndex
                               }
+                            </td>
+                            <td>
+                              {choicePoints[key]
+                                ? `[${choicePoints[key].join(", ")}]`
+                                : "[1, 2, 4]"}
                             </td>
                             <td>
                               {
@@ -1202,6 +1240,9 @@ export default function Assign() {
                     <b>#</b>
                   </th>
                   <th>
+                    <b>Punkte</b>
+                  </th>
+                  <th>
                     <b>Projekt</b>
                   </th>
                   <th>
@@ -1216,6 +1257,11 @@ export default function Assign() {
                     <td>{choices.find((choice) => choice.id === key).grade}</td>
                     <td>
                       {choices.find((choice) => choice.id === key).listIndex}
+                    </td>
+                    <td>
+                      {choicePoints[key]
+                        ? `[${choicePoints[key].join(", ")}]`
+                        : "[1, 2, 4]"}
                     </td>
                     <td>
                       {options.find((option) => option.id === value).title}

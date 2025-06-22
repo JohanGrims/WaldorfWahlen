@@ -908,12 +908,12 @@ export default function Match() {
                     <td>
                       <mdui-text-field
                         type="number"
-                        value={item.className}
+                        value={item.className.toString()}
                         onChange={(e) =>
                           updateNonVoter(
                             index,
                             "className",
-                            parseInt(e.target.value) || 1
+                            parseInt((e.target as HTMLInputElement).value) || 1
                           )
                         }
                         placeholder="Klasse"
@@ -924,7 +924,11 @@ export default function Match() {
                         type="text"
                         value={item.student.listIndex}
                         onChange={(e) =>
-                          updateNonVoter(index, "listIndex", e.target.value)
+                          updateNonVoter(
+                            index,
+                            "listIndex",
+                            (e.target as HTMLInputElement).value
+                          )
                         }
                         placeholder="#"
                       />
@@ -934,7 +938,11 @@ export default function Match() {
                         type="text"
                         value={item.student.name}
                         onChange={(e) =>
-                          updateNonVoter(index, "name", e.target.value)
+                          updateNonVoter(
+                            index,
+                            "name",
+                            (e.target as HTMLInputElement).value
+                          )
                         }
                         placeholder="Name"
                       />
