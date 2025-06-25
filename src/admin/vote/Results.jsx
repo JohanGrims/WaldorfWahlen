@@ -57,6 +57,161 @@ export default function Results() {
     }, 1000);
   }
 
+  function printProjectResults(projectId) {
+    const project = options.find((option) => option.id === projectId);
+    const projectResults = filteredResults().filter(
+      (result) => result.result === projectId
+    );
+
+    const printContents = `
+      <div>
+        <h2>${vote.title}</h2>
+        <h3>${project.title.replace(/\[.*?\]/g, "")}</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Klasse</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${projectResults
+              .map(
+                (result) => `
+              <tr>
+                <td>${choices
+                  .find((choice) => choice.id === result.id)
+                  .name?.replace(/\[.*?\]/g, "")}</td>
+                <td>${
+                  choices.find((choice) => choice.id === result.id).grade
+                }</td>
+              </tr>
+            `
+              )
+              .join("")}
+          </tbody>
+        </table>
+        <p style="margin-top: 20px;">
+          <i>Generiert am ${new Date().toLocaleDateString()} von ${
+      auth.currentUser.email
+    } mit WaldorfWahlen</i>
+        </p>
+      </div>
+    `;
+
+    // Neues iframe erstellen
+    const printFrame = document.createElement("iframe");
+    printFrame.style.position = "absolute";
+    printFrame.style.width = "0";
+    printFrame.style.height = "0";
+    printFrame.style.border = "none";
+    document.body.appendChild(printFrame);
+
+    const frameDoc = printFrame.contentWindow || printFrame.contentDocument;
+    frameDoc.document.open();
+    frameDoc.document.write(`
+      <html>
+        <head>
+          <title>Drucken - ${project.title.replace(/\[.*?\]/g, "")}</title>
+          <style>
+            body { font-family: Arial, sans-serif; }
+            table { width: 100%; border-collapse: collapse; }
+            th, td { border: 1px solid #000; padding: 8px; text-align: left; }
+            h2, h3 { margin-bottom: 10px; }
+          </style>
+        </head>
+        <body>${printContents}</body>
+      </html>
+    `);
+    frameDoc.document.close();
+
+    // print()-Funktion des iframe verwenden
+    frameDoc.focus();
+    frameDoc.print();
+
+    // iframe nach dem Drucken entfernen
+    setTimeout(() => {
+      document.body.removeChild(printFrame);
+    }, 1000);
+  }
+
+  function printClassResults(grade) {
+    const classResults = filteredResults().filter(
+      (result) => result.grade === grade
+    );
+
+    const printContents = `
+      <div>
+        <h2>${vote.title}</h2>
+        <h3>Klasse ${grade}</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Projekt</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${classResults
+              .map(
+                (result) => `
+              <tr>
+                <td>${choices
+                  .find((choice) => choice.id === result.id)
+                  .name?.replace(/\[.*?\]/g, "")}</td>
+                <td>${
+                  options.find((option) => option.id === result.result).title
+                }</td>
+              </tr>
+            `
+              )
+              .join("")}
+          </tbody>
+        </table>
+        <p style="margin-top: 20px;">
+          <i>Generiert am ${new Date().toLocaleDateString()} von ${
+      auth.currentUser.email
+    } mit WaldorfWahlen</i>
+        </p>
+      </div>
+    `;
+
+    // Neues iframe erstellen
+    const printFrame = document.createElement("iframe");
+    printFrame.style.position = "absolute";
+    printFrame.style.width = "0";
+    printFrame.style.height = "0";
+    printFrame.style.border = "none";
+    document.body.appendChild(printFrame);
+
+    const frameDoc = printFrame.contentWindow || printFrame.contentDocument;
+    frameDoc.document.open();
+    frameDoc.document.write(`
+      <html>
+        <head>
+          <title>Drucken - Klasse ${grade}</title>
+          <style>
+            body { font-family: Arial, sans-serif; }
+            table { width: 100%; border-collapse: collapse; }
+            th, td { border: 1px solid #000; padding: 8px; text-align: left; }
+            h2, h3 { margin-bottom: 10px; }
+          </style>
+        </head>
+        <body>${printContents}</body>
+      </html>
+    `);
+    frameDoc.document.close();
+
+    // print()-Funktion des iframe verwenden
+    frameDoc.focus();
+    frameDoc.print();
+
+    // iframe nach dem Drucken entfernen
+    setTimeout(() => {
+      document.body.removeChild(printFrame);
+    }, 1000);
+  }
+
   function publishResults() {
     confirm({
       icon: "warning",
@@ -616,6 +771,25 @@ export default function Results() {
                 <>
                   <p />
                   <div style={{ padding: "10px" }}>
+                    <div
+                      style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                        marginBottom: "15px",
+                      }}
+                    >
+                      <h3 style={{ margin: 0 }}>
+                        {option.title.replace(/\[.*?\]/g, "")}
+                      </h3>
+                      <mdui-button
+                        icon="print"
+                        variant="outlined"
+                        onClick={() => printProjectResults(option.id)}
+                      >
+                        Drucken
+                      </mdui-button>
+                    </div>
                     <div className="mdui-table" style={{ width: "100%" }}>
                       <table>
                         <thead>
@@ -728,6 +902,23 @@ export default function Results() {
                   <>
                     <p />
                     <div style={{ padding: "10px" }}>
+                      <div
+                        style={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                          marginBottom: "15px",
+                        }}
+                      >
+                        <h3 style={{ margin: 0 }}>Klasse {grade}</h3>
+                        <mdui-button
+                          icon="print"
+                          variant="outlined"
+                          onClick={() => printClassResults(grade)}
+                        >
+                          Drucken
+                        </mdui-button>
+                      </div>
                       <div className="mdui-table" style={{ width: "100%" }}>
                         <table>
                           <thead>
