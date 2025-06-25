@@ -456,7 +456,9 @@ export default function Results() {
                 {filteredResults().map((result) => (
                   <tr key={result.id}>
                     <td>
-                      {choices.find((choice) => choice.id === result.id).name}
+                      {choices
+                        .find((choice) => choice.id === result.id)
+                        .name?.replace(/\[.*?\]/g, "")}
                     </td>
                     <td>
                       {choices.find((choice) => choice.id === result.id).grade}
@@ -474,10 +476,9 @@ export default function Results() {
                         gap: "10px",
                       }}
                     >
-                      {
-                        options.find((option) => option.id === result.result)
-                          ?.title
-                      }
+                      {options
+                        .find((option) => option.id === result.result)
+                        ?.title?.replace(/\[.*?\]/g, "")}
 
                       {result.comments !== undefined &&
                       result.comments.length < 1 ? (
@@ -560,16 +561,17 @@ export default function Results() {
                 {filteredResults().map((result) => (
                   <tr key={result.id}>
                     <td>
-                      {choices.find((choice) => choice.id === result.id).name}
+                      {choices
+                        .find((choice) => choice.id === result.id)
+                        .name?.replace(/\[.*?\]/g, "")}
                     </td>
                     <td>
                       {choices.find((choice) => choice.id === result.id).grade}
                     </td>
                     <td>
-                      {
-                        options.find((option) => option.id === result.result)
-                          ?.title
-                      }
+                      {options
+                        .find((option) => option.id === result.result)
+                        ?.title?.replace(/\[.*?\]/g, "")}
                     </td>
                   </tr>
                 ))}
@@ -601,7 +603,7 @@ export default function Results() {
                 key={option.id}
                 value={option.id}
               >
-                {option.title}
+                {option.title.replace(/\[.*?\]/g, "")}
               </mdui-tab>
             ))}
             {options.map((option) => (
@@ -628,11 +630,9 @@ export default function Results() {
                             .map((result) => (
                               <tr key={result.id}>
                                 <td>
-                                  {
-                                    choices.find(
-                                      (choice) => choice.id === result.id
-                                    ).name
-                                  }
+                                  {choices
+                                    .find((choice) => choice.id === result.id)
+                                    .name?.replace(/\[.*?\]/g, "")}
                                 </td>
                                 <td>
                                   {
@@ -655,7 +655,7 @@ export default function Results() {
             <h2>{vote.title}</h2>
             {options.map((option) => (
               <div key={option.id}>
-                <h3>{option.title}</h3>
+                <h3>{option.title.replace(/\[.*?\]/g, "")}</h3>
                 <table>
                   <thead>
                     <tr>
@@ -669,10 +669,9 @@ export default function Results() {
                       .map((result) => (
                         <tr key={result.id}>
                           <td>
-                            {
-                              choices.find((choice) => choice.id === result.id)
-                                .name
-                            }
+                            {choices
+                              .find((choice) => choice.id === result.id)
+                              .name?.replace(/\[.*?\]/g, "")}
                           </td>
                           <td
                             style={{
@@ -743,11 +742,9 @@ export default function Results() {
                               .map((result) => (
                                 <tr key={result.id}>
                                   <td>
-                                    {
-                                      choices.find(
-                                        (choice) => choice.id === result.id
-                                      ).name
-                                    }
+                                    {choices
+                                      .find((choice) => choice.id === result.id)
+                                      .name?.replace(/\[.*?\]/g, "")}
                                   </td>
                                   <td>
                                     {
@@ -785,10 +782,9 @@ export default function Results() {
                       .map((result) => (
                         <tr key={result.id}>
                           <td style={{ width: "50%" }}>
-                            {
-                              choices.find((choice) => choice.id === result.id)
-                                .name
-                            }
+                            {choices
+                              .find((choice) => choice.id === result.id)
+                              .name?.replace(/\[.*?\]/g, "")}
                           </td>
                           <td>
                             {
