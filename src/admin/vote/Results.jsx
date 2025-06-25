@@ -4,6 +4,7 @@ import { auth, db } from "../../firebase";
 
 import { confirm, prompt, snackbar } from "mdui";
 import React from "react";
+import jsPDF from "jspdf";
 
 export default function Results() {
   const { vote, options, results, choices } = useLoaderData();
@@ -81,7 +82,8 @@ export default function Results() {
               <tr>
                 <td>${choices
                   .find((choice) => choice.id === result.id)
-                  .name?.replace(/\[.*?\]/g, "")}</td>
+                  .name?.replace(/\[.*?\]/g, "")
+                  .trim()}</td>
                 <td>${
                   choices.find((choice) => choice.id === result.id).grade
                 }</td>
@@ -158,7 +160,8 @@ export default function Results() {
               <tr>
                 <td>${choices
                   .find((choice) => choice.id === result.id)
-                  .name?.replace(/\[.*?\]/g, "")}</td>
+                  .name?.replace(/\[.*?\]/g, "")
+                  .trim()}</td>
                 <td>${
                   options.find((option) => option.id === result.result).title
                 }</td>
@@ -410,6 +413,237 @@ export default function Results() {
     setCommenting(false);
   }
 
+  function exportAttendancePDF() {
+    // Ask for number of attendance columns
+    prompt({
+      headline: "Anwesenheitsliste exportieren",
+      description:
+        "Wie viele Spalten sollen für die Anwesenheit erstellt werden?",
+      textFieldOptions: {
+        placeholder: "5",
+      },
+      icon: "picture_as_pdf",
+      confirmText: "Exportieren",
+      cancelText: "Abbrechen",
+      onConfirm: (value) => {
+        const attendanceColumns = parseInt(value) || 5;
+        generateAttendancePDF(attendanceColumns);
+      },
+    });
+  }
+
+  function generateAttendancePDF(attendanceColumns) {
+    const doc = new jsPDF("landscape", "mm", "a4");
+    const pageWidth = 297; // A4 landscape width
+    const pageHeight = 210; // A4 landscape height
+    const margin = 15;
+    const usableWidth = pageWidth - 2 * margin;
+
+    // Calculate column widths
+    const nameWidth = 80;
+    const gradeWidth = 25;
+    const checkboxWidth =
+      (usableWidth - nameWidth - gradeWidth) / attendanceColumns;
+    const checkboxSize = 2;
+    const rowHeight = 6;
+
+    let currentPage = 1;
+    let currentY = margin;
+
+    options.forEach((option, optionIndex) => {
+      const projectStudents = filteredResults().filter(
+        (result) => result.result === option.id
+      );
+
+      // Calculate needed height for this project (header + students + 2 empty rows)
+      const totalRows = projectStudents.length + 2;
+      const headerHeight = 12;
+      const neededHeight = headerHeight + 8; // Just for header check
+
+      // Check if we need a new page for the header
+      if (currentY + neededHeight > pageHeight - margin) {
+        doc.addPage();
+        currentPage++;
+        currentY = margin;
+      }
+
+      // Project title
+      doc.setFontSize(12);
+      doc.text(option.title.replace(/\[.*?\]/g, ""), margin, currentY + 8);
+      currentY += 18;
+
+      // Table headers
+      doc.setFontSize(10);
+      const headerY = currentY;
+
+      // Draw header background
+      doc.setFillColor(240, 240, 240);
+      doc.rect(margin, headerY - 4, usableWidth, 6, "F");
+
+      // Header texts
+      doc.setTextColor(0, 0, 0);
+      doc.text("Name", margin + 2, headerY);
+      doc.text("Klasse", margin + nameWidth + 2, headerY);
+
+      currentY += 8;
+      const dataStartY = currentY;
+
+      // Process each row (students + empty rows)
+      for (let rowIndex = 0; rowIndex < totalRows; rowIndex++) {
+        // Check if this row fits on current page
+        if (currentY + rowHeight > pageHeight - margin) {
+          // Start new page with continuation header
+          doc.addPage();
+          currentPage++;
+          currentY = margin;
+
+          // Project title (continuation)
+          doc.setFontSize(12);
+          doc.text(
+            option.title.replace(/\[.*?\]/g, "") + " (Fortsetzung)",
+            margin,
+            currentY + 8
+          );
+          currentY += 18;
+
+          // Table headers
+          doc.setFontSize(10);
+          const newHeaderY = currentY;
+
+          // Header background
+          doc.setFillColor(240, 240, 240);
+          doc.rect(margin, newHeaderY - 4, usableWidth, 6, "F");
+
+          // Header texts
+          doc.setTextColor(0, 0, 0);
+          doc.text("Name", margin + 2, newHeaderY);
+          doc.text("Klasse", margin + nameWidth + 2, newHeaderY);
+
+          currentY += 8;
+        }
+
+        const rowY = currentY;
+
+        // Draw row border lines
+        doc.setDrawColor(200, 200, 200);
+
+        // Vertical lines for this row
+        doc.line(margin, rowY - 2, margin, rowY + rowHeight - 2); // Left
+        doc.line(
+          margin + nameWidth,
+          rowY - 2,
+          margin + nameWidth,
+          rowY + rowHeight - 2
+        );
+        doc.line(
+          margin + nameWidth + gradeWidth,
+          rowY - 2,
+          margin + nameWidth + gradeWidth,
+          rowY + rowHeight - 2
+        );
+
+        for (let col = 1; col < attendanceColumns; col++) {
+          const lineX = margin + nameWidth + gradeWidth + col * checkboxWidth;
+          doc.line(lineX, rowY - 2, lineX, rowY + rowHeight - 2);
+        }
+        doc.line(
+          margin + usableWidth,
+          rowY - 2,
+          margin + usableWidth,
+          rowY + rowHeight - 2
+        ); // Right
+
+        // Top horizontal line for first row or after page break
+        if (rowIndex === 0 || rowY === margin + 20) {
+          doc.line(margin, rowY - 2, margin + usableWidth, rowY - 2);
+        }
+
+        // Bottom horizontal line for each row
+        doc.line(
+          margin,
+          rowY + rowHeight - 2,
+          margin + usableWidth,
+          rowY + rowHeight - 2
+        );
+
+        // Add student data or leave empty
+        if (rowIndex < projectStudents.length) {
+          const student = choices.find(
+            (choice) => choice.id === projectStudents[rowIndex].id
+          );
+
+          // Student name
+          doc.text(
+            student.name?.replace(/\[.*?\]/g, "").trim() || "",
+            margin + 2,
+            rowY + 3
+          );
+
+          // Student grade
+          doc.text(student.grade || "", margin + nameWidth + 2, rowY + 3);
+        }
+
+        // Draw attendance checkboxes (centered in columns)
+        for (let col = 0; col < attendanceColumns; col++) {
+          const checkboxX =
+            margin +
+            nameWidth +
+            gradeWidth +
+            col * checkboxWidth +
+            (checkboxWidth - checkboxSize) / 2;
+          const checkboxY = rowY; // Center checkboxes vertically to align with text
+          doc.rect(checkboxX, checkboxY, checkboxSize, checkboxSize);
+        }
+
+        currentY += rowHeight;
+      }
+
+      currentY += 10; // Add spacing after each project
+
+      // Add cutting line between projects (except after the last project)
+      if (optionIndex < options.length - 1) {
+        // Check if there's enough space for the cutting line, otherwise add it to next page
+        if (currentY + 5 > pageHeight - margin) {
+          doc.addPage();
+          currentPage++;
+          currentY = margin;
+        }
+
+        // Draw dotted cutting line
+        doc.setDrawColor(150, 150, 150);
+        doc.setLineDashPattern([2, 2], 0); // 2mm dash, 2mm gap
+        doc.line(margin, currentY, pageWidth - margin, currentY);
+        doc.setLineDashPattern([], 0); // Reset to solid lines
+
+        currentY += 5; // Small spacing after cutting line
+      }
+    });
+
+    // Footer on each page
+    const totalPages = doc.getNumberOfPages();
+    for (let i = 1; i <= totalPages; i++) {
+      doc.setPage(i);
+      doc.setFontSize(8);
+      doc.setTextColor(128, 128, 128);
+      doc.text(
+        `Seite ${i} von ${totalPages} - Erstellt mit WaldorfWahlen`,
+        pageWidth - margin - 50,
+        pageHeight - 5
+      );
+    }
+
+    // Save the PDF
+    const fileName = `${vote.title.replace(
+      /[^a-zA-Z0-9]/g,
+      "_"
+    )}_Anwesenheit.pdf`;
+    doc.save(fileName);
+
+    snackbar({
+      message: "PDF wurde erfolgreich erstellt und heruntergeladen.",
+    });
+  }
+
   return (
     <div className="mdui-prose">
       <mdui-dialog fullscreen open={commenting}>
@@ -585,14 +819,24 @@ export default function Results() {
           </mdui-radio>
         </mdui-radio-group>
 
-        <mdui-button
-          onClick={() => {
-            setCommenting(true);
-          }}
-          icon="comment"
-        >
-          Kommentare hinzufügen
-        </mdui-button>
+        <div style={{ display: "flex", gap: "10px" }}>
+          <mdui-button
+            onClick={() => {
+              setCommenting(true);
+            }}
+            icon="comment"
+          >
+            Kommentare hinzufügen
+          </mdui-button>
+
+          <mdui-button
+            onClick={exportAttendancePDF}
+            icon="picture_as_pdf"
+            variant="outlined"
+          >
+            Anwesenheitsliste
+          </mdui-button>
+        </div>
       </div>
 
       {mode === "all" && (
@@ -613,7 +857,8 @@ export default function Results() {
                     <td>
                       {choices
                         .find((choice) => choice.id === result.id)
-                        .name?.replace(/\[.*?\]/g, "")}
+                        .name?.replace(/\[.*?\]/g, "")
+                        .trim()}
                     </td>
                     <td>
                       {choices.find((choice) => choice.id === result.id).grade}
@@ -716,12 +961,13 @@ export default function Results() {
                 {filteredResults().map((result) => (
                   <tr key={result.id}>
                     <td>
-                      {choices
-                        .find((choice) => choice.id === result.id)
-                        .name?.replace(/\[.*?\]/g, "")}
+                      {choices.find((choice) => choice.id === result.id).grade}
                     </td>
                     <td>
-                      {choices.find((choice) => choice.id === result.id).grade}
+                      {choices
+                        .find((choice) => choice.id === result.id)
+                        .name?.replace(/\[.*?\]/g, "")
+                        .trim()}
                     </td>
                     <td>
                       {options
@@ -806,7 +1052,8 @@ export default function Results() {
                                 <td>
                                   {choices
                                     .find((choice) => choice.id === result.id)
-                                    .name?.replace(/\[.*?\]/g, "")}
+                                    .name?.replace(/\[.*?\]/g, "")
+                                    .trim()}
                                 </td>
                                 <td>
                                   {
@@ -845,7 +1092,8 @@ export default function Results() {
                           <td>
                             {choices
                               .find((choice) => choice.id === result.id)
-                              .name?.replace(/\[.*?\]/g, "")}
+                              .name?.replace(/\[.*?\]/g, "")
+                              .trim()}
                           </td>
                           <td
                             style={{
@@ -935,7 +1183,8 @@ export default function Results() {
                                   <td>
                                     {choices
                                       .find((choice) => choice.id === result.id)
-                                      .name?.replace(/\[.*?\]/g, "")}
+                                      .name?.replace(/\[.*?\]/g, "")
+                                      .trim()}
                                   </td>
                                   <td>
                                     {
