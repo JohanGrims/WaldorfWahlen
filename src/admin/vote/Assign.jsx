@@ -872,7 +872,9 @@ export default function Assign() {
                           style={{
                             cursor: selected !== value && "pointer",
                             textDecoration: selected !== value && "underline",
-                            color: selected !== value && "rgb(27, 68, 133)",
+                            color:
+                              selected !== value &&
+                              "rgb(var(--mdui-color-primary))",
                           }}
                           onClick={() => {
                             if (selected === value) return;
@@ -982,7 +984,8 @@ export default function Assign() {
                                     textDecoration:
                                       selected !== value && "underline",
                                     color:
-                                      selected !== value && "rgb(27, 68, 133)",
+                                      selected !== value &&
+                                      "rgb(var(--mdui-color-primary))",
                                   }}
                                   onClick={() => {
                                     if (selected === value) return;
@@ -1068,7 +1071,7 @@ export default function Assign() {
                                     "underline",
                                   color:
                                     results[choice.id] !== selected &&
-                                    "rgb(27, 68, 133)",
+                                    "rgb(var(--mdui-color-tertiary))",
                                 }}
                                 onClick={() => {
                                   if (results[choice.id] === selected) return;
