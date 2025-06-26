@@ -93,9 +93,6 @@ export default defineConfig({
               if (matchingDep && packageToChunk[matchingDep]) {
                 return packageToChunk[matchingDep];
               }
-
-              // Log unmatched packages for debugging
-              console.log("Unmatched package:", packageName, "from path:", id);
             }
 
             // A catch-all vendor chunk for other node_modules
