@@ -195,7 +195,10 @@
     </style>
     <script>
       setTimeout(() => {
-        document.querySelector(".slow-loading").style.display = "flex";
+        const slowLoadingElement = document.querySelector(".slow-loading");
+        if (slowLoadingElement) {
+          slowLoadingElement.style.display = "flex";
+        }
       }, 5000);
     </script>
     <script type="module" src="/src/main.jsx"></script>
