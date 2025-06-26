@@ -29,6 +29,9 @@ jobs:
       - name: Install pnpm
         run: npm install -g pnpm
 
+      - name: Enable corepack (for pnpm)
+        run: corepack enable
+
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
