@@ -9,6 +9,7 @@
     "lint": "eslint . --ext js,jsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview"
   },
+  "packageManager": "pnpm@10.0.0",
   "dependencies": {
     "@mdui/icons": "^1.0.2",
     "file-saver": "^2.0.5",
