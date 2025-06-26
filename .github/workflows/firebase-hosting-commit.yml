@@ -39,9 +39,6 @@ jobs:
         run: pnpm install -g firebase-tools
 
       - name: Deploy to Firebase Hosting
-        uses: FirebaseExtended/action-hosting-deploy@v0
-        with:
-          repoToken: ${{ secrets.GITHUB_TOKEN }}
-          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_WALDORFWAHLEN }}
-          channelId: live
-          projectId: waldorfwahlen
+        run: pnpm firebase deploy --only hosting --project waldorfwahlen --json
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_WALDORFWAHLEN }}
