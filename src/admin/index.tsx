@@ -1,4 +1,4 @@
-import { onAuthStateChanged } from "firebase/auth";
+import { onAuthStateChanged, User } from "firebase/auth";
 import React from "react";
 import { Outlet, useRevalidator } from "react-router-dom";
 import { auth, db } from "../firebase";
@@ -9,16 +9,27 @@ import { confirm, snackbar } from "mdui";
 import { useNavigate } from "react-router-dom";
 import Login from "./auth/Login";
 import DrawerList from "./navigation/DrawerList";
-import { doc, getDoc } from "firebase/firestore";
+import { doc, getDoc, DocumentData } from "firebase/firestore";
 import { Helmet } from "react-helmet";
 
+interface ReleaseNotesData extends DocumentData {
+  updated?: {
+    seconds: number;
+  };
+}
+
+interface DrawerListProps {
+  onClose: () => void;
+  mobile: boolean;
+}
+
 export default function Admin() {
-  const mobile = window.innerWidth < 840;
+  const mobile: boolean = window.innerWidth < 840;
 
-  const [authUser, setAuthUser] = React.useState(false);
-  const [loading, setLoading] = React.useState(true);
+  const [authUser, setAuthUser] = React.useState<User | null | false>(false);
+  const [loading, setLoading] = React.useState<boolean>(true);
 
-  const [open, setOpen] = React.useState(!mobile);
+  const [open, setOpen] = React.useState<boolean>(!mobile);
 
   const navigate = useNavigate();
 
@@ -28,10 +39,13 @@ export default function Admin() {
     const response = await getDoc(doc(db, "docs", "release-notes"));
 
     if (response.exists()) {
-      const data = response.data();
+      const data = response.data() as ReleaseNotesData;
       if (!data?.updated?.seconds) return;
 
-      const lastLogin = auth.currentUser.metadata.lastSignInTime;
+      const lastLogin = auth.currentUser?.metadata.lastSignInTime;
+      console.log("Last login time:", lastLogin);
+
+      if (!lastLogin) return;
 
       const newTimestamp = new Date(data.updated.seconds * 1000).getTime();
 
@@ -52,7 +66,7 @@ export default function Admin() {
   }
 
   React.useEffect(() => {
-    const listen = onAuthStateChanged(auth, (user) => {
+    const listen = onAuthStateChanged(auth, (user: User | null) => {
       if (user) {
         setAuthUser(user);
         setLoading(false);
@@ -108,10 +122,12 @@ export default function Admin() {
             style={{ marginRight: "1rem", cursor: "pointer" }}
           >
             {authUser.email
-              .split(/[@.]/)
-              .slice(0, 2)
-              .map((part) => part.charAt(0).toUpperCase())
-              .join("")}
+              ? authUser.email
+                  .split(/[@.]/)
+                  .slice(0, 2)
+                  .map((part) => part.charAt(0).toUpperCase())
+                  .join("")
+              : "?"}
           </mdui-avatar>
           <mdui-menu>
             <mdui-menu-item
@@ -135,7 +151,7 @@ export default function Admin() {
           </mdui-menu>
         </mdui-dropdown>
 
-        <mdui-tooltip content="Abmelden" open-delay="0" placement="left">
+        <mdui-tooltip content="Abmelden" open-delay={0} placement="left">
           <mdui-button-icon
             icon="logout"
             onClick={() => {
@@ -168,4 +184,3 @@ export default function Admin() {
     </mdui-layout>
   );
 }
-

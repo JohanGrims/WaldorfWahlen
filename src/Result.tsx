@@ -1,23 +1,61 @@
-import { collection, doc, getDoc, getDocs } from "firebase/firestore";
+import {
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  DocumentData,
+} from "firebase/firestore";
 import React from "react";
 import { useLoaderData, useNavigate, useParams } from "react-router-dom";
 import { db } from "./firebase";
 import { confirm } from "mdui";
 
+interface VoteData extends DocumentData {
+  result: boolean;
+}
+
+interface OptionData extends DocumentData {
+  id: string;
+  title: string;
+}
+
+interface CommentData {
+  from: string;
+  text: string;
+  timestamp: number;
+}
+
+interface VoteResultData extends DocumentData {
+  result: string;
+  comments?: CommentData[];
+}
+
+interface LoaderData {
+  vote: VoteData;
+  options: OptionData[];
+}
+
 export default function Result() {
-  let { id } = useParams();
+  let { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { vote, options } = useLoaderData();
+  const { vote, options } = useLoaderData() as LoaderData;
   const { result } = vote;
 
-  const [voteResult, setVoteResult] = React.useState();
+  const [voteResult, setVoteResult] = React.useState<
+    VoteResultData | undefined
+  >(undefined);
 
   React.useEffect(() => {
-    if (vote.result && localStorage.getItem(id)) {
-      const choiceId = JSON.parse(localStorage.getItem(id)).choiceId;
-      getDoc(doc(db, `/votes/${id}/results/${choiceId}`)).then((doc) => {
-        setVoteResult(doc.data());
-      });
+    if (vote.result && id) {
+      const storedItem = localStorage.getItem(id);
+      if (storedItem) {
+        const choiceId = JSON.parse(storedItem).choiceId;
+        getDoc(doc(db, `/votes/${id}/results/${choiceId}`)).then((docSnap) => {
+          if (docSnap.exists()) {
+            setVoteResult(docSnap.data() as VoteResultData);
+          }
+        });
+      }
     }
   }, [id, vote.result]);
 
@@ -34,11 +72,13 @@ export default function Result() {
         <p />
         <div className="button-container">
           <mdui-button onClick={() => navigate("/")}>Startseite</mdui-button>
-          {localStorage.getItem(id)?.choiceId && (
-            <mdui-button disabled variant="text">
-              {JSON.parse(localStorage.getItem(id))?.choiceId}
-            </mdui-button>
-          )}
+          {id &&
+            localStorage.getItem(id) &&
+            JSON.parse(localStorage.getItem(id)!).choiceId && (
+              <mdui-button disabled variant="text">
+                {JSON.parse(localStorage.getItem(id)!).choiceId}
+              </mdui-button>
+            )}
         </div>
       </mdui-dialog>
     );
@@ -68,7 +108,7 @@ export default function Result() {
         <p>Es sieht so aus, als wären Sie im Projekt...</p>
         <p>...Trommelwirbel...</p>
         <b style={{ fontSize: "30px" }}>
-          {options.find((option) => voteResult.result === option.id).title}
+          {options.find((option) => voteResult.result === option.id)?.title}
         </b>
       </div>
       <p />
@@ -126,14 +166,14 @@ export default function Result() {
   );
 }
 
-export async function loader({ params }) {
+export async function loader({ params }: { params: { id: string } }) {
   const { id } = params;
-  const vote = (await getDoc(doc(db, `/votes/${id}`))).data();
+  const vote = (await getDoc(doc(db, `/votes/${id}`))).data() as VoteData;
   const options = (
     await getDocs(collection(db, `/votes/${id}/options`))
   ).docs.map((doc) => {
     return { id: doc.id, ...doc.data() };
-  });
+  }) as OptionData[];
 
   return { vote, options };
 }

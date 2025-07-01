@@ -1,4 +1,4 @@
-import { collection, getDocs } from "firebase/firestore";
+import { collection, getDocs, Timestamp } from "firebase/firestore";
 import { snackbar } from "mdui";
 import React from "react";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -7,15 +7,32 @@ import { DrawerItem } from "./components";
 import VoteDrawer from "./VoteDrawer";
 import routes from "./routes.json";
 
+interface VoteData {
+  id: string;
+  title: string;
+  version: string;
+  startTime: Timestamp;
+  endTime: Timestamp;
+  active?: boolean;
+}
+
+interface DrawerListProps {
+  onClose?: () => void;
+  mobile: boolean;
+}
+
 let pages = [undefined, ...routes];
 
-export default function DrawerList({ onClose = () => {}, mobile }) {
-  const [activeVotes, setActiveVotes] = React.useState([]);
-  const [expiredVotes, setExpiredVotes] = React.useState([]);
-  const [scheduledVotes, setScheduledVotes] = React.useState([]);
-  const [loading, setLoading] = React.useState(true);
+export default function DrawerList({
+  onClose = () => {},
+  mobile,
+}: DrawerListProps) {
+  const [activeVotes, setActiveVotes] = React.useState<VoteData[]>([]);
+  const [expiredVotes, setExpiredVotes] = React.useState<VoteData[]>([]);
+  const [scheduledVotes, setScheduledVotes] = React.useState<VoteData[]>([]);
+  const [loading, setLoading] = React.useState<boolean>(true);
 
-  const [active, setActive] = React.useState(undefined);
+  const [active, setActive] = React.useState<string | undefined>(undefined);
 
   const navigate = useNavigate();
 
@@ -26,7 +43,7 @@ export default function DrawerList({ onClose = () => {}, mobile }) {
     getDocs(collection(db, "/votes"))
       .then((data) => {
         data.docs.map((e) => {
-          let data = e.data();
+          let data = e.data() as VoteData;
           if (data.active && data.endTime.seconds * 1000 > Date.now()) {
             if (data.startTime.seconds * 1000 > Date.now()) {
               setScheduledVotes((scheduledVotes) => [
@@ -84,7 +101,7 @@ export default function DrawerList({ onClose = () => {}, mobile }) {
     return <VoteDrawer onClose={onClose} />;
   }
 
-  const navigateTo = (path) => {
+  const navigateTo = (path: string) => {
     navigate(path);
     onClose();
   };
@@ -122,7 +139,7 @@ export default function DrawerList({ onClose = () => {}, mobile }) {
             <mdui-list-item-content>Administrator</mdui-list-item-content>
           </mdui-list-item>
         )}
-        {loading && <mdui-linear-progress indeterminate></mdui-linear-progress>}
+        {loading && <mdui-linear-progress></mdui-linear-progress>}
 
         <mdui-tooltip
           variant="rich"

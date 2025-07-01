@@ -1,30 +1,82 @@
-import { collection, doc, getDoc, getDocs, setDoc } from "firebase/firestore";
+import {
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  setDoc,
+  DocumentData,
+} from "firebase/firestore";
 import { confirm, snackbar } from "mdui";
 import React from "react";
 import { useBlocker, useLoaderData, useNavigate } from "react-router-dom";
 import { appCheck, auth, db } from "../../firebase";
 import { getToken } from "firebase/app-check";
 
+interface VoteData extends DocumentData {
+  id: string;
+  selectCount: number;
+}
+
+interface ChoiceData extends DocumentData {
+  id: string;
+  name: string;
+  grade: number;
+  listIndex: number;
+  selected: string[];
+}
+
+interface OptionData extends DocumentData {
+  id: string;
+  title: string;
+  max: number;
+}
+
+interface ResultData extends DocumentData {
+  id: string;
+  result: string;
+}
+
+interface LoaderData {
+  vote: VoteData;
+  choices: ChoiceData[];
+  options: OptionData[];
+  results: ResultData[];
+}
+
+interface Rule {
+  apply: string;
+  scores: number[];
+}
+
 export default function Assign() {
-  const { vote, choices, options, results: cloudResults } = useLoaderData();
+  const {
+    vote,
+    choices,
+    options,
+    results: cloudResults,
+  } = useLoaderData() as LoaderData;
 
-  const [results, setResults] = React.useState(null);
-  const [loading, setLoading] = React.useState(false);
-  const [mode, setMode] = React.useState("by-option");
-  const [choicePoints, setChoicePoints] = React.useState({});
+  const [results, setResults] = React.useState<Record<string, string> | null>(
+    null
+  );
+  const [loading, setLoading] = React.useState<boolean>(false);
+  const [mode, setMode] = React.useState<string>("by-option");
+  const [choicePoints, setChoicePoints] = React.useState<
+    Record<string, number[]>
+  >({});
 
-  const [search, setSearch] = React.useState("");
+  const [search, setSearch] = React.useState<string>("");
 
-  const [rules, setRules] = React.useState([
+  const [rules, setRules] = React.useState<Rule[]>([
     {
       apply: "*",
       scores: [1, 2, 4],
     },
   ]);
-  const [editRules, setEditRules] = React.useState(false);
+  const [editRules, setEditRules] = React.useState<boolean>(false);
 
   function setCloudResults() {
-    let newResults = {};
+    let newResults: Record<string, string> = {};
 
     cloudResults.forEach((result) => {
       newResults[result.id] = result.result;
@@ -40,19 +92,24 @@ export default function Assign() {
   }
 
   function assignToFirstChoice() {
-    const results = {};
+    const newResults: Record<string, string> = {};
     choices.forEach((choice) => {
-      results[choice.id] = choice.selected[0];
+      newResults[choice.id] = choice.selected[0];
     });
-    setResults(results);
+    setResults(newResults);
   }
 
   async function fetchOptimization() {
     setLoading(true);
     try {
+      if (!auth.currentUser) {
+        snackbar({ message: "Benutzer nicht angemeldet." });
+        setLoading(false);
+        return;
+      }
       const authToken = await auth.currentUser.getIdToken();
 
-      const projects = {};
+      const projects: Record<string, { title: string; max: number }> = {};
       for (const option of options) {
         projects[option.id] = {
           title: option.title,
@@ -60,8 +117,11 @@ export default function Assign() {
         };
       }
 
-      const preferences = {};
-      const calculatedPoints = {};
+      const preferences: Record<
+        string,
+        { selected: string[]; points: number[] }
+      > = {};
+      const calculatedPoints: Record<string, number[]> = {};
 
       for (const choice of choices) {
         let points = [1, 2, 4];
@@ -73,7 +133,10 @@ export default function Assign() {
           let matches = true;
           for (const condition of conditions) {
             const [key, value] = condition.split("=");
-            if (key === "grade" && parseInt(choice.grade) !== parseInt(value)) {
+            if (
+              key === "grade" &&
+              parseInt(choice.grade.toString()) !== parseInt(value)
+            ) {
               matches = false;
               break;
             }
@@ -151,11 +214,11 @@ export default function Assign() {
     }
   }
 
-  const switchRef = React.useRef(null);
+  const switchRef = React.useRef<HTMLInputElement>(null);
 
   let blocker = useBlocker(
     ({ currentLocation, nextLocation }) =>
-      currentLocation.pathname !== nextLocation.pathname && results
+      currentLocation.pathname !== nextLocation.pathname && results !== null
   );
   const navigate = useNavigate();
 
@@ -190,7 +253,9 @@ export default function Assign() {
       }
     };
 
-    switchRef.current.addEventListener("change", handleToggle);
+    if (switchRef.current) {
+      switchRef.current.addEventListener("change", handleToggle);
+    }
 
     return () => {
       if (switchRef.current) {
@@ -205,7 +270,7 @@ export default function Assign() {
         <h2>Automatische Optimierung</h2>
         Die Möglichkeiten werden optimiert. Dies kann einige Sekunden dauern.
         Bitte warten.
-        <mdui-linear-progress indeterminate></mdui-linear-progress>
+        <mdui-linear-progress></mdui-linear-progress>
         <p />
         <div
           style={{
@@ -228,13 +293,7 @@ export default function Assign() {
   if (!results) {
     return (
       <div className="mdui-prose">
-        {blocker.state === "blocked" && blocker.proceed()}
-        <mdui-dialog
-          open={editRules}
-          onClosed={() => setEditRules(false)}
-          headline="Regeln anpassen"
-          fullscreen
-        >
+        <mdui-dialog open={editRules} headline="Regeln anpassen" fullscreen>
           {rules.map((rule, i) => (
             <div
               key={i}
@@ -245,7 +304,7 @@ export default function Assign() {
                   label="Bedingung"
                   placeholder="grade=12"
                   value={rule.apply}
-                  onInput={(e) => {
+                  onInput={(e: React.ChangeEvent<HTMLInputElement>) => {
                     const newRules = [...rules];
                     newRules[i].apply = e.target.value;
                     setRules(newRules);
@@ -257,7 +316,7 @@ export default function Assign() {
                   label="Bedingung"
                   placeholder="grade=12"
                   value={rule.apply}
-                  onInput={(e) => {
+                  onInput={(e: React.ChangeEvent<HTMLInputElement>) => {
                     const newRules = [...rules];
                     newRules[i].apply = e.target.value;
                     setRules(newRules);
@@ -268,7 +327,7 @@ export default function Assign() {
                 label="Punkte"
                 placeholder="1,2,4"
                 value={rule.scores.join(",")}
-                onInput={(e) => {
+                onInput={(e: React.ChangeEvent<HTMLInputElement>) => {
                   const newRules = [...rules];
                   newRules[i].scores = e.target.value.split(",").map(Number);
                   setRules(newRules);
@@ -338,8 +397,7 @@ export default function Assign() {
             angewendet, in der sie hier aufgelistet sind. Die Regeln werden auf
             die Schüler angewendet, die die Bedingungen erfüllen. Die Punkte
             geben an, wie viele Punkte die Schüler für die jeweilige Wahl
-            erhalten. Die Regeln können auf verschiedene Kriterien angewendet
-            werden. Die Kriterien sind in der Form <code>key=value</code>{" "}
+            erhalten. Die Kriterien sind in der Form <code>key=value</code>{" "}
             angegeben. Mehrere Kriterien können durch Kommas getrennt werden.
             Die Kriterien sind:
             <ul>
@@ -481,14 +539,15 @@ export default function Assign() {
     );
   }
 
-  const countWahlen = (wahlen) => {
-    const counts = {};
+  const countWahlen = (wahlen: number) => {
+    const counts: Record<number, number> = {};
     for (let i = 1; i <= wahlen; i++) {
       counts[i] = 0;
     }
-    Object.entries(results).forEach(([key, value]) => {
+    Object.entries(results!).forEach(([key, value]) => {
       const wahl =
-        choices.find((choice) => choice.id === key).selected.indexOf(value) + 1;
+        choices.find((choice) => choice.id === key)!.selected.indexOf(value) +
+        1;
       counts[wahl] = (counts[wahl] || 0) + 1;
     });
     return counts;
@@ -496,12 +555,12 @@ export default function Assign() {
 
   const wahlenCounts = countWahlen(vote.selectCount);
 
-  const sortedResults = Object.entries(results).sort(([keyA], [keyB]) => {
+  const sortedResults = Object.entries(results!).sort(([keyA], [keyB]) => {
     const nameA = choices
-      .find((choice) => choice.id === keyA)
+      .find((choice) => choice.id === keyA)!
       .name.toLowerCase();
     const nameB = choices
-      .find((choice) => choice.id === keyB)
+      .find((choice) => choice.id === keyB)!
       .name.toLowerCase();
     return nameA.localeCompare(nameB);
   });
@@ -526,7 +585,7 @@ export default function Assign() {
         "Die Ergebnisse wurden erfolgreich gespeichert. Sie können diese URL mit anderen Lehrern teilen.",
       icon: "done",
       cancelText: "URL kopieren",
-      onCancel: (e) => {
+      onCancel: (e: any) => {
         navigator.clipboard.writeText(window.location.href);
         snackbar({ message: "URL kopiert." });
 
@@ -540,10 +599,11 @@ export default function Assign() {
     });
   }
 
-  const filteredResults = () => {
+  const filteredResults = (): [string, string][] => {
     if (mode === "power-search") {
       return sortedResults.filter(([key]) => {
         const choice = choices.find((choice) => choice.id === key);
+        if (!choice) return false;
         const searchTerms = search.split(",");
         return searchTerms.every((term) => {
           const orTerms = term.split("|");
@@ -560,18 +620,19 @@ export default function Assign() {
               }
               if (key === "grade") {
                 return isNegative
-                  ? choice.grade !== value
-                  : choice.grade === value;
+                  ? choice.grade.toString() !== value
+                  : choice.grade.toString() === value;
               }
               if (key === "assignedTo") {
                 return isNegative
-                  ? results[choice.id] !== value
-                  : results[choice.id] === value;
+                  ? results![choice.id] !== value
+                  : results![choice.id] === value;
               }
               if (key === "choice") {
                 return isNegative
-                  ? results[choice.id] !== choice.selected[parseInt(value) - 1]
-                  : results[choice.id] === choice.selected[parseInt(value) - 1];
+                  ? results![choice.id] !== choice.selected[parseInt(value) - 1]
+                  : results![choice.id] ===
+                      choice.selected[parseInt(value) - 1];
               }
               if (key === "selected") {
                 return isNegative
@@ -579,9 +640,13 @@ export default function Assign() {
                   : choice.selected.includes(value);
               }
               if (key.startsWith("selected[")) {
-                const index = parseInt(key.match(/\d+/)?.[0]) - 1;
-                if (isNaN(index)) return false;
-                if (!choice.selected[index]) return false;
+                const index = parseInt(key.match(/\d+/)?.[0] || "0") - 1;
+                if (
+                  isNaN(index) ||
+                  index < 0 ||
+                  index >= choice.selected.length
+                )
+                  return false;
                 return isNegative
                   ? choice.selected[index] !== value
                   : choice.selected[index] === value;
@@ -610,10 +675,10 @@ export default function Assign() {
         </div>
         <p />
         <div className="button-container">
-          <mdui-button onClick={() => blocker.reset()} variant="text">
+          <mdui-button onClick={() => blocker.reset?.()} variant="text">
             Zurück
           </mdui-button>
-          <mdui-button onClick={() => blocker.proceed()}>
+          <mdui-button onClick={() => blocker.proceed?.()}>
             Fortfahren
           </mdui-button>
         </div>
@@ -626,7 +691,7 @@ export default function Assign() {
           alignItems: "start",
         }}
       >
-        <h2>Ergebnisse</h2>
+        <h2>Zuteilung</h2>
         <div>
           <mdui-tooltip content="Regeln anpassen" variant="rich">
             <mdui-button-icon
@@ -651,19 +716,19 @@ export default function Assign() {
         </div>
       </div>
       <p />
-      {mode !== "power-search" && (
+      {results && mode !== "power-search" && (
         <>
           Insgesamt wurden {Object.keys(results).length} Schüler zugeordnet.
           Davon haben:{" "}
           {Object.entries(wahlenCounts).map(([wahl, count]) => (
-            <>
+            <React.Fragment key={wahl}>
               <i>{count}</i> Schüler die{" "}
               {wahl === "1"
                 ? "Erstwahlen, "
                 : `${wahl}. Wahlen${
                     wahl === vote.selectCount.toString() ? "." : ","
                   } `}
-            </>
+            </React.Fragment>
           ))}
         </>
       )}
@@ -791,7 +856,7 @@ export default function Assign() {
               label="Power-Search"
               clearable
               placeholder="name=Johan,grade=12"
-              onInput={(e) => {
+              onInput={(e: React.ChangeEvent<HTMLInputElement>) => {
                 setSearch(e.target.value);
               }}
               value={search}
@@ -812,14 +877,16 @@ export default function Assign() {
                     `#power-search tr:nth-child(${randomIndex + 1})`
                   );
 
-                  element.scrollIntoView({
-                    behavior: "smooth",
-                  });
-                  element.style.backgroundColor =
-                    "rgb(var(--mdui-color-tertiary-container-dark))";
-                  setTimeout(() => {
-                    element.style.backgroundColor = "";
-                  }, 5000);
+                  if (element) {
+                    element.scrollIntoView({
+                      behavior: "smooth",
+                    });
+                    (element as HTMLElement).style.backgroundColor =
+                      "rgb(var(--mdui-color-tertiary-container-dark))";
+                    setTimeout(() => {
+                      (element as HTMLElement).style.backgroundColor = "";
+                    }, 5000);
+                  }
                 }}
                 icon="casino--outlined"
               ></mdui-button-icon>
@@ -854,10 +921,12 @@ export default function Assign() {
               <tbody id="power-search">
                 {filteredResults().map(([key, value]) => (
                   <tr key={key}>
-                    <td>{choices.find((choice) => choice.id === key).name}</td>
-                    <td>{choices.find((choice) => choice.id === key).grade}</td>
+                    <td>{choices.find((choice) => choice.id === key)!.name}</td>
                     <td>
-                      {choices.find((choice) => choice.id === key).listIndex}
+                      {choices.find((choice) => choice.id === key)!.grade}
+                    </td>
+                    <td>
+                      {choices.find((choice) => choice.id === key)!.listIndex}
                     </td>
                     <td>
                       {choicePoints[key]
@@ -865,23 +934,25 @@ export default function Assign() {
                         : "[1, 2, 4]"}
                     </td>
                     {choices
-                      .find((choice) => choice.id === key)
+                      .find((choice) => choice.id === key)!
                       .selected.map((selected, i) => (
                         <td
                           key={i}
                           style={{
-                            cursor: selected !== value && "pointer",
-                            textDecoration: selected !== value && "underline",
+                            cursor: selected !== value ? "pointer" : "default",
+                            textDecoration:
+                              selected !== value ? "underline" : "none",
                             color:
-                              selected !== value &&
-                              "rgb(var(--mdui-color-primary))",
+                              selected !== value
+                                ? "rgb(var(--mdui-color-primary))"
+                                : "inherit",
                           }}
                           onClick={() => {
                             if (selected === value) return;
-                            const newResults = { ...results };
+                            const newResults = { ...results! };
                             newResults[key] = selected;
                             setResults(newResults);
-                            const previousResults = { ...results };
+                            const previousResults = { ...results! };
                             snackbar({
                               message: "Änderung rückgängig machen",
                               action: "Rückgängig",
@@ -891,14 +962,14 @@ export default function Assign() {
                         >
                           {selected === value && `✓ `}
                           {`${
-                            options.find((option) => option.id === selected)
+                            options.find((option) => option.id === selected)!
                               .title
                           } (${
-                            sortedResults.filter(
-                              ([, value]) => value === selected
-                            ).length
+                            sortedResults.filter(([, val]) => val === selected)
+                              .length
                           }/${
-                            options.find((option) => option.id === selected).max
+                            options.find((option) => option.id === selected)!
+                              .max
                           })`}
                         </td>
                       ))}
@@ -961,11 +1032,14 @@ export default function Assign() {
                         .map(([key, value]) => (
                           <tr key={key}>
                             <td>
-                              {choices.find((choice) => choice.id === key).name}
+                              {
+                                choices.find((choice) => choice.id === key)!
+                                  .name
+                              }
                             </td>
                             <td>
                               {
-                                choices.find((choice) => choice.id === key)
+                                choices.find((choice) => choice.id === key)!
                                   .grade
                               }
                             </td>
@@ -975,24 +1049,28 @@ export default function Assign() {
                                 : "[1, 2, 4]"}
                             </td>
                             {choices
-                              .find((choice) => choice.id === key)
+                              .find((choice) => choice.id === key)!
                               .selected.map((selected, i) => (
                                 <td
                                   key={i}
                                   style={{
-                                    cursor: selected !== value && "pointer",
+                                    cursor:
+                                      selected !== value
+                                        ? "pointer"
+                                        : "default",
                                     textDecoration:
-                                      selected !== value && "underline",
+                                      selected !== value ? "underline" : "none",
                                     color:
-                                      selected !== value &&
-                                      "rgb(var(--mdui-color-primary))",
+                                      selected !== value
+                                        ? "rgb(var(--mdui-color-primary))"
+                                        : "inherit",
                                   }}
                                   onClick={() => {
                                     if (selected === value) return;
-                                    const newResults = { ...results };
+                                    const newResults = { ...results! };
                                     newResults[key] = selected;
                                     setResults(newResults);
-                                    const previousResults = { ...results };
+                                    const previousResults = { ...results! };
                                     snackbar({
                                       message: "Änderung rückgängig machen",
                                       action: "Rückgängig",
@@ -1006,15 +1084,15 @@ export default function Assign() {
                                     : `${
                                         options.find(
                                           (option) => option.id === selected
-                                        ).title
+                                        )!.title
                                       } (${
                                         sortedResults.filter(
-                                          ([, value]) => value === selected
+                                          ([, val]) => val === selected
                                         ).length
                                       }/${
                                         options.find(
                                           (option) => option.id === selected
-                                        ).max
+                                        )!.max
                                       })`}
                                 </td>
                               ))}
@@ -1064,21 +1142,24 @@ export default function Assign() {
                                 key={i}
                                 style={{
                                   cursor:
-                                    results[choice.id] !== selected &&
-                                    "pointer",
+                                    results![choice.id] !== selected
+                                      ? "pointer"
+                                      : "default",
                                   textDecoration:
-                                    results[choice.id] !== selected &&
-                                    "underline",
+                                    results![choice.id] !== selected
+                                      ? "underline"
+                                      : "none",
                                   color:
-                                    results[choice.id] !== selected &&
-                                    "rgb(var(--mdui-color-tertiary))",
+                                    results![choice.id] !== selected
+                                      ? "rgb(var(--mdui-color-tertiary))"
+                                      : "inherit",
                                 }}
                                 onClick={() => {
-                                  if (results[choice.id] === selected) return;
-                                  const newResults = { ...results };
+                                  if (results![choice.id] === selected) return;
+                                  const newResults = { ...results! };
                                   newResults[choice.id] = selected;
                                   setResults(newResults);
-                                  const previousResults = { ...results };
+                                  const previousResults = { ...results! };
                                   snackbar({
                                     message: "Änderung rückgängig machen",
                                     action: "Rückgängig",
@@ -1090,18 +1171,18 @@ export default function Assign() {
                                 {
                                   options.find(
                                     (option) => option.id === selected
-                                  ).title
+                                  )!.title
                                 }
 
-                                {results[choice.id] === selected &&
+                                {results![choice.id] === selected &&
                                   ` (${
                                     sortedResults.filter(
-                                      ([, value]) => value === selected
+                                      ([, val]) => val === selected
                                     ).length
                                   }/${
                                     options.find(
                                       (option) => option.id === selected
-                                    ).max
+                                    )!.max
                                   }) ✓`}
                               </td>
                             ))}
@@ -1116,16 +1197,24 @@ export default function Assign() {
         </mdui-tabs>
       )}
       {mode === "by-grade" && (
-        <mdui-tabs value={grades.sort((a, b) => parseInt(a) - parseInt(b))[0]}>
+        <mdui-tabs
+          value={
+            grades
+              .sort(
+                (a, b) => parseInt(a.toString()) - parseInt(b.toString())
+              )[0]
+              ?.toString() || ""
+          }
+        >
           {grades
-            .sort((a, b) => parseInt(a) - parseInt(b))
+            .sort((a, b) => parseInt(a.toString()) - parseInt(b.toString()))
             .map((grade, i) => (
-              <mdui-tab key={i} value={grade}>
+              <mdui-tab key={i} value={grade.toString()}>
                 Klasse {grade}
               </mdui-tab>
             ))}
           {grades.map((grade, i) => (
-            <mdui-tab-panel key={i} value={grade} slot="panel">
+            <mdui-tab-panel key={i} value={grade.toString()} slot="panel">
               <p />
               <div style={{ padding: "10px" }}>
                 <div className="mdui-table" style={{ width: "100%" }}>
@@ -1156,32 +1245,36 @@ export default function Assign() {
                       {sortedResults
                         .filter(
                           ([key]) =>
-                            choices.find((choice) => choice.id === key)
-                              .grade === grade
+                            choices
+                              .find((choice) => choice.id === key)!
+                              .grade.toString() === grade.toString()
                         )
                         .sort(([keyA], [keyB]) => {
                           const nameA = choices
-                            .find((choice) => choice.id === keyA)
+                            .find((choice) => choice.id === keyA)!
                             .name.toLowerCase();
                           const nameB = choices
-                            .find((choice) => choice.id === keyB)
+                            .find((choice) => choice.id === keyB)!
                             .name.toLowerCase();
                           return nameA.localeCompare(nameB);
                         })
                         .map(([key, value], i) => (
                           <tr key={i}>
                             <td>
-                              {choices.find((choice) => choice.id === key).name}
+                              {
+                                choices.find((choice) => choice.id === key)!
+                                  .name
+                              }
                             </td>
                             <td>
                               {
-                                choices.find((choice) => choice.id === key)
+                                choices.find((choice) => choice.id === key)!
                                   .grade
                               }
                             </td>
                             <td>
                               {
-                                choices.find((choice) => choice.id === key)
+                                choices.find((choice) => choice.id === key)!
                                   .listIndex
                               }
                             </td>
@@ -1192,13 +1285,13 @@ export default function Assign() {
                             </td>
                             <td>
                               {
-                                options.find((option) => option.id === value)
+                                options.find((option) => option.id === value)!
                                   .title
                               }
                             </td>
                             <td>
                               {choices
-                                .find((choice) => choice.id === key)
+                                .find((choice) => choice.id === key)!
                                 .selected.indexOf(value) + 1}
                             </td>
                           </tr>
@@ -1216,14 +1309,14 @@ export default function Assign() {
           <mdui-text-field
             clearable
             label="Suchen"
-            onInput={(e) => {
+            onInput={(e: React.ChangeEvent<HTMLInputElement>) => {
               const query = e.target.value.toLowerCase();
               const elements = document.querySelectorAll("tr");
-              elements.forEach((element) => {
-                if (element.textContent.toLowerCase().includes(query)) {
-                  element.style.display = "";
+              elements.forEach((element: Element) => {
+                if (element.textContent?.toLowerCase().includes(query)) {
+                  (element as HTMLElement).style.display = "";
                 } else {
-                  element.style.display = "none";
+                  (element as HTMLElement).style.display = "none";
                 }
               });
             }}
@@ -1256,10 +1349,12 @@ export default function Assign() {
               <tbody>
                 {sortedResults.map(([key, value]) => (
                   <tr key={key}>
-                    <td>{choices.find((choice) => choice.id === key).name}</td>
-                    <td>{choices.find((choice) => choice.id === key).grade}</td>
+                    <td>{choices.find((choice) => choice.id === key)!.name}</td>
                     <td>
-                      {choices.find((choice) => choice.id === key).listIndex}
+                      {choices.find((choice) => choice.id === key)!.grade}
+                    </td>
+                    <td>
+                      {choices.find((choice) => choice.id === key)!.listIndex}
                     </td>
                     <td>
                       {choicePoints[key]
@@ -1267,11 +1362,11 @@ export default function Assign() {
                         : "[1, 2, 4]"}
                     </td>
                     <td>
-                      {options.find((option) => option.id === value).title}
+                      {options.find((option) => option.id === value)!.title}
                     </td>
                     <td>
                       {choices
-                        .find((choice) => choice.id === key)
+                        .find((choice) => choice.id === key)!
                         .selected.indexOf(value) + 1}
                     </td>
                   </tr>
@@ -1286,22 +1381,28 @@ export default function Assign() {
 }
 
 Assign.loader = async function loader({ params }) {
-  const { id } = params;
+  const { id } = params as { id: string };
 
   const vote = await getDoc(doc(db, `/votes/${id}`));
-  const voteData = { id: vote.id, ...vote.data() };
+  const voteData = { id: vote.id, ...vote.data() } as VoteData;
 
   const choices = await getDocs(collection(db, `/votes/${id}/choices`));
-  const choiceData = choices.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+  const choiceData = choices.docs.map((doc) => ({
+    id: doc.id,
+    ...doc.data(),
+  })) as ChoiceData[];
 
   const options = await getDocs(collection(db, `/votes/${id}/options`));
-  const optionData = options.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+  const optionData = options.docs.map((doc) => ({
+    id: doc.id,
+    ...doc.data(),
+  })) as OptionData[];
 
   const results = await getDocs(collection(db, `/votes/${id}/results`));
   const resultsData = results.docs.map((doc) => ({
     id: doc.id,
     ...doc.data(),
-  }));
+  })) as ResultData[];
 
   return {
     vote: voteData,

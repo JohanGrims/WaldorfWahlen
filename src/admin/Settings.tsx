@@ -10,17 +10,14 @@ import { auth } from "../firebase";
 import { Helmet } from "react-helmet";
 
 export default function Settings() {
-  const [email, setEmail] = React.useState(auth.currentUser.email);
-  const [password, setPassword] = React.useState("");
-  const [newPassword, setNewPassword] = React.useState("");
-
-  const [darkMode, setDarkMode] = React.useState(
-    localStorage.getItem("theme") === "light"
-  );
+  const [email, setEmail] = React.useState<string>(auth.currentUser?.email || "");
+  const [password, setPassword] = React.useState<string>("");
+  const [newPassword, setNewPassword] = React.useState<string>("");
 
   function updateUser() {
+    if (!auth.currentUser) return;
     const userCredentials = EmailAuthProvider.credential(
-      auth.currentUser.email,
+      auth.currentUser.email || "",
       password
     );
     reauthenticateWithCredential(auth.currentUser, userCredentials)
@@ -28,7 +25,7 @@ export default function Settings() {
         if (newPassword) {
           changePassword();
         }
-        if (email !== auth.currentUser.email) {
+        if (email !== auth.currentUser?.email) {
           changeEmail();
         }
       })
@@ -38,6 +35,7 @@ export default function Settings() {
   }
 
   function changeEmail() {
+    if (!auth.currentUser) return;
     updateEmail(auth.currentUser, email)
       .then(() => {
         snackbar({ message: "E-Mail-Adresse geändert" });
@@ -48,7 +46,8 @@ export default function Settings() {
   }
 
   function changePassword() {
-    updatePassword(auth.currentUser, password)
+    if (!auth.currentUser) return;
+    updatePassword(auth.currentUser, newPassword)
       .then(() => {
         snackbar({ message: "Passwort geändert" });
       })
@@ -57,19 +56,28 @@ export default function Settings() {
       });
   }
 
-  const switchRef = React.useRef(null);
+  const switchRef = React.useRef<HTMLInputElement>(null);
 
   React.useEffect(() => {
     const handleToggle = () => {
-      setDarkMode(switchRef.current.checked);
-      localStorage.setItem(
-        "theme",
-        switchRef.current.checked ? "dark" : "light"
-      );
-      setTheme(switchRef.current.checked ? "dark" : "light");
+      if (switchRef.current) {
+        localStorage.setItem(
+          "theme",
+          switchRef.current.checked ? "dark" : "light"
+        );
+        setTheme(switchRef.current.checked ? "dark" : "light");
+      }
     };
 
-    switchRef.current.addEventListener("change", handleToggle);
+    if (switchRef.current) {
+      switchRef.current.addEventListener("change", handleToggle);
+    }
+
+    return () => {
+      if (switchRef.current) {
+        switchRef.current.removeEventListener("change", handleToggle);
+      }
+    };
   }, []);
 
   return (
@@ -84,21 +92,21 @@ export default function Settings() {
         type="email"
         required
         value={email}
-        onInput={(e) => setEmail(e.target.value)}
+        onInput={(e: React.ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
       ></mdui-text-field>
       <mdui-text-field
         label="Passwort"
         type="password"
         required
         value={password}
-        onInput={(e) => setPassword(e.target.value)}
+        onInput={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
       ></mdui-text-field>
       <mdui-text-field
         label="Neues Passwort"
         type="password"
         required
         value={newPassword}
-        onInput={(e) => setNewPassword(e.target.value)}
+        onInput={(e: React.ChangeEvent<HTMLInputElement>) => setNewPassword(e.target.value)}
       ></mdui-text-field>
       <p />
       <div className="button-container">

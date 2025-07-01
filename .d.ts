@@ -16,6 +16,7 @@ declare namespace JSX {
       "mdui-segmented-button": any;
       "mdui-list": any;
       "mdui-list-item": any;
+      "mdui-list-item-content": any;
     }
   }
   

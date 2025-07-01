@@ -1,4 +1,10 @@
-import { doc, getDoc, setDoc, Timestamp } from "firebase/firestore";
+import {
+  doc,
+  getDoc,
+  setDoc,
+  Timestamp,
+  DocumentData,
+} from "firebase/firestore";
 import { snackbar } from "mdui";
 import React from "react";
 import { useLoaderData, useNavigate, useParams } from "react-router-dom";
@@ -6,35 +12,57 @@ import { db } from "../../firebase";
 
 import moment from "moment-timezone";
 import AdminVote from ".";
+
+interface VoteData extends DocumentData {
+  active: boolean;
+  startTime: Timestamp;
+  endTime: Timestamp;
+}
+
+interface LoaderData {
+  vote: VoteData;
+}
+
 export default function Schedule() {
-  const { id } = useParams();
-  const { vote } = useLoaderData();
+  const { id } = useParams<{ id: string }>();
+  const { vote } = useLoaderData() as LoaderData;
 
   const navigate = useNavigate();
 
-  const [active, setActive] = React.useState(vote.active);
-  const [startTime, setStartTime] = React.useState(
+  const [active, setActive] = React.useState<boolean>(vote.active);
+  const [startTime, setStartTime] = React.useState<string>(
     moment
       .tz(vote.startTime?.seconds * 1000, "Europe/Berlin")
       .format("YYYY-MM-DDTHH:mm")
   );
-  const [endTime, setEndTime] = React.useState(
+  const [endTime, setEndTime] = React.useState<string>(
     moment
       .tz(vote.endTime?.seconds * 1000, "Europe/Berlin")
       .format("YYYY-MM-DDTHH:mm")
   );
 
-  const switchRef = React.useRef(null);
+  const switchRef = React.useRef<HTMLInputElement>(null);
 
   React.useEffect(() => {
     const handleToggle = () => {
-      setActive(switchRef.current.checked);
+      if (switchRef.current) {
+        setActive(switchRef.current.checked);
+      }
     };
 
-    switchRef.current.addEventListener("change", handleToggle);
+    if (switchRef.current) {
+      switchRef.current.addEventListener("change", handleToggle);
+    }
+
+    return () => {
+      if (switchRef.current) {
+        switchRef.current.removeEventListener("change", handleToggle);
+      }
+    };
   }, []);
 
   function save() {
+    if (!id) return;
     setDoc(doc(db, `/votes/${id}`), {
       ...vote,
       active: active,
@@ -56,45 +84,50 @@ export default function Schedule() {
   return (
     <>
       <AdminVote />
-      <mdui-dialog open={true} headline="Status einstellen" icon="schedule">
+      <mdui-dialog open headline="Status einstellen" icon="schedule">
         <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
           <mdui-switch checked={vote.active} ref={switchRef}></mdui-switch>
           <label>Nutzern erlauben, Wahlen abzugeben</label>
         </div>
         <p />
         {active && (
-          <div className="fields-row">
+          <div>
             <mdui-text-field
               value={startTime}
-              onInput={(e) => setStartTime(e.target.value)}
+              onInput={(e: React.ChangeEvent<HTMLInputElement>) =>
+                setStartTime(e.target.value)
+              }
               label="Startzeitpunkt"
               type="datetime-local"
             ></mdui-text-field>
+            <p />
             <mdui-text-field
               value={endTime}
-              onInput={(e) => setEndTime(e.target.value)}
+              onInput={(e: React.ChangeEvent<HTMLInputElement>) =>
+                setEndTime(e.target.value)
+              }
               label="Endzeitpunkt"
               type="datetime-local"
             ></mdui-text-field>
           </div>
         )}
         <p />
-        <div className="button-container">
-          <mdui-button variant="text" onClick={() => navigate(-1)}>
-            Abbrechen
-          </mdui-button>
-          <mdui-button onClick={save}>Speichern</mdui-button>
-        </div>
+        <mdui-button slot="action" variant="text" onClick={() => navigate(-1)}>
+          Abbrechen
+        </mdui-button>
+        <mdui-button slot="action" onClick={save}>
+          Speichern
+        </mdui-button>
       </mdui-dialog>
     </>
   );
 }
 
 export async function loader({ params }) {
-  const { id } = params;
+  const { id } = params as { id: string };
   const vote = await getDoc(doc(db, `/votes/${id}`));
-  const data = vote.data();
+  const data = vote.data() as VoteData;
   return {
-    ...data,
+    vote: data,
   };
 }

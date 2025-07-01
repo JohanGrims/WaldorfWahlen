@@ -1,12 +1,26 @@
-import { collection, getDocs } from "firebase/firestore";
+import { collection, getDocs, Timestamp, DocumentData } from "firebase/firestore";
 import moment from "moment-timezone";
 import { useLoaderData } from "react-router-dom";
 import { db } from "./firebase";
-import VoteCard from './VoteCard.jsx'; // Import VoteCard
+import VoteCard from './VoteCard.tsx'; // Import VoteCard
 import { Helmet } from "react-helmet";
 
+interface VoteData extends DocumentData {
+  id: string;
+  title: string;
+  startTime: Timestamp;
+  endTime: Timestamp;
+  active: boolean;
+}
+
+interface LoaderData {
+  activeVotes: VoteData[];
+  expiredVotes: VoteData[];
+  scheduledVotes: VoteData[];
+}
+
 function App() {
-  const { activeVotes, expiredVotes, scheduledVotes } = useLoaderData();
+  const { activeVotes, expiredVotes, scheduledVotes } = useLoaderData() as LoaderData;
 
   return (
     <div className="mdui-prose">
@@ -156,12 +170,12 @@ export default App;
 
 App.loader = async function loader() {
   const votes = await getDocs(collection(db, "/votes"));
-  const activeVotes = [];
-  const expiredVotes = [];
-  const scheduledVotes = [];
+  const activeVotes: VoteData[] = [];
+  const expiredVotes: VoteData[] = [];
+  const scheduledVotes: VoteData[] = [];
 
   votes.docs.map((e) => {
-    let data = e.data();
+    let data = e.data() as VoteData;
 
     const now = moment().tz("Europe/Berlin");
     const startTime = moment.unix(data.startTime.seconds).tz("Europe/Berlin");
@@ -174,14 +188,15 @@ App.loader = async function loader() {
           title: data.title,
           startTime: data.startTime,
           endTime: data.endTime, // Add endTime to activeVotes objects
+          active: data.active,
         });
       } else {
         expiredVotes.push({
           id: e.id,
           title: data.title,
           startTime: data.startTime,
-          // Optionally add endTime to expiredVotes if needed elsewhere
-          // endTime: data.endTime, 
+          endTime: data.endTime,
+          active: data.active,
         });
       }
       return;
@@ -190,8 +205,8 @@ App.loader = async function loader() {
       id: e.id,
       title: data.title,
       startTime: data.startTime,
-      // Optionally add endTime to scheduledVotes if needed elsewhere
-      // endTime: data.endTime,
+      endTime: data.endTime,
+      active: data.active,
     });
   });
 

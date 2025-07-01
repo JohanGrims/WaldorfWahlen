@@ -2,20 +2,33 @@ import React from "react";
 import QRCode from "react-qr-code";
 import { useParams } from "react-router-dom";
 
-export default function Share() {
-  const { id } = useParams();
-  const [settings, setSettings] = React.useState(false);
-  const [allowResubmission, setAllowResubmission] = React.useState(false);
+interface ShareProps {}
 
-  const switchRef = React.useRef(null);
-  const qrCodeRef = React.useRef(null);
+export default function Share({}: ShareProps) {
+  const { id } = useParams<{ id: string }>();
+  const [settings, setSettings] = React.useState<boolean>(false);
+  const [allowResubmission, setAllowResubmission] =
+    React.useState<boolean>(false);
+
+  const switchRef = React.useRef<HTMLInputElement>(null);
+  const qrCodeRef = React.useRef<SVGSVGElement>(null);
 
   React.useEffect(() => {
     const handleToggle = () => {
-      setAllowResubmission(switchRef.current.checked);
+      if (switchRef.current) {
+        setAllowResubmission(switchRef.current.checked);
+      }
     };
 
-    switchRef.current.addEventListener("change", handleToggle);
+    if (switchRef.current) {
+      switchRef.current.addEventListener("change", handleToggle);
+    }
+
+    return () => {
+      if (switchRef.current) {
+        switchRef.current.removeEventListener("change", handleToggle);
+      }
+    };
   }, []);
 
   return (
@@ -69,10 +82,12 @@ export default function Share() {
             icon="download"
             onClick={() => {
               const qrCodeElement = qrCodeRef.current;
+              if (!qrCodeElement) return;
               const serializer = new XMLSerializer();
               const svgString = serializer.serializeToString(qrCodeElement);
               const canvas = document.createElement("canvas");
               const ctx = canvas.getContext("2d");
+              if (!ctx) return;
               const svg = new Blob([svgString], { type: "image/svg+xml" });
               const url = URL.createObjectURL(svg);
               const img = new Image();
@@ -82,6 +97,7 @@ export default function Share() {
                 ctx.drawImage(img, 0, 0);
                 URL.revokeObjectURL(url);
                 canvas.toBlob((blob) => {
+                  if (!blob) return;
                   const link = document.createElement("a");
                   link.href = URL.createObjectURL(blob);
                   link.download = "qrcode.png";

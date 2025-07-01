@@ -6,7 +6,15 @@ import { useNavigate } from "react-router";
 // For navigation, ideally use Link from react-router-dom if appropriate,
 // otherwise a simple href.
 
-const VoteCard = ({ id, title, endTime }) => {
+import { Timestamp } from "firebase/firestore";
+
+interface VoteCardProps {
+  id: string;
+  title: string;
+  endTime: Timestamp;
+}
+
+const VoteCard = ({ id, title, endTime }: VoteCardProps) => {
   const endTimeDE = new Date(endTime.seconds * 1000).toLocaleDateString(
     "de-DE",
     {

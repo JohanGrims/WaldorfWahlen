@@ -6,16 +6,50 @@ import {
   getDocs,
   onSnapshot,
   setDoc,
+  Timestamp,
+  DocumentData,
 } from "firebase/firestore";
 import { confirm, prompt, snackbar } from "mdui";
 import React from "react";
-import { useLoaderData, useNavigate, useRevalidator } from "react-router-dom";
+import {
+  useLoaderData,
+  useNavigate,
+  useRevalidator,
+  useParams,
+} from "react-router-dom";
 import { db } from "../../firebase";
 
-export default function Answers() {
-  const { vote, options } = useLoaderData();
+interface VoteData extends DocumentData {
+  id: string;
+  title: string;
+  extraFields?: string[];
+  selectCount: number;
+}
 
-  const [loading, setLoading] = React.useState(true);
+interface OptionData extends DocumentData {
+  id: string;
+  title: string;
+}
+
+interface AnswerData extends DocumentData {
+  id: string;
+  name: string;
+  grade: number;
+  listIndex: number;
+  selected: string[];
+  extraFields?: string[];
+  timestamp: Timestamp;
+}
+
+interface LoaderData {
+  vote: VoteData;
+  options: OptionData[];
+}
+
+export default function Answers() {
+  const { vote, options } = useLoaderData() as LoaderData;
+
+  const [loading, setLoading] = React.useState<boolean>(true);
 
   const searchParams = new URLSearchParams(window.location.search);
   const search = searchParams.get("search");
@@ -24,10 +58,10 @@ export default function Answers() {
 
   const revalidator = useRevalidator();
 
-  const [mode, setMode] = React.useState(
+  const [mode, setMode] = React.useState<string>(
     search || grade || listIndex ? "by-name" : "by-option"
   );
-  const [answers, setAnswers] = React.useState([]);
+  const [answers, setAnswers] = React.useState<AnswerData[]>([]);
 
   const grades = [...new Set(answers.map((answer) => answer.grade))];
 
@@ -35,7 +69,7 @@ export default function Answers() {
 
   React.useEffect(() => {
     let isFirstLoad = true;
-    let answersLoad = [];
+    let answersLoad: AnswerData[] = [];
 
     console.log("Loading answers for vote:", vote.id);
 
@@ -45,7 +79,7 @@ export default function Answers() {
         const answerData = snapshot.docs.map((doc) => ({
           id: doc.id,
           ...doc.data(),
-        }));
+        })) as AnswerData[];
         setAnswers(answerData);
         setLoading(false);
 
@@ -53,15 +87,17 @@ export default function Answers() {
           const newAnswer = answerData.find(
             (newAns) => !answersLoad.some((oldAns) => oldAns.id === newAns.id)
           );
-          snackbar({
-            message: `Neue Antwort von ${newAnswer.name} (${newAnswer.grade})`,
-            timeout: 5000,
-            action: "Anzeigen",
-            onActionClick: () => {
-              setMode("by-name");
-              navigate(`.?search=${newAnswer.id}`);
-            },
-          });
+          if (newAnswer) {
+            snackbar({
+              message: `Neue Antwort von ${newAnswer.name} (${newAnswer.grade})`,
+              action: "Anzeigen",
+              autoCloseDelay: 5000,
+              onActionClick: () => {
+                setMode("by-name");
+                navigate(`.?search=${newAnswer.id}`);
+              },
+            });
+          }
         }
         isFirstLoad = false;
         answersLoad = answerData;
@@ -76,43 +112,49 @@ export default function Answers() {
     if (search && mode === "by-name") {
       const query = search.toLowerCase();
       const elements = document.querySelectorAll("tbody tr");
-      elements.forEach((element) => {
-        if (element.textContent.toLowerCase().includes(query)) {
-          element.style.display = "";
+      elements.forEach((element: Element) => {
+        if (element.textContent?.toLowerCase().includes(query)) {
+          (element as HTMLElement).style.display = "";
         } else {
-          element.style.display = "none";
+          (element as HTMLElement).style.display = "none";
         }
       });
       // write search query to search field
       const searchField = document.querySelector("mdui-text-field");
 
       if (searchField) {
-        searchField.value = search;
+        (searchField as unknown as HTMLInputElement).value = search;
       }
     }
     if (grade && listIndex && mode === "by-name") {
       const elements = document.querySelectorAll("tbody tr");
-      elements.forEach((element) => {
-        const gradeCell = element.querySelector("td:nth-child(2)").textContent;
+      elements.forEach((element: Element) => {
+        const gradeCell = element.querySelector("td:nth-child(2)")?.textContent;
         const listIndexCell =
-          element.querySelector("td:nth-child(3)").textContent;
+          element.querySelector("td:nth-child(3)")?.textContent;
         if (gradeCell == grade && listIndexCell == listIndex) {
-          element.style.display = "";
+          (element as HTMLElement).style.display = "";
         } else {
-          element.style.display = "none";
+          (element as HTMLElement).style.display = "none";
         }
       });
     }
   }, [search, mode, answers, loading, grade, listIndex]);
 
-  async function updateAnswer({ id, data }) {
+  async function updateAnswer({
+    id,
+    data,
+  }: {
+    id: string;
+    data: Partial<AnswerData>;
+  }) {
     try {
       await setDoc(doc(db, `/votes/${vote.id}/choices/${id}`), data, {
         merge: true,
       });
       snackbar({
         message: "Antwort erfolgreich aktualisiert.",
-        timeout: 5000,
+        autoCloseDelay: 5000,
       });
       // update the answers
       const newAnswers = answers.map((answer) =>
@@ -122,7 +164,7 @@ export default function Answers() {
     } catch (error) {
       snackbar({
         message: "Fehler beim Aktualisieren der Antwort.",
-        timeout: 5000,
+        autoCloseDelay: 5000,
       });
       console.error(error);
     }
@@ -256,7 +298,7 @@ export default function Answers() {
                             </td>
                             <td>{answer.grade}</td>
                             {vote.extraFields?.map((field, i) => (
-                              <td key={i}>{answer.extraFields[i]}</td>
+                              <td key={i}>{answer.extraFields?.[i]}</td>
                             ))}
                           </tr>
                         ))}
@@ -272,12 +314,18 @@ export default function Answers() {
       {mode === "by-grade" && (
         <mdui-tabs
           style={{ width: "100%", overflowX: "auto" }}
-          value={grades.sort((a, b) => parseInt(a) - parseInt(b))[0]}
+          value={grades
+            .sort((a, b) => parseInt(a.toString()) - parseInt(b.toString()))[0]
+            ?.toString()}
         >
           {grades
-            .sort((a, b) => parseInt(a) - parseInt(b))
+            .sort((a, b) => parseInt(a.toString()) - parseInt(b.toString()))
             .map((grade, i) => (
-              <mdui-tab style={{ whiteSpace: "nowrap" }} key={i} value={grade}>
+              <mdui-tab
+                style={{ whiteSpace: "nowrap" }}
+                key={i}
+                value={grade.toString()}
+              >
                 Klasse {grade}
                 <mdui-badge>
                   {answers.filter((answer) => answer.grade === grade).length}
@@ -288,7 +336,7 @@ export default function Answers() {
             <mdui-tab-panel
               slot="panel"
               key={i}
-              value={grade}
+              value={grade.toString()}
               style={{ width: "100%", overflowX: "hidden" }}
             >
               <p />
@@ -339,18 +387,19 @@ export default function Answers() {
                                 {answer.name}
                               </a>
                             </td>
+                            <td>{answer.grade}</td>
                             <td>{answer.listIndex}</td>
                             {answer.selected.map((selected, i) => (
                               <td key={i}>
                                 {
                                   options.find(
                                     (option) => option.id === selected
-                                  ).title
+                                  )?.title
                                 }
                               </td>
                             ))}
                             {vote.extraFields?.map((field, i) => (
-                              <td key={i}>{answer.extraFields[i]}</td>
+                              <td key={i}>{answer.extraFields?.[i]}</td>
                             ))}
                           </tr>
                         ))}
@@ -374,14 +423,14 @@ export default function Answers() {
           <mdui-text-field
             clearable
             label="Suchen"
-            onInput={(e) => {
+            onInput={(e: React.ChangeEvent<HTMLInputElement>) => {
               const query = e.target.value.toLowerCase();
               const elements = document.querySelectorAll("tbody tr");
-              elements.forEach((element) => {
-                if (element.textContent.toLowerCase().includes(query)) {
-                  element.style.display = "";
+              elements.forEach((element: Element) => {
+                if (element.textContent?.toLowerCase().includes(query)) {
+                  (element as HTMLElement).style.display = "";
                 } else {
-                  element.style.display = "none";
+                  (element as HTMLElement).style.display = "none";
                 }
               });
               // append search query to URL
@@ -437,12 +486,12 @@ export default function Answers() {
                         <td key={i}>
                           {
                             options.find((option) => option.id === selected)
-                              .title
+                              ?.title
                           }
                         </td>
                       ))}
                       {vote.extraFields?.map((field, i) => (
-                        <td key={i}>{answer.extraFields[i]}</td>
+                        <td key={i}>{answer.extraFields?.[i]}</td>
                       ))}
                       <td>{answer.id}</td>
                       <td
@@ -454,29 +503,32 @@ export default function Answers() {
                           let data = JSON.stringify(answer, null, 2);
                           prompt({
                             icon: "edit",
-                            placeholder: "JSON-Daten",
                             confirmText: "Speichern",
                             cancelText: "Abbrechen",
                             headline: "Antwort bearbeiten",
                             description:
                               "Beachten Sie: bei fehlerhaften Daten kann diese Antwort unbrauchbar werden. Stellen Sie vor dem Speichern sicher, dass die Daten korrekt sind.",
-                            onConfirm: (value) => {
+                            onConfirm: (value: string) => {
                               try {
                                 const data = JSON.parse(value);
                                 updateAnswer({ id: answer.id, data });
                               } catch (error) {
-                                snackbar("Ungültige JSON-Daten.");
+                                snackbar({
+                                  message: "Ungültige JSON-Daten.",
+                                  autoCloseDelay: 5000,
+                                });
                               }
                             },
                             textFieldOptions: {
                               value: data,
-                              oninput: (e) => {
-                                data = e.target.value;
+                              oninput: (e: Event) => {
+                                data = (e.target as HTMLTextAreaElement).value;
                               },
                               autosize: true,
+                              placeholder: "JSON-Daten",
                               rows: 5,
                             },
-                            validator: (value) => {
+                            validator: (value: string) => {
                               try {
                                 JSON.parse(value);
                                 return true;
@@ -511,7 +563,7 @@ export default function Answers() {
                               ).then(() => {
                                 snackbar({
                                   message: "Antwort erfolgreich gelöscht.",
-                                  timeout: 5000,
+                                  autoCloseDelay: 5000,
                                 });
                                 revalidator.revalidate();
                               });
@@ -596,11 +648,14 @@ export default function Answers() {
 }
 
 Answers.loader = async function loader({ params }) {
-  const { id } = params;
+  const { id } = params as { id: string };
   const vote = await getDoc(doc(db, `/votes/${id}`));
-  const voteData = { id, ...vote.data() };
+  const voteData = { id, ...vote.data() } as VoteData;
   const options = await getDocs(collection(db, `/votes/${id}/options`));
-  const optionData = options.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+  const optionData = options.docs.map((doc) => ({
+    id: doc.id,
+    ...doc.data(),
+  })) as OptionData[];
   return {
     vote: voteData,
     options: optionData,
