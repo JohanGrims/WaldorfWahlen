@@ -8,7 +8,7 @@ export default function ErrorPage() {
   let errorMessage: string;
 
   if (isRouteErrorResponse(error)) {
-    errorMessage = error.statusText || error.data;
+    errorMessage = error.statusText || String(error.data || 'Route error');
   } else if (error instanceof Error) {
     errorMessage = error.message;
   } else if (typeof error === 'string') {
