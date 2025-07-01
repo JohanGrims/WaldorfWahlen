@@ -7,7 +7,8 @@ import React from "react";
 import { auth } from "../../firebase";
 
 export default function Login() {
-  const [loading, setLoading] = React.useState(false);
+  const [loading, setLoading] = React.useState<boolean>(false);
+
   interface LoginFormElements extends HTMLFormControlsCollection {
     email: HTMLInputElement;
     password: HTMLInputElement;
@@ -31,7 +32,7 @@ export default function Login() {
         const user = userCredential.user;
         window.location.reload();
       })
-      .catch((error) => {
+      .catch((error: any) => {
         console.error(error);
         setLoading(false);
         if (error.code === "auth/invalid-credential") {
@@ -86,7 +87,7 @@ export default function Login() {
         type: "email",
         label: "Email",
       },
-      onConfirm: (email) => {
+      onConfirm: (email: string) => {
         setLoading(true);
         sendPasswordResetEmail(auth, email)
           .then(() => {
@@ -97,7 +98,7 @@ export default function Login() {
             });
             setLoading(false);
           })
-          .catch((error) => {
+          .catch((error: any) => {
             console.error(error);
             alert({
               icon: "error",

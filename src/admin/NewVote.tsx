@@ -8,14 +8,44 @@ import { generateRandomHash } from "./utils";
 import { Helmet } from "react-helmet";
 import * as XLSX from "xlsx";
 
+interface ProposeField {
+  id: string;
+  label: string;
+  type: "text" | "textarea" | "number" | "email" | "tel";
+  required: boolean;
+  maxLength: number;
+  placeholder: string;
+}
+
+interface ProposeTexts {
+  welcomeHeadline: string;
+  welcomeDescription: string;
+  hintHeadline: string;
+  hintDescription: string;
+}
+
+interface OptionData {
+  title: string;
+  max: number;
+  teacher: string;
+  description: string;
+}
+
+interface ProposeFieldCardProps {
+  field: ProposeField;
+  index: number;
+  editProposeField: (index: number, updates: Partial<ProposeField>) => void;
+  removeProposeField: (index: number) => void;
+}
+
 // Component to handle individual propose field with proper switch ref handling
 function ProposeFieldCard({
   field,
   index,
   editProposeField,
   removeProposeField,
-}) {
-  const switchRef = React.useRef(null);
+}: ProposeFieldCardProps) {
+  const switchRef = React.useRef<HTMLInputElement>(null);
 
   React.useEffect(() => {
     if (switchRef.current) {
@@ -23,7 +53,7 @@ function ProposeFieldCard({
       switchRef.current.checked = field.required;
 
       const handleToggle = () => {
-        editProposeField(index, { required: switchRef.current.checked });
+        editProposeField(index, { required: switchRef.current!.checked });
       };
 
       switchRef.current.addEventListener("change", handleToggle);
@@ -50,13 +80,19 @@ function ProposeFieldCard({
         <mdui-text-field
           label="Feld-Label"
           value={field.label}
-          onInput={(e) => editProposeField(index, { label: e.target.value })}
+          onInput={(e: React.ChangeEvent<HTMLInputElement>) =>
+            editProposeField(index, { label: e.target.value })
+          }
           placeholder="z.B. Telefonnummer"
         />
         <mdui-select
           label="Feldtyp"
           value={field.type}
-          onChange={(e) => editProposeField(index, { type: e.target.value })}
+          onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
+            editProposeField(index, {
+              type: e.target.value as ProposeField["type"],
+            })
+          }
         >
           <mdui-menu-item value="text">Text (kurz)</mdui-menu-item>
           <mdui-menu-item value="textarea">Text (lang)</mdui-menu-item>
@@ -70,7 +106,7 @@ function ProposeFieldCard({
         <mdui-text-field
           label="Platzhalter"
           value={field.placeholder}
-          onInput={(e) =>
+          onInput={(e: React.ChangeEvent<HTMLInputElement>) =>
             editProposeField(index, { placeholder: e.target.value })
           }
           placeholder={
@@ -88,8 +124,8 @@ function ProposeFieldCard({
         <mdui-text-field
           label="Max. Länge"
           type="number"
-          value={field.maxLength}
-          onInput={(e) =>
+          value={field.maxLength.toString()}
+          onInput={(e: React.ChangeEvent<HTMLInputElement>) =>
             editProposeField(index, {
               maxLength:
                 parseInt(e.target.value) ||
@@ -124,31 +160,31 @@ function ProposeFieldCard({
 }
 
 export default function NewVote() {
-  const [title, setTitle] = React.useState("");
-  const [description, setDescription] = React.useState("");
-  const [selectCount, setSelectCount] = React.useState(3);
-  const [startTime, setStartTime] = React.useState();
-  const [endTime, setEndTime] = React.useState();
+  const [title, setTitle] = React.useState<string>("");
+  const [description, setDescription] = React.useState<string>("");
+  const [selectCount, setSelectCount] = React.useState<number>(3);
+  const [startTime, setStartTime] = React.useState<string>("");
+  const [endTime, setEndTime] = React.useState<string>("");
 
-  const [extraFields, setExtraFields] = React.useState([]);
+  const [extraFields, setExtraFields] = React.useState<string[]>([]);
 
-  const [options, setOptions] = React.useState([]);
+  const [options, setOptions] = React.useState<OptionData[]>([]);
 
-  const [proposals, setProposals] = React.useState(false);
+  const [proposals, setProposals] = React.useState<boolean>(false);
 
-  const [id, setId] = React.useState(generateRandomHash());
+  const [id, setId] = React.useState<string>(generateRandomHash());
 
   // Form fields for new option
-  const [name, setName] = React.useState("");
-  const [max, setMax] = React.useState("");
-  const [teacher, setTeacher] = React.useState("");
-  const [optionDescription, setOptionDescription] = React.useState("");
+  const [name, setName] = React.useState<string>("");
+  const [max, setMax] = React.useState<string | number>("");
+  const [teacher, setTeacher] = React.useState<string>("");
+  const [optionDescription, setOptionDescription] = React.useState<string>("");
 
   // Custom proposal fields
-  const [proposeFields, setProposeFields] = React.useState([]);
+  const [proposeFields, setProposeFields] = React.useState<ProposeField[]>([]);
 
   // Custom dialog texts for proposal page
-  const [proposeTexts, setProposeTexts] = React.useState({
+  const [proposeTexts, setProposeTexts] = React.useState<ProposeTexts>({
     welcomeHeadline: "Vorschlag einreichen",
     welcomeDescription:
       "Sie sind dabei, einen Vorschlag für ein Projekt einzureichen. Vielen Dank! Das erleichtert den Administratoren die Übersicht über die Daten und stellt sicher, dass alles so ist, wie es sein soll. Bitte stellen Sie sicher, dass Sie die Felder so ausfüllen, wie sie am Ende aussehen sollen. Unten sehen Sie eine Vorschau Ihres Projekts. Die Zeichenlimits sind layoutbedingt und können nicht überschritten werden.",
@@ -160,19 +196,24 @@ export default function NewVote() {
   const navigate = useNavigate();
 
   // Excel import functionality
-  function parseExcelFile(file) {
+  function parseExcelFile(file: File): Promise<{
+    config: any;
+    options: OptionData[];
+    proposeFields: ProposeField[];
+    proposeTexts: ProposeTexts;
+  }> {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
       reader.onload = (e) => {
         try {
-          const data = new Uint8Array(e.target.result);
+          const data = new Uint8Array(e.target!.result as ArrayBuffer);
           const workbook = XLSX.read(data, { type: "array" });
 
           // Parse vote configuration from "Config" sheet
-          let voteConfig = {};
-          let optionsData = [];
-          let proposeFieldsData = [];
-          let proposeTextsData = {};
+          let voteConfig: any = {};
+          let optionsData: OptionData[] = [];
+          let proposeFieldsData: ProposeField[] = [];
+          let proposeTextsData: ProposeTexts = { ...proposeTexts };
 
           // Parse Config sheet
           if (workbook.SheetNames.includes("Config")) {
@@ -181,7 +222,7 @@ export default function NewVote() {
               header: 1,
             });
 
-            configData.forEach((row) => {
+            configData.forEach((row: any) => {
               if (row[0] && row[1] !== undefined) {
                 const key = row[0].toString().toLowerCase();
                 const value = row[1];
@@ -232,7 +273,7 @@ export default function NewVote() {
             const optionsRaw = XLSX.utils.sheet_to_json(optionsSheet);
 
             optionsData = optionsRaw
-              .map((row) => ({
+              .map((row: any) => ({
                 title: row.Title || row.Titel || row.title || "",
                 teacher: row.Teacher || row.Lehrer || row.teacher || "",
                 description:
@@ -245,7 +286,7 @@ export default function NewVote() {
                       row["Max SchülerInnen"]
                   ) || 1,
               }))
-              .filter((option) => option.title);
+              .filter((option: OptionData) => option.title);
           }
 
           // Parse ProposeFields sheet (for proposal fields configuration)
@@ -262,7 +303,7 @@ export default function NewVote() {
             const fieldsRaw = XLSX.utils.sheet_to_json(fieldsSheet);
 
             proposeFieldsData = fieldsRaw
-              .map((row) => ({
+              .map((row: any) => ({
                 id: generateRandomHash(10),
                 label: row.Label || row.label || "",
                 type: row.Type || row.Typ || row.type || "text",
@@ -286,7 +327,7 @@ export default function NewVote() {
                     : 50),
                 placeholder: row.Placeholder || row.placeholder || "",
               }))
-              .filter((field) => field.label);
+              .filter((field: ProposeField) => field.label);
           }
 
           // Parse ProposeTexts sheet (for proposal dialog texts)
@@ -302,7 +343,7 @@ export default function NewVote() {
               header: 1,
             });
 
-            textsData.forEach((row) => {
+            textsData.forEach((row: any) => {
               if (row[0] && row[1] !== undefined) {
                 const key = row[0].toString().toLowerCase();
                 const value = row[1];
@@ -348,27 +389,29 @@ export default function NewVote() {
     });
   }
 
-  async function handleExcelImport(event) {
-    const file = event.target.files[0];
+  async function handleExcelImport(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
     if (!file) return;
 
     try {
       const importedData = await parseExcelFile(file);
 
       // Show confirmation dialog with import preview
-      const previewText = `
-Titel: ${importedData.config.title || "Nicht angegeben"}
-Beschreibung: ${importedData.config.description || "Nicht angegeben"}
-Anzahl Wahlen: ${importedData.config.selectCount || 3}
-Optionen: ${importedData.options.length}
-Vorschlagsfelder: ${importedData.proposeFields.length}
-Vorschlagstexte: ${
+      const previewText = `\nTitel: ${
+        importedData.config.title || "Nicht angegeben"
+      }\nBeschreibung: ${
+        importedData.config.description || "Nicht angegeben"
+      }\nAnzahl Wahlen: ${importedData.config.selectCount || 3}\nOptionen: ${
+        importedData.options.length
+      }\nVorschlagsfelder: ${
+        importedData.proposeFields.length
+      }\nVorschlagstexte: ${
         Object.keys(importedData.proposeTexts).length > 0
           ? "Angepasst"
           : "Standard"
-      }
-Vorschläge aktiviert: ${importedData.config.proposals ? "Ja" : "Nein"}
-      `.trim();
+      }\nVorschläge aktiviert: ${
+        importedData.config.proposals ? "Ja" : "Nein"
+      }\n      `.trim();
 
       confirm({
         icon: "upload_file",
@@ -420,7 +463,7 @@ Vorschläge aktiviert: ${importedData.config.proposals ? "Ja" : "Nein"}
 
           snackbar({
             message: "Excel-Daten erfolgreich importiert.",
-            timeout: 5000,
+            autoCloseDelay: 5000,
           });
         },
       });
@@ -553,7 +596,7 @@ Vorschläge aktiviert: ${importedData.config.proposals ? "Ja" : "Nein"}
 
     snackbar({
       message: "Aktuelle Konfiguration heruntergeladen.",
-      timeout: 5000,
+      autoCloseDelay: 5000,
     });
   }
 
@@ -698,7 +741,7 @@ Vorschläge aktiviert: ${importedData.config.proposals ? "Ja" : "Nein"}
 
     snackbar({
       message: "Excel-Vorlage heruntergeladen.",
-      timeout: 5000,
+      autoCloseDelay: 5000,
     });
   }
 
@@ -707,7 +750,7 @@ Vorschläge aktiviert: ${importedData.config.proposals ? "Ja" : "Nein"}
       ...options,
       {
         title: name,
-        max: max,
+        max: max as number,
         teacher: teacher,
         description: optionDescription,
       },
@@ -718,7 +761,7 @@ Vorschläge aktiviert: ${importedData.config.proposals ? "Ja" : "Nein"}
     setMax("");
   }
 
-  function editOption(index) {
+  function editOption(index: number) {
     setName(options[index].title);
     setTeacher(options[index].teacher);
     setOptionDescription(options[index].description);
@@ -753,20 +796,20 @@ Vorschläge aktiviert: ${importedData.config.proposals ? "Ja" : "Nein"}
             `https://waldorfwahlen.web.app/p/${id}`,
           confirmText: "Link kopieren",
           cancelText: "Zur Wahl",
-          onConfirm: (e) => {
+          onConfirm: (e: any) => {
             navigator.clipboard.writeText(
               `https://waldorfwahlen.web.app/p/${id}`
             );
             snackbar({
               message: "Link in die Zwischenablage kopiert.",
-              timeout: 5000,
+              autoCloseDelay: 5000,
             });
             navigate(`/admin/${id}`);
           },
         });
       }
       if (!proposals) {
-        const option = options.map(async (e) => {
+        const optionPromises = options.map(async (e) => {
           return addDoc(collection(db, `/votes/${id}/options`), {
             title: e.title,
             max: e.max,
@@ -775,11 +818,11 @@ Vorschläge aktiviert: ${importedData.config.proposals ? "Ja" : "Nein"}
           });
         });
 
-        await Promise.all(option);
+        await Promise.all(optionPromises);
 
         snackbar({
           message: "Wahl erfolgreich erstellt.",
-          timeout: 5000,
+          autoCloseDelay: 5000,
         });
 
         navigate(`/admin/${id}`);
@@ -788,12 +831,12 @@ Vorschläge aktiviert: ${importedData.config.proposals ? "Ja" : "Nein"}
       console.error(e);
       snackbar({
         message: "Fehler beim Erstellen der Wahl.",
-        timeout: 5000,
+        autoCloseDelay: 5000,
       });
     }
   }
 
-  const submitDisabled = () => {
+  const submitDisabled = (): boolean => {
     if (
       !title ||
       !selectCount ||
@@ -807,7 +850,7 @@ Vorschläge aktiviert: ${importedData.config.proposals ? "Ja" : "Nein"}
     return false;
   };
 
-  const isChanged = () => {
+  const isChanged = (): boolean => {
     if (
       title ||
       description ||
@@ -824,17 +867,17 @@ Vorschläge aktiviert: ${importedData.config.proposals ? "Ja" : "Nein"}
     return false;
   };
 
-  function addOptionDisabled() {
+  function addOptionDisabled(): boolean {
     return !name || !max;
   }
 
-  function editExtraField(index, value) {
+  function editExtraField(index: number, value: string) {
     const newValues = [...extraFields];
     newValues[index] = value;
     setExtraFields(newValues);
   }
 
-  function removeExtraField(index) {
+  function removeExtraField(index: number) {
     setExtraFields((extraFields) => extraFields.filter((_, i) => i !== index));
   }
 
@@ -852,15 +895,15 @@ Vorschläge aktiviert: ${importedData.config.proposals ? "Ja" : "Nein"}
     ]);
   }
 
-  function editProposeField(index, field) {
+  function editProposeField(index: number, updates: Partial<ProposeField>) {
     const newFields = [...proposeFields];
-    const updatedField = { ...newFields[index], ...field };
+    const updatedField = { ...newFields[index], ...updates };
 
     // Auto-adjust maxLength when type changes
-    if (field.type && field.type !== newFields[index].type) {
-      if (field.type === "textarea" && updatedField.maxLength <= 100) {
+    if (updates.type && updates.type !== newFields[index].type) {
+      if (updates.type === "textarea" && updatedField.maxLength <= 100) {
         updatedField.maxLength = 500;
-      } else if (field.type !== "textarea" && updatedField.maxLength > 500) {
+      } else if (updates.type !== "textarea" && updatedField.maxLength > 500) {
         updatedField.maxLength = 50;
       }
     }
@@ -869,7 +912,7 @@ Vorschläge aktiviert: ${importedData.config.proposals ? "Ja" : "Nein"}
     setProposeFields(newFields);
   }
 
-  function removeProposeField(index) {
+  function removeProposeField(index: number) {
     setProposeFields(proposeFields.filter((_, i) => i !== index));
   }
 
@@ -970,7 +1013,9 @@ Vorschläge aktiviert: ${importedData.config.proposals ? "Ja" : "Nein"}
         maxlength={25}
         counter
         value={title}
-        onInput={(e) => setTitle(e.target.value)}
+        onInput={(e: React.ChangeEvent<HTMLInputElement>) =>
+          setTitle(e.target.value)
+        }
       />
       <mdui-text-field
         label="Beschreibung (optional)"
@@ -979,7 +1024,9 @@ Vorschläge aktiviert: ${importedData.config.proposals ? "Ja" : "Nein"}
         maxlength={200}
         counter
         value={description}
-        onInput={(e) => setDescription(e.target.value)}
+        onInput={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
+          setDescription(e.target.value)
+        }
       ></mdui-text-field>
       <div className="fields-row">
         <mdui-tooltip
@@ -994,8 +1041,10 @@ Vorschläge aktiviert: ${importedData.config.proposals ? "Ja" : "Nein"}
             placeholder="3"
             min={1}
             max={10}
-            value={selectCount}
-            onInput={(e) => setSelectCount(e.target.value)}
+            value={String(selectCount)}
+            onInput={(e: React.ChangeEvent<HTMLInputElement>) =>
+              setSelectCount(parseInt(e.target.value))
+            }
           ></mdui-text-field>
         </mdui-tooltip>
 
@@ -1004,7 +1053,7 @@ Vorschläge aktiviert: ${importedData.config.proposals ? "Ja" : "Nein"}
             label="Startzeitpunkt"
             type="datetime-local"
             value={startTime}
-            onInput={(e) =>
+            onInput={(e: React.ChangeEvent<HTMLInputElement>) =>
               setStartTime(
                 moment
                   .tz(e.target.value, "Europe/Berlin")
@@ -1017,7 +1066,7 @@ Vorschläge aktiviert: ${importedData.config.proposals ? "Ja" : "Nein"}
             label="Endzeitpunkt"
             type="datetime-local"
             value={endTime}
-            onInput={(e) =>
+            onInput={(e: React.ChangeEvent<HTMLInputElement>) =>
               setEndTime(
                 moment
                   .tz(e.target.value, "Europe/Berlin")
@@ -1029,13 +1078,15 @@ Vorschläge aktiviert: ${importedData.config.proposals ? "Ja" : "Nein"}
       </div>
       <p />
       {extraFields.map((e, i) => (
-        <>
+        <React.Fragment key={i}>
           <div className="fields-row">
             <mdui-text-field
               label={"Extrafeld #" + (i + 1)}
               placeholder={"Musikinstrument"}
               value={e}
-              onInput={(e) => editExtraField(i, e.target.value)}
+              onInput={(e: React.ChangeEvent<HTMLInputElement>) =>
+                editExtraField(i, e.target.value)
+              }
             >
               <mdui-button-icon
                 slot="end-icon"
@@ -1045,7 +1096,7 @@ Vorschläge aktiviert: ${importedData.config.proposals ? "Ja" : "Nein"}
             </mdui-text-field>
           </div>
           <p />
-        </>
+        </React.Fragment>
       ))}
       <div
         style={{
@@ -1085,7 +1136,7 @@ Vorschläge aktiviert: ${importedData.config.proposals ? "Ja" : "Nein"}
               icon="upload_file"
               variant="text"
               onClick={() =>
-                document.getElementById("excel-import-input").click()
+                document.getElementById("excel-import-input")?.click()
               }
             >
               Excel importieren
@@ -1114,12 +1165,12 @@ Vorschläge aktiviert: ${importedData.config.proposals ? "Ja" : "Nein"}
                 headline: "ID der Wahl",
                 description:
                   "Ändern Sie die ID der Wahl. Diese erscheint in der URL (waldorfwahlen.web.app/[ID]). Achten Sie darauf, dass die ID eindeutig ist und keine Sonderzeichen enthält.",
-                inputType: "text",
                 confirmText: "Schließen",
                 cancelText: "",
                 textFieldOptions: {
                   value: id,
-                  onInput: (e) => setId(e.target.value),
+                  oninput: (e: Event) =>
+                    setId((e.target as HTMLInputElement).value),
                   placeholder: "spw24",
                   label: "ID",
                 },
@@ -1223,15 +1274,19 @@ Vorschläge aktiviert: ${importedData.config.proposals ? "Ja" : "Nein"}
               maxlength={25}
               counter
               value={name}
-              onInput={(e) => setName(e.target.value)}
+              onInput={(e: React.ChangeEvent<HTMLInputElement>) =>
+                setName(e.target.value)
+              }
             ></mdui-text-field>
             <mdui-text-field
               label="max. SchülerInnen"
               type="number"
               placeholder="15"
               min={1}
-              value={max}
-              onInput={(e) => setMax(e.target.value)}
+              value={String(max)}
+              onInput={(e: React.ChangeEvent<HTMLInputElement>) =>
+                setMax(parseInt(e.target.value))
+              }
             ></mdui-text-field>
             <p />
             <br />
@@ -1241,7 +1296,9 @@ Vorschläge aktiviert: ${importedData.config.proposals ? "Ja" : "Nein"}
               maxlength={25}
               counter
               value={teacher}
-              onInput={(e) => setTeacher(e.target.value)}
+              onInput={(e: React.ChangeEvent<HTMLInputElement>) =>
+                setTeacher(e.target.value)
+              }
             ></mdui-text-field>
             <mdui-text-field
               label="Beschreibung (optional)"
@@ -1250,7 +1307,9 @@ Vorschläge aktiviert: ${importedData.config.proposals ? "Ja" : "Nein"}
               maxlength={100}
               counter
               value={optionDescription}
-              onInput={(e) => setOptionDescription(e.target.value)}
+              onInput={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
+                setOptionDescription(e.target.value)
+              }
             ></mdui-text-field>
             {addOptionDisabled() ? (
               <mdui-button
@@ -1291,7 +1350,7 @@ Vorschläge aktiviert: ${importedData.config.proposals ? "Ja" : "Nein"}
               <mdui-text-field
                 label="Willkommen-Überschrift"
                 value={proposeTexts.welcomeHeadline}
-                onInput={(e) =>
+                onInput={(e: React.ChangeEvent<HTMLInputElement>) =>
                   setProposeTexts({
                     ...proposeTexts,
                     welcomeHeadline: e.target.value,
@@ -1304,7 +1363,7 @@ Vorschläge aktiviert: ${importedData.config.proposals ? "Ja" : "Nein"}
                 label="Willkommen-Beschreibung"
                 rows={3}
                 value={proposeTexts.welcomeDescription}
-                onInput={(e) =>
+                onInput={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
                   setProposeTexts({
                     ...proposeTexts,
                     welcomeDescription: e.target.value,
@@ -1316,7 +1375,7 @@ Vorschläge aktiviert: ${importedData.config.proposals ? "Ja" : "Nein"}
               <mdui-text-field
                 label="Hinweis-Überschrift"
                 value={proposeTexts.hintHeadline}
-                onInput={(e) =>
+                onInput={(e: React.ChangeEvent<HTMLInputElement>) =>
                   setProposeTexts({
                     ...proposeTexts,
                     hintHeadline: e.target.value,
@@ -1329,7 +1388,7 @@ Vorschläge aktiviert: ${importedData.config.proposals ? "Ja" : "Nein"}
                 label="Hinweis-Beschreibung"
                 rows={3}
                 value={proposeTexts.hintDescription}
-                onInput={(e) =>
+                onInput={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
                   setProposeTexts({
                     ...proposeTexts,
                     hintDescription: e.target.value,

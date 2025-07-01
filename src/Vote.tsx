@@ -5,6 +5,8 @@ import {
   getDoc,
   getDocs,
   serverTimestamp,
+  Timestamp,
+  DocumentData,
 } from "firebase/firestore";
 import React, { useRef } from "react";
 import { useLoaderData, useNavigate, useParams } from "react-router-dom";
@@ -17,11 +19,35 @@ import { redirect } from "react-router-dom";
 import { capitalizeWords } from "./admin/utils";
 import CheckItem from "./CheckItem";
 import { Helmet } from "react-helmet";
+
+interface VoteData extends DocumentData {
+  title: string;
+  active: boolean;
+  selectCount: number;
+  extraFields?: string[];
+  endTime: Timestamp;
+  startTime: Timestamp;
+  description: string;
+}
+
+interface OptionData extends DocumentData {
+  id: string;
+  title: string;
+  max: number;
+  teacher?: string;
+  description?: string;
+}
+
+interface LoaderData {
+  vote: VoteData;
+  options: OptionData[];
+}
+
 export default function Vote() {
-  const refs = useRef([]);
+  const refs = useRef<Array<HTMLElement | null>>([]);
   const urlParams = new URLSearchParams(window.location.search);
-  let { id } = useParams();
-  const { vote, options } = useLoaderData();
+  let { id } = useParams<{ id: string }>();
+  const { vote, options } = useLoaderData() as LoaderData;
 
   const navigate = useNavigate();
   const breakpointCondition = breakpoint();
@@ -36,24 +62,26 @@ export default function Vote() {
     description,
   } = vote;
 
-  const [firstName, setFirstName] = React.useState();
-  const [lastName, setLastName] = React.useState();
-  const [grade, setGrade] = React.useState();
-  const [listIndex, setListIndex] = React.useState();
-  const [selected, setSelected] = React.useState(
+  const [firstName, setFirstName] = React.useState<string>("");
+  const [lastName, setLastName] = React.useState<string>("");
+  const [grade, setGrade] = React.useState<string>("");
+  const [listIndex, setListIndex] = React.useState<string>("");
+  const [selected, setSelected] = React.useState<string[]>(
     Array.from({ length: selectCount }, () => "null")
   );
-  const [extraFieldsValues, setExtraFieldsValues] = React.useState([]);
+  const [extraFieldsValues, setExtraFieldsValues] = React.useState<string[]>(
+    []
+  );
 
-  const [accepted, setAccepted] = React.useState(false);
+  const [accepted, setAccepted] = React.useState<boolean>(false);
 
-  const [confirmDialog, setConfirmDialog] = React.useState(false);
+  const [confirmDialog, setConfirmDialog] = React.useState<boolean>(false);
 
-  const [sending, setSending] = React.useState(false);
+  const [sending, setSending] = React.useState<boolean>(false);
 
   const preview = urlParams.get("preview");
 
-  const submitDisabled = () => {
+  const submitDisabled = (): boolean => {
     if (
       selected.includes("null") ||
       !firstName?.trim() ||
@@ -74,12 +102,12 @@ export default function Vote() {
     return false;
   };
 
-  const select = (index, newValue) => {
+  const select = (index: number, newValue: string) => {
     const newArray = [...selected];
     newArray[index] = newValue;
     setSelected(newArray);
     if (newValue && refs.current[index + 1] && newValue !== "null") {
-      refs.current[index + 1].scrollIntoView();
+      refs.current[index + 1]?.scrollIntoView();
     }
   };
 
@@ -89,10 +117,11 @@ export default function Vote() {
 
   function submit() {
     setSending(true);
+    if (!id) return;
     addDoc(collection(db, `/votes/${id}/choices`), {
-      name: `${firstName} ${lastName.charAt(0)}.`,
-      grade,
-      listIndex,
+      name: `${firstName} ${lastName.charAt(0)}.`, // Ensure firstName and lastName are not null
+      grade: parseInt(grade),
+      listIndex: parseInt(listIndex),
       selected,
       extraFields: extraFieldsValues,
       version: 2,
@@ -151,7 +180,7 @@ export default function Vote() {
       });
   }
 
-  const handleInputChange = (index, value) => {
+  const handleInputChange = (index: number, value: string) => {
     const newValues = [...extraFieldsValues];
     newValues[index] = value;
     setExtraFieldsValues(newValues);
@@ -249,14 +278,18 @@ export default function Vote() {
             label="Vorname(n)"
             placeholder="Max Erika"
             value={firstName}
-            onInput={(e) => setFirstName(capitalizeWords(e.target.value))}
+            onInput={(e: React.ChangeEvent<HTMLInputElement>) =>
+              setFirstName(capitalizeWords(e.target.value))
+            }
             icon="person"
           ></mdui-text-field>
           <mdui-text-field
             label="Nachname"
             placeholder="Mustermann"
             value={lastName}
-            onInput={(e) => setLastName(capitalizeWords(e.target.value))}
+            onInput={(e: React.ChangeEvent<HTMLInputElement>) =>
+              setLastName(capitalizeWords(e.target.value))
+            }
             icon="badge"
           ></mdui-text-field>
         </div>
@@ -267,7 +300,9 @@ export default function Vote() {
             label="Klasse"
             placeholder="11"
             value={grade}
-            onInput={(e) => setGrade(e.target.value)}
+            onInput={(e: React.ChangeEvent<HTMLInputElement>) =>
+              setGrade(e.target.value)
+            }
             icon="school"
           ></mdui-text-field>
           <mdui-text-field
@@ -275,7 +310,9 @@ export default function Vote() {
             label="Nummer"
             placeholder="17"
             value={listIndex}
-            onInput={(e) => setListIndex(e.target.value)}
+            onInput={(e: React.ChangeEvent<HTMLInputElement>) =>
+              setListIndex(e.target.value)
+            }
             icon="format_list_numbered"
           ></mdui-text-field>
         </div>
@@ -285,7 +322,7 @@ export default function Vote() {
             <mdui-text-field
               label={e}
               value={extraFieldsValues[i]}
-              onInput={(e) =>
+              onInput={(e: React.ChangeEvent<HTMLInputElement>) =>
                 handleInputChange(i, capitalizeWords(e.target.value))
               }
               icon="edit"
@@ -297,7 +334,7 @@ export default function Vote() {
         <br />
         <mdui-divider></mdui-divider>
         <p />
-        {Array.from({ length: selectCount }).map((e, index) => (
+        {Array.from({ length: selectCount }).map((_, index) => (
           <div key={index}>
             <div className="mdui-prosa">
               {selectCount > 1 && (
@@ -310,44 +347,49 @@ export default function Vote() {
               )}
             </div>
             <div className="flex-wrap">
-              {options.map((e) => (
+              {options.map((option) => (
                 <mdui-card
-                  key={e.id}
+                  key={option.id}
                   clickable={
-                    selected[index] !== e.id && !selected.includes(e.id)
+                    selected[index] !== option.id &&
+                    !selected.includes(option.id)
                   }
                   style={{
                     cursor:
-                      selected[index] !== e.id && selected.includes(e.id)
+                      selected[index] !== option.id &&
+                      selected.includes(option.id)
                         ? "not-allowed"
                         : "pointer",
                     backgroundColor:
-                      selected[index] !== e.id &&
-                      selected.includes(e.id) &&
-                      "rgba(0, 0, 0, 0.1)",
+                      selected[index] !== option.id &&
+                      selected.includes(option.id)
+                        ? "rgba(0, 0, 0, 0.1)"
+                        : undefined,
                   }}
                   class={`option-card ${
-                    selected[index] === e.id ? "selected" : ""
+                    selected[index] === option.id ? "selected" : ""
                   } ${
-                    selected[index] !== e.id && selected.includes(e.id)
+                    selected[index] !== option.id &&
+                    selected.includes(option.id)
                       ? "disabled"
                       : ""
                   }`}
                   variant={
-                    selected.includes(e.id)
-                      ? selected[index] === e.id
+                    selected.includes(option.id)
+                      ? selected[index] === option.id
                         ? "outlined"
                         : "filled"
                       : "elevated"
                   }
                   onClick={() => {
-                    selected[index] === e.id
+                    selected[index] === option.id
                       ? select(index, "null")
-                      : !selected.includes(e.id) && select(index, e.id);
+                      : !selected.includes(option.id) &&
+                        select(index, option.id);
                   }}
                 >
                   <b className="title">
-                    {e.title}
+                    {option.title}
                     <mdui-badge
                       style={{
                         backgroundColor: "transparent",
@@ -355,17 +397,17 @@ export default function Vote() {
                       }}
                     >
                       <mdui-icon name="group"></mdui-icon>
-                      {e.max}
+                      {option.max}
                     </mdui-badge>
                   </b>
-                  {e.teacher && (
+                  {option.teacher && (
                     <div className="teacher">
                       <mdui-icon name="person"></mdui-icon>
-                      {e.teacher}
+                      {option.teacher}
                     </div>
                   )}
-                  {e.description && (
-                    <div className="description">{e.description}</div>
+                  {option.description && (
+                    <div className="description">{option.description}</div>
                   )}
                 </mdui-card>
               ))}
@@ -378,7 +420,9 @@ export default function Vote() {
         <br />
         <mdui-checkbox
           checked={accepted}
-          onChange={(e) => setAccepted(e.target.checked)}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+            setAccepted(e.target.checked)
+          }
         >
           Ich willige ein, dass mein Vorname, der erste Buchstabe meines
           Nachnamens, meine Klasse sowie meine Position in der Klassenliste
@@ -455,27 +499,23 @@ export default function Vote() {
         >
           <CheckItem
             label={"Vorname(n)"}
-            checked={firstName?.trim() && firstName.length >= 2}
+            checked={!!(firstName?.trim() && firstName.length >= 2)}
           />
           <CheckItem
             label={"Nachname"}
-            checked={lastName?.trim() && lastName.length >= 2}
+            checked={!!(lastName?.trim() && lastName.length >= 2)}
           />
           <div className="break" />
-          <CheckItem label={"Klasse"} checked={grade} />
-          <CheckItem label={"Klassenlistennr."} checked={listIndex} />
+          <CheckItem label={"Klasse"} checked={!!grade} />
+          <CheckItem label={"Klassenlistennr."} checked={!!listIndex} />
           <div className="break" />
           {extraFields?.map((e, i) => (
-            <>
-              <CheckItem
-                key={i}
-                label={e}
-                checked={extraFieldsValues[i]?.trim()}
-              />
+            <React.Fragment key={i}>
+              <CheckItem label={e} checked={!!extraFieldsValues[i]?.trim()} />
               <div className="break" />
-            </>
+            </React.Fragment>
           ))}
-          {Array.from({ length: selectCount }).map((e, index) => (
+          {Array.from({ length: selectCount }).map((_, index) => (
             <CheckItem
               key={index}
               label={`${index + 1}. Wahl`}
@@ -497,8 +537,11 @@ Vote.loader = async function loader({ params, request }) {
     });
   }
   const options = await getDocs(collection(db, `/votes/${params.id}/options`));
-  const voteData = vote.data();
-  const optionsData = options.docs.map((e) => ({ id: e.id, ...e.data() }));
+  const voteData = vote.data() as VoteData;
+  const optionsData = options.docs.map((e) => ({
+    id: e.id,
+    ...e.data(),
+  })) as OptionData[];
 
   const type = request.url.split("/")[3];
 

@@ -1,8 +1,19 @@
 import moment from "moment-timezone";
 import React from "react";
 import { useLoaderData, useNavigate } from "react-router-dom";
+import { Timestamp, DocumentData } from "firebase/firestore";
+
+interface VoteData extends DocumentData {
+  startTime: Timestamp;
+  endTime: Timestamp;
+}
+
+interface LoaderData {
+  vote: VoteData;
+}
+
 export default function Scheduled() {
-  const { vote } = useLoaderData();
+  const { vote } = useLoaderData() as LoaderData;
 
   const navigate = useNavigate();
 

@@ -5,10 +5,18 @@ import { appCheck, auth } from "../firebase";
 import { alert, confirm, prompt, snackbar } from "mdui";
 import { getToken } from "firebase/app-check";
 
+interface AdminUser {
+  email: string;
+  uid: string;
+  disabled: boolean;
+}
+
+interface LoaderData {
+  admins: AdminUser[];
+}
+
 export default function Admins() {
-  const { admins } = useLoaderData() as {
-    admins: { email: string; uid: string; disabled: boolean }[];
-  };
+  const { admins } = useLoaderData() as LoaderData;
 
   const revalidator = useRevalidator();
 
@@ -28,7 +36,7 @@ export default function Admins() {
       textFieldOptions: {
         placeholder: "nutzer@waldorfschule-potsdam.de",
       },
-      onConfirm: async (email) => {
+      onConfirm: async (email: string) => {
         let token: string;
         try {
           token = await getToken(appCheck).then((result) => result.token);
@@ -264,7 +272,7 @@ Admins.loader = async () => {
     return { admins: [] };
   }
   // get firebase token
-  const token = await new Promise((resolve) => {
+  const token = await new Promise<string | null>((resolve) => {
     const unsubscribe = auth.onAuthStateChanged(async (user) => {
       if (user) {
         const token = await user.getIdToken();
@@ -277,6 +285,9 @@ Admins.loader = async () => {
   });
 
   // Fetch list of admins
+  if (!token) {
+    return { admins: [] };
+  }
 
   const response = await fetch(
     `https://api.chatwithsteiner.de/waldorfwahlen/users?token=${token}&uid=${auth.currentUser?.uid}`,

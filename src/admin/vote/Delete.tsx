@@ -6,12 +6,13 @@ import AdminVote from ".";
 import { db } from "../../firebase";
 
 export default function Delete() {
-  const { id } = useParams();
-  const [confirmtion, setConfirmation] = React.useState("");
+  const { id } = useParams<{ id: string }>();
+  const [confirmtion, setConfirmation] = React.useState<string>("");
 
   const navigate = useNavigate();
 
   function deleteVote() {
+    if (!id) return;
     deleteDoc(doc(db, "/votes", id))
       .then(() => {
         snackbar({ message: "Wahl gelöscht." });
@@ -36,9 +37,9 @@ export default function Delete() {
         </p>
         <mdui-text-field
           value={confirmtion}
-          onInput={(e) => setConfirmation(e.target.value)}
+          onInput={(e: React.ChangeEvent<HTMLInputElement>) => setConfirmation(e.target.value)}
           label="Bestätigung"
-          onPaste={(e) => {
+          onPaste={(e: React.ClipboardEvent<HTMLInputElement>) => {
             return e.preventDefault();
           }}
         ></mdui-text-field>

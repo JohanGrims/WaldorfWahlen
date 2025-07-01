@@ -1,4 +1,4 @@
-import { doc, getDoc } from "firebase/firestore";
+import { doc, getDoc, DocumentData, Timestamp } from "firebase/firestore";
 import { snackbar } from "mdui";
 import React from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
@@ -6,15 +6,26 @@ import { db } from "../../firebase";
 import { DrawerItem } from "./components";
 import { Helmet } from "react-helmet";
 
-export default function VoteDrawer({ onClose = () => {} }) {
-  const [loading, setLoading] = React.useState(true);
-  const [data, setData] = React.useState([]);
+interface VoteDrawerProps {
+  onClose?: () => void;
+}
 
-  const [active, setActive] = React.useState(undefined);
+interface VoteData extends DocumentData {
+  title: string;
+  active: boolean;
+  endTime: Timestamp;
+  startTime: Timestamp;
+}
+
+export default function VoteDrawer({ onClose = () => {} }: VoteDrawerProps) {
+  const [loading, setLoading] = React.useState<boolean>(true);
+  const [data, setData] = React.useState<VoteData | null>(null);
+
+  const [active, setActive] = React.useState<string | undefined>(undefined);
 
   const navigate = useNavigate();
 
-  const { id } = useParams();
+  const { id } = useParams<{ id: string }>();
   const location = useLocation();
 
   React.useEffect(() => {
@@ -22,14 +33,15 @@ export default function VoteDrawer({ onClose = () => {} }) {
   }, [location]);
 
   React.useEffect(() => {
-    setData({});
+    setData(null);
+    if (!id) return;
     getDoc(doc(db, `/votes/${id}`))
       .then(async (request) => {
         if (!request.exists()) {
           snackbar({ message: "Wahl existiert nicht." });
           navigate("/admin");
         }
-        const data = request.data();
+        const data = request.data() as VoteData;
         setData(data);
         setLoading(false);
       })
@@ -38,9 +50,9 @@ export default function VoteDrawer({ onClose = () => {} }) {
         snackbar({ message: "Fehler beim Laden der Wahl." });
         navigate("/admin");
       });
-  }, []);
+  }, [id]);
 
-  const navigateTo = (path) => {
+  const navigateTo = (path: string) => {
     navigate(path);
     onClose();
   };
@@ -60,7 +72,7 @@ export default function VoteDrawer({ onClose = () => {} }) {
             title={""}
             onClick={() => navigateTo("/admin")}
           />
-          <mdui-linear-progress indeterminate></mdui-linear-progress>
+          <mdui-linear-progress></mdui-linear-progress>
         </mdui-list>
       </mdui-navigation-drawer>
     );

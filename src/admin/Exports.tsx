@@ -287,17 +287,17 @@ export default function Exports() {
             <p />
             <mdui-segmented-button-group
               selects="single"
-              value={config.headers}
+              value={config.headers.toString()}
             >
               <mdui-segmented-button
-                value={true}
+                value="true"
                 onClick={() => setConfig({ ...config, headers: true })}
                 icon="table_chart"
               >
                 Mit Kopfzeile
               </mdui-segmented-button>
               <mdui-segmented-button
-                value={false}
+                value="false"
                 onClick={() => setConfig({ ...config, headers: false })}
                 icon="table_rows"
               >

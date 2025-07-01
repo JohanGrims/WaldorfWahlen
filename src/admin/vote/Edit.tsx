@@ -5,6 +5,7 @@ import {
   getDoc,
   getDocs,
   setDoc,
+  DocumentData,
 } from "firebase/firestore";
 import { useLoaderData, useRevalidator } from "react-router-dom";
 import { db } from "../../firebase";
@@ -13,7 +14,63 @@ import { confirm, snackbar } from "mdui";
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { deepEqual, generateRandomHash } from "../utils";
-import { re } from "mathjs";
+
+interface ProposeField {
+  id: string;
+  label: string;
+  type: "text" | "textarea" | "number" | "email" | "tel";
+  required: boolean;
+  maxLength: number;
+  placeholder: string;
+}
+
+interface ProposeTexts {
+  welcomeHeadline: string;
+  welcomeDescription: string;
+  hintHeadline: string;
+  hintDescription: string;
+}
+
+interface OptionData {
+  id: string;
+  title: string;
+  teacher: string;
+  description: string;
+  max: number;
+}
+
+interface ProposalData {
+  id: string;
+  name: string;
+  teacher: string;
+  description: string;
+  max: number;
+  customFields?: Record<string, string>;
+}
+
+interface VoteData extends DocumentData {
+  id: string;
+  title: string;
+  description: string;
+  selectCount: number;
+  extraFields?: string[];
+  proposals: boolean;
+  proposeFields?: ProposeField[];
+  proposeTexts?: ProposeTexts;
+}
+
+interface LoaderData {
+  vote: VoteData;
+  options: OptionData[];
+  proposals: ProposalData[];
+}
+
+interface ProposeFieldCardProps {
+  field: ProposeField;
+  index: number;
+  editProposeField: (index: number, updates: Partial<ProposeField>) => void;
+  removeProposeField: (index: number) => void;
+}
 
 // Component to handle individual propose field with proper switch ref handling
 function ProposeFieldCard({
@@ -21,8 +78,8 @@ function ProposeFieldCard({
   index,
   editProposeField,
   removeProposeField,
-}) {
-  const switchRef = React.useRef(null);
+}: ProposeFieldCardProps) {
+  const switchRef = React.useRef<HTMLInputElement>(null);
 
   React.useEffect(() => {
     if (switchRef.current) {
@@ -30,7 +87,7 @@ function ProposeFieldCard({
       switchRef.current.checked = field.required;
 
       const handleToggle = () => {
-        editProposeField(index, { required: switchRef.current.checked });
+        editProposeField(index, { required: switchRef.current!.checked });
       };
 
       switchRef.current.addEventListener("change", handleToggle);
@@ -57,13 +114,19 @@ function ProposeFieldCard({
         <mdui-text-field
           label="Feld-Label"
           value={field.label}
-          onInput={(e) => editProposeField(index, { label: e.target.value })}
+          onInput={(e: React.ChangeEvent<HTMLInputElement>) =>
+            editProposeField(index, { label: e.target.value })
+          }
           placeholder="z.B. Telefonnummer"
         />
         <mdui-select
           label="Feldtyp"
           value={field.type}
-          onChange={(e) => editProposeField(index, { type: e.target.value })}
+          onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
+            editProposeField(index, {
+              type: e.target.value as ProposeField["type"],
+            })
+          }
         >
           <mdui-menu-item value="text">Text (kurz)</mdui-menu-item>
           <mdui-menu-item value="textarea">Text (lang)</mdui-menu-item>
@@ -77,24 +140,30 @@ function ProposeFieldCard({
         <mdui-text-field
           label="Platzhalter"
           value={field.placeholder}
-          onInput={(e) =>
+          onInput={(e: React.ChangeEvent<HTMLInputElement>) =>
             editProposeField(index, { placeholder: e.target.value })
           }
           placeholder={
-            field.type === "email" ? "beispiel@mail.com" :
-            field.type === "tel" ? "+49 123 456789" :
-            field.type === "number" ? "42" :
-            field.type === "textarea" ? "Längerer Text..." :
-            "Kurzer Text"
+            field.type === "email"
+              ? "beispiel@mail.com"
+              : field.type === "tel"
+              ? "+49 123 456789"
+              : field.type === "number"
+              ? "42"
+              : field.type === "textarea"
+              ? "Längerer Text..."
+              : "Kurzer Text"
           }
         />
         <mdui-text-field
           label="Max. Länge"
           type="number"
-          value={field.maxLength}
-          onInput={(e) =>
+          value={String(field.maxLength)}
+          onInput={(e: React.ChangeEvent<HTMLInputElement>) =>
             editProposeField(index, {
-              maxLength: parseInt(e.target.value) || (field.type === "textarea" ? 500 : 50),
+              maxLength:
+                parseInt(e.target.value) ||
+                (field.type === "textarea" ? 500 : 50),
             })
           }
           min={1}
@@ -111,10 +180,7 @@ function ProposeFieldCard({
         }}
       >
         <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-          <mdui-switch
-            ref={switchRef}
-            checked={field.required}
-          ></mdui-switch>
+          <mdui-switch ref={switchRef} checked={field.required}></mdui-switch>
           <span>Pflichtfeld</span>
         </div>
         <mdui-button-icon
@@ -132,19 +198,23 @@ export default function Edit() {
     vote,
     options: loadedOptions,
     proposals: loadedProposals,
-  } = useLoaderData();
+  } = useLoaderData() as LoaderData;
 
-  const [title, setTitle] = React.useState(vote.title);
-  const [description, setDescription] = React.useState(vote.description);
-  const [selectCount] = React.useState(vote.selectCount);
+  const [title, setTitle] = React.useState<string>(vote.title);
+  const [description, setDescription] = React.useState<string>(
+    vote.description
+  );
+  const [selectCount] = React.useState<number>(vote.selectCount);
 
-  const [extraFields, setExtraFields] = React.useState(vote.extraFields || []);
+  const [extraFields, setExtraFields] = React.useState<string[]>(
+    vote.extraFields || []
+  );
 
   // Proposal fields and dialog texts
-  const [proposeFields, setProposeFields] = React.useState(
+  const [proposeFields, setProposeFields] = React.useState<ProposeField[]>(
     vote.proposeFields || []
   );
-  const [proposeTexts, setProposeTexts] = React.useState(
+  const [proposeTexts, setProposeTexts] = React.useState<ProposeTexts>(
     vote.proposeTexts || {
       welcomeHeadline: "Vorschlag einreichen",
       welcomeDescription:
@@ -155,51 +225,57 @@ export default function Edit() {
     }
   );
 
-  const [options, setOptions] = React.useState(loadedOptions);
-  const [proposals, setProposals] = React.useState(loadedProposals);
+  const [options, setOptions] = React.useState<OptionData[]>(loadedOptions);
+  const [proposals, setProposals] =
+    React.useState<ProposalData[]>(loadedProposals);
 
   // Calculate total max value from all options
-  const [totalMax, setTotalMax] = React.useState(() =>
-    loadedOptions.reduce((sum, option) => sum + (parseInt(option.max) || 0), 0)
+  const [totalMax, setTotalMax] = React.useState<number>(() =>
+    loadedOptions.reduce((sum, option) => sum + (option.max || 0), 0)
   );
 
-  const [name, setName] = React.useState("");
-  const [teacher, setTeacher] = React.useState("");
-  const [optionDescription, setOptionDescription] = React.useState("");
-  const [max, setMax] = React.useState();
-  const [optionId, setOptionId] = React.useState(generateRandomHash(20));
+  const [name, setName] = React.useState<string>("");
+  const [teacher, setTeacher] = React.useState<string>("");
+  const [optionDescription, setOptionDescription] = React.useState<string>("");
+  const [max, setMax] = React.useState<number | undefined>(undefined);
+  const [optionId, setOptionId] = React.useState<string>(
+    generateRandomHash(20)
+  );
 
-  const [proposeTextsCardOpen, setProposeTextsCardOpen] = React.useState(false);
+  const [proposeTextsCardOpen, setProposeTextsCardOpen] =
+    React.useState<boolean>(false);
   const [proposeFieldsCardOpen, setProposeFieldsCardOpen] =
-    React.useState(false);
+    React.useState<boolean>(false);
 
   const navigate = useNavigate();
   const revalidator = useRevalidator();
 
   function addOption() {
-    const newOptions = [
-      ...options,
-      {
-        title: name,
-        max: max,
-        teacher: teacher,
-        description: optionDescription,
-        id: optionId,
-      },
-    ];
-    setOptions(newOptions);
-    // Update total max value
-    setTotalMax(
-      newOptions.reduce((sum, option) => sum + (parseInt(option.max) || 0), 0)
-    );
-    setName("");
-    setTeacher("");
-    setOptionDescription("");
-    setMax("");
-    setOptionId(generateRandomHash(20));
+    if (name && max !== undefined) {
+      const newOptions: OptionData[] = [
+        ...options,
+        {
+          title: name,
+          max: max,
+          teacher: teacher,
+          description: optionDescription,
+          id: optionId,
+        },
+      ];
+      setOptions(newOptions);
+      // Update total max value
+      setTotalMax(
+        newOptions.reduce((sum, option) => sum + (option.max || 0), 0)
+      );
+      setName("");
+      setTeacher("");
+      setOptionDescription("");
+      setMax(undefined);
+      setOptionId(generateRandomHash(20));
+    }
   }
 
-  function editOption(index) {
+  function editOption(index: number) {
     setName(options[index].title);
     setTeacher(options[index].teacher);
     setOptionDescription(options[index].description);
@@ -208,9 +284,7 @@ export default function Edit() {
     const newOptions = options.filter((_, i) => i !== index);
     setOptions(newOptions);
     // Update total max when removing an option during edit
-    setTotalMax(
-      newOptions.reduce((sum, option) => sum + (parseInt(option.max) || 0), 0)
-    );
+    setTotalMax(newOptions.reduce((sum, option) => sum + (option.max || 0), 0));
   }
 
   async function update() {
@@ -254,7 +328,7 @@ export default function Edit() {
 
       snackbar({
         message: "Wahl erfolgreich aktualisiert.",
-        timeout: 5000,
+        autoCloseDelay: 5000,
       });
 
       navigate(`/admin/${vote.id}`);
@@ -262,12 +336,12 @@ export default function Edit() {
       console.error("Failed to update vote:", error);
       snackbar({
         message: "Fehler beim Aktualisieren der Wahl.",
-        timeout: 5000,
+        autoCloseDelay: 5000,
       });
     }
   }
 
-  const isVoteUnchanged = () => {
+  const isVoteUnchanged = (): boolean => {
     const newVote = {
       title,
       description,
@@ -278,12 +352,15 @@ export default function Edit() {
       proposeTexts: vote.proposals ? proposeTexts : {},
     };
 
-    const changes = Object.keys(newVote).reduce((result, key) => {
-      if (!deepEqual(newVote[key], vote[key])) {
-        result[key] = [vote[key], newVote[key]];
-      }
-      return result;
-    }, {});
+    const changes = Object.keys(newVote).reduce(
+      (result: Record<string, any[]>, key: keyof VoteData) => {
+        if (!deepEqual(newVote[key], vote[key])) {
+          result[key] = [vote[key], newVote[key]];
+        }
+        return result;
+      },
+      {}
+    );
 
     if (Object.keys(changes).length > 0) {
       // log the changes
@@ -297,15 +374,27 @@ export default function Edit() {
     }
 
     for (let i = 0; i < options.length; i++) {
-      const changes = Object.keys(options[i]).reduce((result, key) => {
-        const loadedOption = loadedOptions.find(
-          (opt) => opt.id === options[i].id
-        );
-        if (!deepEqual(options[i][key], loadedOption[key])) {
-          result[key] = [loadedOption[key], options[i][key]];
-        }
-        return result;
-      }, {});
+      const changes = Object.keys(options[i]).reduce(
+        (result: Record<string, any[]>, key: string) => {
+          const loadedOption = loadedOptions.find(
+            (opt) => opt.id === options[i].id
+          );
+          if (
+            loadedOption &&
+            !deepEqual(
+              options[i][key as keyof OptionData],
+              loadedOption[key as keyof OptionData]
+            )
+          ) {
+            result[key] = [
+              loadedOption[key as keyof OptionData],
+              options[i][key as keyof OptionData],
+            ];
+          }
+          return result;
+        },
+        {} as Record<string, any[]>
+      );
 
       if (Object.keys(changes).length > 0) {
         console.info("Option has changed", changes);
@@ -316,25 +405,25 @@ export default function Edit() {
     return true;
   };
 
-  const submitDisabled = () => {
-    if (!title || !selectCount || isVoteUnchanged()) {
+  const submitDisabled = (): boolean => {
+    if (!title || selectCount === undefined || isVoteUnchanged()) {
       return true;
     }
 
     return false;
   };
 
-  function addOptionDisabled() {
-    return !name || !max;
+  function addOptionDisabled(): boolean {
+    return !name || max === undefined;
   }
 
-  function editExtraField(index, value) {
+  function editExtraField(index: number, value: string) {
     const newValues = [...extraFields];
     newValues[index] = value;
     setExtraFields(newValues);
   }
 
-  function removeExtraField(index) {
+  function removeExtraField(index: number) {
     setExtraFields((extraFields) => extraFields.filter((_, i) => i !== index));
   }
 
@@ -352,15 +441,15 @@ export default function Edit() {
     ]);
   }
 
-  function editProposeField(index, field) {
+  function editProposeField(index: number, updates: Partial<ProposeField>) {
     const newFields = [...proposeFields];
-    const updatedField = { ...newFields[index], ...field };
+    const updatedField = { ...newFields[index], ...updates };
 
     // Auto-adjust maxLength when type changes
-    if (field.type && field.type !== newFields[index].type) {
-      if (field.type === "textarea" && updatedField.maxLength <= 100) {
+    if (updates.type && updates.type !== newFields[index].type) {
+      if (updates.type === "textarea" && updatedField.maxLength <= 100) {
         updatedField.maxLength = 500;
-      } else if (field.type !== "textarea" && updatedField.maxLength > 500) {
+      } else if (updates.type !== "textarea" && updatedField.maxLength > 500) {
         updatedField.maxLength = 50;
       }
     }
@@ -369,11 +458,11 @@ export default function Edit() {
     setProposeFields(newFields);
   }
 
-  function removeProposeField(index) {
+  function removeProposeField(index: number) {
     setProposeFields(proposeFields.filter((_, i) => i !== index));
   }
 
-  async function deleteProposal(proposal) {
+  async function deleteProposal(proposal: ProposalData) {
     confirm({
       icon: "delete",
       headline: "Vorschlag löschen",
@@ -390,13 +479,13 @@ export default function Edit() {
           );
           snackbar({
             message: "Vorschlag erfolgreich gelöscht.",
-            timeout: 5000,
+            autoCloseDelay: 5000,
           });
         } catch (error) {
           console.error("Failed to delete proposal:", error);
           snackbar({
             message: "Fehler beim Löschen des Vorschlags.",
-            timeout: 5000,
+            autoCloseDelay: 5000,
           });
         }
       },
@@ -462,7 +551,7 @@ export default function Edit() {
                     setOptions(loadedOptions);
                     setTotalMax(
                       loadedOptions.reduce(
-                        (sum, option) => sum + (parseInt(option.max) || 0),
+                        (sum, option) => sum + (option.max || 0),
                         0
                       )
                     );
@@ -470,7 +559,7 @@ export default function Edit() {
                     setName("");
                     setTeacher("");
                     setOptionDescription("");
-                    setMax("");
+                    setMax(undefined);
                     setOptionId(generateRandomHash(20));
                     revalidator.revalidate();
                   },
@@ -527,7 +616,9 @@ export default function Edit() {
         maxlength={25}
         counter
         value={title}
-        onInput={(e) => setTitle(e.target.value)}
+        onInput={(e: React.ChangeEvent<HTMLInputElement>) =>
+          setTitle(e.target.value)
+        }
       />
       <mdui-text-field
         label="Beschreibung (optional)"
@@ -536,7 +627,9 @@ export default function Edit() {
         maxlength={200}
         counter
         value={description}
-        onInput={(e) => setDescription(e.target.value)}
+        onInput={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
+          setDescription(e.target.value)
+        }
       ></mdui-text-field>
       <p />
       {extraFields.map((e, i) => (
@@ -546,7 +639,9 @@ export default function Edit() {
               label={"Extrafeld #" + (i + 1)}
               placeholder={"Musikinstrument"}
               value={e}
-              onInput={(e) => editExtraField(i, e.target.value)}
+              onInput={(e: React.ChangeEvent<HTMLInputElement>) =>
+                editExtraField(i, e.target.value)
+              }
             >
               <mdui-button-icon
                 slot="end-icon"
@@ -623,7 +718,7 @@ export default function Edit() {
                   <mdui-text-field
                     label="Willkommen-Überschrift"
                     value={proposeTexts.welcomeHeadline}
-                    onInput={(e) =>
+                    onInput={(e: React.ChangeEvent<HTMLInputElement>) =>
                       setProposeTexts({
                         ...proposeTexts,
                         welcomeHeadline: e.target.value,
@@ -636,7 +731,7 @@ export default function Edit() {
                     label="Willkommen-Beschreibung"
                     rows={3}
                     value={proposeTexts.welcomeDescription}
-                    onInput={(e) =>
+                    onInput={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
                       setProposeTexts({
                         ...proposeTexts,
                         welcomeDescription: e.target.value,
@@ -648,7 +743,7 @@ export default function Edit() {
                   <mdui-text-field
                     label="Hinweis-Überschrift"
                     value={proposeTexts.hintHeadline}
-                    onInput={(e) =>
+                    onInput={(e: React.ChangeEvent<HTMLInputElement>) =>
                       setProposeTexts({
                         ...proposeTexts,
                         hintHeadline: e.target.value,
@@ -661,7 +756,7 @@ export default function Edit() {
                     label="Hinweis-Beschreibung"
                     rows={3}
                     value={proposeTexts.hintDescription}
-                    onInput={(e) =>
+                    onInput={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
                       setProposeTexts({
                         ...proposeTexts,
                         hintDescription: e.target.value,
@@ -762,11 +857,13 @@ export default function Edit() {
                     setMax(e.max);
                     setOptionId(e.id);
 
-                    document
-                      .querySelector("#add-option-button")
-                      .scrollIntoView({
+                    const addButton =
+                      document.querySelector("#add-option-button");
+                    if (addButton) {
+                      addButton.scrollIntoView({
                         behavior: "smooth",
                       });
+                    }
                   }}
                 >
                   <div
@@ -801,7 +898,7 @@ export default function Edit() {
                             </small>
                             {vote.proposeFields.map(
                               (field) =>
-                                e.customFields[field.id] && (
+                                e.customFields?.[field.id] && (
                                   <div
                                     key={field.id}
                                     style={{
@@ -912,8 +1009,7 @@ export default function Edit() {
                           // Update total max when removing an option
                           setTotalMax(
                             newOptions.reduce(
-                              (sum, option) =>
-                                sum + (parseInt(option.max) || 0),
+                              (sum, option) => sum + (option.max || 0),
                               0
                             )
                           );
@@ -921,14 +1017,13 @@ export default function Edit() {
                         });
                         snackbar({
                           message: `Option "${e.title}" wurde gelöscht.`,
-                          timeout: 5000,
+                          autoCloseDelay: 5000,
                           action: "Änderungen verwerfen",
                           onActionClick: () => {
                             setOptions(loadedOptions);
                             setTotalMax(
                               loadedOptions.reduce(
-                                (sum, option) =>
-                                  sum + (parseInt(option.max) || 0),
+                                (sum, option) => sum + (option.max || 0),
                                 0
                               )
                             );
@@ -949,15 +1044,19 @@ export default function Edit() {
             maxlength={25}
             counter
             value={name}
-            onInput={(e) => setName(e.target.value)}
+            onInput={(e: React.ChangeEvent<HTMLInputElement>) =>
+              setName(e.target.value)
+            }
           ></mdui-text-field>
           <mdui-text-field
             label="max. SchülerInnen"
             type="number"
             placeholder="15"
             min={1}
-            value={max}
-            onInput={(e) => setMax(Number(e.target.value))}
+            value={String(max || "")}
+            onInput={(e: React.ChangeEvent<HTMLInputElement>) =>
+              setMax(Number(e.target.value))
+            }
           ></mdui-text-field>
           <p />
           <br />
@@ -967,7 +1066,9 @@ export default function Edit() {
             maxlength={25}
             counter
             value={teacher}
-            onInput={(e) => setTeacher(e.target.value)}
+            onInput={(e: React.ChangeEvent<HTMLInputElement>) =>
+              setTeacher(e.target.value)
+            }
           ></mdui-text-field>
           <mdui-text-field
             label="Beschreibung (optional)"
@@ -976,7 +1077,9 @@ export default function Edit() {
             maxlength={100}
             counter
             value={optionDescription}
-            onInput={(e) => setOptionDescription(e.target.value)}
+            onInput={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
+              setOptionDescription(e.target.value)
+            }
           ></mdui-text-field>
           <div className="fields-row">
             <mdui-button
@@ -987,7 +1090,7 @@ export default function Edit() {
                 setName("");
                 setTeacher("");
                 setOptionDescription("");
-                setMax("");
+                setMax(undefined);
                 setOptionId(generateRandomHash(20));
               }}
             >

@@ -1,5 +1,3 @@
-import React from "react";
-
 let def = `{
     "id": "string", // ID der Wahl
     "active": boolean, // Aktiv

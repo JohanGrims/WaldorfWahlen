@@ -1,18 +1,53 @@
-import { collection, doc, getDoc, getDocs } from "firebase/firestore";
+import { collection, doc, getDoc, getDocs, Timestamp, DocumentData } from "firebase/firestore";
 import { useLoaderData, useNavigate } from "react-router-dom";
 import { db } from "../../firebase";
 
-export default function AdminVote() {
-  const { vote, choices, options, results, proposals } = useLoaderData();
+interface VoteData extends DocumentData {
+  id: string;
+  title: string;
+  active: boolean;
+  startTime: Timestamp;
+  endTime: Timestamp;
+}
 
-  const mobile = window.innerWidth < 840;
+interface ChoiceData extends DocumentData {
+  id: string;
+}
+
+interface OptionData extends DocumentData {
+  id: string;
+  name: string;
+  title: string;
+}
+
+interface ResultData extends DocumentData {
+  id: string;
+}
+
+interface ProposalData extends DocumentData {
+  id: string;
+  name: string;
+}
+
+interface LoaderData {
+  vote: VoteData;
+  choices: ChoiceData[];
+  options: OptionData[];
+  results: ResultData[];
+  proposals: ProposalData[];
+}
+
+export default function AdminVote() {
+  const { vote, choices, options, proposals } = useLoaderData() as LoaderData;
+
+  const mobile: boolean = window.innerWidth < 840;
 
   const navigate = useNavigate();
 
   const pendingProposals = proposals.filter(
     (proposal) =>
       !options.some(
-        (option) => option.id === proposal.id || option.name === proposal.name
+        (option) => option.id === proposal.id || option.title === proposal.name
       )
   );
 
@@ -165,27 +200,27 @@ export default function AdminVote() {
 }
 
 AdminVote.loader = async function loader({ params }) {
-  const { id } = params;
+  const { id } = params as { id: string };
   const vote = await getDoc(doc(db, `/votes/${id}`));
   if (!vote.exists()) {
     throw new Response("Seite nicht gefunden", { status: 404 });
   }
-  const voteData = { id: vote.id, ...vote.data() };
+  const voteData = { id: vote.id, ...vote.data() } as VoteData;
 
   const choices = await getDocs(collection(db, `/votes/${id}/choices`));
-  const choiceData = choices.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+  const choiceData = choices.docs.map((doc) => ({ id: doc.id, ...doc.data() })) as ChoiceData[];
 
   const options = await getDocs(collection(db, `/votes/${id}/options`));
-  const optionData = options.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+  const optionData = options.docs.map((doc) => ({ id: doc.id, ...doc.data() })) as OptionData[];
 
   const results = await getDocs(collection(db, `/votes/${id}/results`));
-  const resultData = results.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+  const resultData = results.docs.map((doc) => ({ id: doc.id, ...doc.data() })) as ResultData[];
 
   const proposals = await getDocs(collection(db, `/votes/${id}/proposals`));
   const proposalData = proposals.docs.map((doc) => ({
     id: doc.id,
     ...doc.data(),
-  }));
+  })) as ProposalData[];
   return {
     vote: voteData,
     choices: choiceData,

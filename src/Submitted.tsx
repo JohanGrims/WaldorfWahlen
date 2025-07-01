@@ -1,10 +1,16 @@
 import { useNavigate, useParams } from "react-router-dom";
 
+interface LocalStorageData {
+  choiceId: string;
+}
+
 export default function Submitted() {
-  const { id } = useParams();
+  const { id } = useParams<{ id: string }>();
   const urlParams = new URLSearchParams(window.location.search);
 
   const navigate = useNavigate();
+
+  const localStorageData: LocalStorageData | null = id ? JSON.parse(localStorage.getItem(id) || "null") : null;
 
   return (
     <mdui-dialog open headline="Vielen Dank!" icon="done">
@@ -19,7 +25,7 @@ export default function Submitted() {
           {urlParams.get("allowResubmission") ? (
             <mdui-button
               onClick={() => {
-                localStorage.removeItem(id);
+                if (id) localStorage.removeItem(id);
                 navigate(`/v/${id}?allowResubmission=true`);
               }}
             >
@@ -28,9 +34,11 @@ export default function Submitted() {
           ) : (
             <mdui-button onClick={() => navigate(`/`)}>Startseite</mdui-button>
           )}
-          <mdui-button disabled variant="text">
-            {JSON.parse(localStorage.getItem(id))?.choiceId}
-          </mdui-button>
+          {localStorageData?.choiceId && (
+            <mdui-button disabled variant="text">
+              {localStorageData.choiceId}
+            </mdui-button>
+          )}
         </div>
       </div>
     </mdui-dialog>

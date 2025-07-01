@@ -1,19 +1,32 @@
-import { useRouteError } from "react-router-dom";
+import { useRouteError, isRouteErrorResponse } from "react-router-dom";
 
 export default function ErrorPage() {
-  let error = useRouteError();
+  const error = useRouteError();
 
   console.error(error);
+
+  let errorMessage: string;
+
+  if (isRouteErrorResponse(error)) {
+    errorMessage = error.statusText || error.data;
+  } else if (error instanceof Error) {
+    errorMessage = error.message;
+  } else if (typeof error === 'string') {
+    errorMessage = error;
+  } else {
+    errorMessage = "Unknown error";
+  }
+
   return (
     <mdui-dialog
       open
-      headline={`Fehler ${error?.status || "400"}`}
+      headline={`Fehler ${isRouteErrorResponse(error) ? error.status : "400"}`}
       icon="error"
     >
       <div className="mdui-prose">
-        <p>{error?.statusText || error?.data || "Unknown Error Message"}</p>
+        <p>{errorMessage}</p>
         <p>
-          {error.status >= 400 && error.status < 500
+          {isRouteErrorResponse(error) && error.status >= 400 && error.status < 500
             ? "Es scheint, dass der Fehler auf Ihrer Seite liegt."
             : "Wir arbeiten daran, das Problem zu beheben."}
         </p>

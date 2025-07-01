@@ -1,4 +1,12 @@
-import { collection, doc, getDoc, getDocs, setDoc } from "firebase/firestore";
+import {
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  setDoc,
+  DocumentData,
+  Timestamp,
+} from "firebase/firestore";
 import { useLoaderData, useRevalidator } from "react-router-dom";
 import { auth, db } from "../../firebase";
 
@@ -6,21 +14,62 @@ import { confirm, prompt, snackbar } from "mdui";
 import React from "react";
 import jsPDF from "jspdf";
 
-export default function Results() {
-  const { vote, options, results, choices } = useLoaderData();
+interface VoteData extends DocumentData {
+  id: string;
+  title: string;
+  result: boolean;
+}
 
-  const [mode, setMode] = React.useState("all");
+interface OptionData extends DocumentData {
+  id: string;
+  title: string;
+  max: number;
+}
+
+interface ChoiceData extends DocumentData {
+  id: string;
+  name: string;
+  grade: number;
+  listIndex: number;
+  selected: string[];
+}
+
+interface CommentData {
+  from: string;
+  text: string;
+  timestamp: number;
+}
+
+interface ResultData extends DocumentData {
+  id: string;
+  result: string;
+  comments?: CommentData[];
+}
+
+interface LoaderData {
+  vote: VoteData;
+  options: OptionData[];
+  results: ResultData[];
+  choices: ChoiceData[];
+}
+
+export default function Results() {
+  const { vote, options, results, choices } = useLoaderData() as LoaderData;
+
+  const [mode, setMode] = React.useState<"all" | "project" | "class">("all");
 
   const grades = [...new Set(choices.map((choice) => choice.grade))];
 
-  const [commentText, setCommentText] = React.useState("");
-  const [commentGroup, setCommentGroup] = React.useState("");
-  const [commenting, setCommenting] = React.useState(false);
+  const [commentText, setCommentText] = React.useState<string>("");
+  const [commentGroup, setCommentGroup] = React.useState<string>("");
+  const [commenting, setCommenting] = React.useState<boolean>(false);
 
   const revalidator = useRevalidator();
 
   function printResults() {
-    const printContents = document.querySelector(".print-table").outerHTML;
+    const printContents = document.querySelector(".print-table")?.outerHTML;
+
+    if (!printContents) return;
 
     // Neues iframe erstellen
     const printFrame = document.createElement("iframe");
@@ -31,6 +80,7 @@ export default function Results() {
     document.body.appendChild(printFrame);
 
     const frameDoc = printFrame.contentWindow || printFrame.contentDocument;
+    if (!frameDoc) return;
     frameDoc.document.open();
     frameDoc.document.write(`
       <html>
@@ -58,8 +108,9 @@ export default function Results() {
     }, 1000);
   }
 
-  function printProjectResults(projectId) {
+  function printProjectResults(projectId: string) {
     const project = options.find((option) => option.id === projectId);
+    if (!project) return;
     const projectResults = filteredResults().filter(
       (result) => result.result === projectId
     );
@@ -82,10 +133,10 @@ export default function Results() {
               <tr>
                 <td>${choices
                   .find((choice) => choice.id === result.id)
-                  .name?.replace(/\[.*?\]/g, "")
+                  ?.name?.replace(/\[.*?\]/g, "")
                   .trim()}</td>
                 <td>${
-                  choices.find((choice) => choice.id === result.id).grade
+                  choices.find((choice) => choice.id === result.id)?.grade
                 }</td>
               </tr>
             `
@@ -95,7 +146,7 @@ export default function Results() {
         </table>
         <p style="margin-top: 20px;">
           <i>Generiert am ${new Date().toLocaleDateString()} von ${
-      auth.currentUser.email
+      auth.currentUser?.email
     } mit WaldorfWahlen</i>
         </p>
       </div>
@@ -110,6 +161,7 @@ export default function Results() {
     document.body.appendChild(printFrame);
 
     const frameDoc = printFrame.contentWindow || printFrame.contentDocument;
+    if (!frameDoc) return;
     frameDoc.document.open();
     frameDoc.document.write(`
       <html>
@@ -137,7 +189,7 @@ export default function Results() {
     }, 1000);
   }
 
-  function printClassResults(grade) {
+  function printClassResults(grade: number) {
     const classResults = filteredResults().filter(
       (result) => result.grade === grade
     );
@@ -160,10 +212,10 @@ export default function Results() {
               <tr>
                 <td>${choices
                   .find((choice) => choice.id === result.id)
-                  .name?.replace(/\[.*?\]/g, "")
+                  ?.name?.replace(/\[.*?\]/g, "")
                   .trim()}</td>
                 <td>${
-                  options.find((option) => option.id === result.result).title
+                  options.find((option) => option.id === result.result)?.title
                 }</td>
               </tr>
             `
@@ -173,7 +225,7 @@ export default function Results() {
         </table>
         <p style="margin-top: 20px;">
           <i>Generiert am ${new Date().toLocaleDateString()} von ${
-      auth.currentUser.email
+      auth.currentUser?.email
     } mit WaldorfWahlen</i>
         </p>
       </div>
@@ -188,6 +240,7 @@ export default function Results() {
     document.body.appendChild(printFrame);
 
     const frameDoc = printFrame.contentWindow || printFrame.contentDocument;
+    if (!frameDoc) return;
     frameDoc.document.open();
     frameDoc.document.write(`
       <html>
@@ -240,35 +293,58 @@ export default function Results() {
     });
   }
 
-  const filteredResults = () => {
+  const filteredResults = (): (ResultData & {
+    name: string;
+    grade: number;
+    listIndex: number;
+    comments?: CommentData[];
+  })[] => {
     // sort by grade
-    let resultsByGrade = {};
+    let resultsByGrade: Record<
+      number,
+      (ResultData & {
+        name: string;
+        grade: number;
+        listIndex: number;
+        comments?: CommentData[];
+      })[]
+    > = {};
     choices.forEach((choice) => {
-      if (!results.find((result) => result.id === choice.id)) {
+      const result = results.find((res) => res.id === choice.id);
+      if (!result) {
         return;
       }
       if (!resultsByGrade[choice.grade]) {
         resultsByGrade[choice.grade] = [];
       }
       resultsByGrade[choice.grade].push({
-        ...results.find((result) => result.id === choice.id),
+        ...result,
         name: choice.name,
+        grade: choice.grade,
+        listIndex: choice.listIndex,
       });
     });
 
     //  then sort by listIndex
-    Object.keys(resultsByGrade).forEach((grade) => {
+    Object.keys(resultsByGrade).forEach((gradeKey) => {
+      const grade = parseInt(gradeKey);
       resultsByGrade[grade].sort((a, b) => {
         return (
-          choices.find((choice) => choice.id === a.id).listIndex -
-          choices.find((choice) => choice.id === b.id).listIndex
+          choices.find((choice) => choice.id === a.id)!.listIndex -
+          choices.find((choice) => choice.id === b.id)!.listIndex
         );
       });
     });
 
     // Convert resultsByGrade object to a list
-    let resultsList = [];
-    Object.keys(resultsByGrade).forEach((grade) => {
+    let resultsList: (ResultData & {
+      name: string;
+      grade: number;
+      listIndex: number;
+      comments?: CommentData[];
+    })[] = [];
+    Object.keys(resultsByGrade).forEach((gradeKey) => {
+      const grade = parseInt(gradeKey);
       resultsByGrade[grade].forEach((result) => {
         resultsList.push({
           ...result,
@@ -280,7 +356,7 @@ export default function Results() {
     return resultsList;
   };
 
-  function addComment(id) {
+  function addComment(id: string) {
     prompt({
       icon: "comment",
       headline: "Kommentar hinzufügen",
@@ -295,14 +371,16 @@ export default function Results() {
       },
       confirmText: "Hinzufügen",
       cancelText: "Abbrechen",
-      onConfirm: (comment) => {
+      onConfirm: (comment: string) => {
+        const currentResult = results.find((result) => result.id === id);
+        const existingComments = currentResult?.comments || [];
         setDoc(
           doc(db, `votes/${vote.id}/results/${id}`),
           {
             comments: [
-              ...(results.find((result) => result.id === id).comments || []),
+              ...existingComments,
               {
-                from: auth.currentUser.email,
+                from: auth.currentUser?.email || "Unknown",
                 text: comment,
                 timestamp: Date.now(),
               },
@@ -321,7 +399,7 @@ export default function Results() {
     });
   }
 
-  function deleteComment(id, index) {
+  function deleteComment(id: string, index: number) {
     confirm({
       icon: "delete",
       headline: "Kommentar löschen",
@@ -329,7 +407,9 @@ export default function Results() {
       confirmText: "Ja, löschen",
       cancelText: "Abbrechen",
       onConfirm: () => {
-        const comments = results.find((result) => result.id === id).comments;
+        const currentResult = results.find((result) => result.id === id);
+        if (!currentResult || !currentResult.comments) return;
+        const comments = [...currentResult.comments];
         comments.splice(index, 1);
         setDoc(
           doc(db, `votes/${vote.id}/results/${id}`),
@@ -351,35 +431,36 @@ export default function Results() {
 
   function addCommentToGroup() {
     // Parse group
-    let group = {};
+    let group: Record<string, string> = {};
     commentGroup.split(",").forEach((condition) => {
       const [key, value] = condition.split("=");
-      group[key] = value;
+      if (key && value) {
+        group[key.trim()] = value.trim();
+      }
     });
 
     // Filter results
-    let resultsToAdd = [];
+    let resultsToAdd: string[] = [];
     choices.forEach((choice) => {
       // Check if choice matches group, also considering the current results
+      const currentResult = results.find((res) => res.id === choice.id);
       if (
         Object.keys(group).every((key) => {
           if (key === "name") {
             return choice.name.toLowerCase().includes(group[key].toLowerCase());
           } else if (key === "grade") {
-            return parseInt(choice.grade) === parseInt(group[key]);
+            return choice.grade.toString() === group[key];
           } else if (key === "assignedTo") {
             // Check if the choice is assigned to the project with the ID group[key]
-            return filteredResults().some((result) => {
-              return result.id === choice.id && result.result === group[key];
-            });
+            return currentResult?.result === group[key];
           } else if (key === "choice") {
-            // Check whitch index the assigned project has in the selected array (choices)
-            return results.some(
-              (result) =>
-                result.id === choice.id &&
-                result.result === choice.selected[parseInt(group[key]) - 1]
+            // Check which index the assigned project has in the selected array (choices)
+            return (
+              currentResult?.result ===
+              choice.selected[parseInt(group[key]) - 1]
             );
           }
+          return false;
         })
       ) {
         resultsToAdd.push(choice.id);
@@ -388,13 +469,15 @@ export default function Results() {
 
     // Add comments
     resultsToAdd.forEach((id) => {
+      const currentResult = results.find((res) => res.id === id);
+      const existingComments = currentResult?.comments || [];
       setDoc(
         doc(db, `votes/${vote.id}/results/${id}`),
         {
           comments: [
-            ...(results.find((result) => result.id === id).comments || []),
+            ...existingComments,
             {
-              from: auth.currentUser.email,
+              from: auth.currentUser?.email || "Unknown",
               text: commentText,
               timestamp: Date.now(),
             },
@@ -425,14 +508,14 @@ export default function Results() {
       icon: "picture_as_pdf",
       confirmText: "Exportieren",
       cancelText: "Abbrechen",
-      onConfirm: (value) => {
+      onConfirm: (value: string) => {
         const attendanceColumns = parseInt(value) || 5;
         generateAttendancePDF(attendanceColumns);
       },
     });
   }
 
-  function generateAttendancePDF(attendanceColumns) {
+  function generateAttendancePDF(attendanceColumns: number) {
     const doc = new jsPDF("landscape", "mm", "a4");
     const pageWidth = 297; // A4 landscape width
     const pageHeight = 210; // A4 landscape height
@@ -574,13 +657,17 @@ export default function Results() {
 
           // Student name
           doc.text(
-            student.name?.replace(/\[.*?\]/g, "").trim() || "",
+            student?.name?.replace(/\[.*?\]/g, "").trim() || "",
             margin + 2,
             rowY + 3
           );
 
           // Student grade
-          doc.text(student.grade || "", margin + nameWidth + 2, rowY + 3);
+          doc.text(
+            student?.grade?.toString() || "",
+            margin + nameWidth + 2,
+            rowY + 3
+          );
         }
 
         // Draw attendance checkboxes (centered in columns)
@@ -653,10 +740,11 @@ export default function Results() {
         ></mdui-button-icon>
         <mdui-text-field
           label="Kommentar"
-          textarea
           rows={5}
           value={commentText}
-          onInput={(e) => setCommentText(e.target.value)}
+          onInput={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
+            setCommentText(e.target.value)
+          }
           placeholder="Ihr Kommentar"
         />
         <p />
@@ -731,7 +819,9 @@ export default function Results() {
         <mdui-text-field
           label="Gruppe"
           value={commentGroup}
-          onInput={(e) => setCommentGroup(e.target.value)}
+          onInput={(e: React.ChangeEvent<HTMLInputElement>) =>
+            setCommentGroup(e.target.value)
+          }
           placeholder="grade=12"
         />
         <p />
@@ -857,16 +947,16 @@ export default function Results() {
                     <td>
                       {choices
                         .find((choice) => choice.id === result.id)
-                        .name?.replace(/\[.*?\]/g, "")
+                        ?.name?.replace(/\[.*?\]/g, "")
                         .trim()}
                     </td>
                     <td>
-                      {choices.find((choice) => choice.id === result.id).grade}
+                      {choices.find((choice) => choice.id === result.id)?.grade}
                     </td>
                     <td>
                       {
                         choices.find((choice) => choice.id === result.id)
-                          .listIndex
+                          ?.listIndex
                       }
                     </td>
                     <td
@@ -961,12 +1051,12 @@ export default function Results() {
                 {filteredResults().map((result) => (
                   <tr key={result.id}>
                     <td>
-                      {choices.find((choice) => choice.id === result.id).grade}
+                      {choices.find((choice) => choice.id === result.id)?.grade}
                     </td>
                     <td>
                       {choices
                         .find((choice) => choice.id === result.id)
-                        .name?.replace(/\[.*?\]/g, "")
+                        ?.name?.replace(/\[.*?\]/g, "")
                         .trim()}
                     </td>
                     <td>
@@ -979,10 +1069,10 @@ export default function Results() {
               </tbody>
               <tfoot>
                 <tr>
-                  <td colSpan="3">
+                  <td colSpan={3}>
                     <i>
                       Generiert am {new Date().toLocaleDateString()} von{" "}
-                      {auth.currentUser.email} mit WaldorfWahlen
+                      {auth.currentUser?.email} mit WaldorfWahlen
                     </i>
                   </td>
                 </tr>
@@ -1052,14 +1142,14 @@ export default function Results() {
                                 <td>
                                   {choices
                                     .find((choice) => choice.id === result.id)
-                                    .name?.replace(/\[.*?\]/g, "")
+                                    ?.name?.replace(/\[.*?\]/g, "")
                                     .trim()}
                                 </td>
                                 <td>
                                   {
                                     choices.find(
                                       (choice) => choice.id === result.id
-                                    ).grade
+                                    )?.grade
                                   }
                                 </td>
                               </tr>
@@ -1092,7 +1182,7 @@ export default function Results() {
                           <td>
                             {choices
                               .find((choice) => choice.id === result.id)
-                              .name?.replace(/\[.*?\]/g, "")
+                              ?.name?.replace(/\[.*?\]/g, "")
                               .trim()}
                           </td>
                           <td
@@ -1102,7 +1192,7 @@ export default function Results() {
                           >
                             {
                               choices.find((choice) => choice.id === result.id)
-                                .grade
+                                ?.grade
                             }
                           </td>
                         </tr>
@@ -1114,7 +1204,7 @@ export default function Results() {
             <tfoot>
               <p>
                 Generiert am {new Date().toLocaleDateString()} von{" "}
-                {auth.currentUser.email} mit WaldorfWahlen
+                {auth.currentUser?.email} mit WaldorfWahlen
               </p>
             </tfoot>
           </div>
@@ -1125,27 +1215,31 @@ export default function Results() {
         <>
           <mdui-tabs
             style={{ width: "100%", overflowX: "auto" }}
-            value={grades.sort((a, b) => parseInt(a) - parseInt(b))[0]}
+            value={String(
+              grades.sort(
+                (a, b) => parseInt(a.toString()) - parseInt(b.toString())
+              )[0]
+            )}
           >
             {grades
-              .sort((a, b) => parseInt(a) - parseInt(b))
+              .sort((a, b) => parseInt(a.toString()) - parseInt(b.toString()))
               .map((grade) => (
                 <mdui-tab
                   style={{ whiteSpace: "nowrap" }}
                   key={grade}
-                  value={grade}
+                  value={grade.toString()}
                 >
                   Klasse {grade}
                 </mdui-tab>
               ))}
             {grades
-              .sort((a, b) => parseInt(a) - parseInt(b))
+              .sort((a, b) => parseInt(a.toString()) - parseInt(b.toString()))
               .map((grade) => (
                 <mdui-tab-panel
                   key={grade}
-                  id={grade}
+                  id={grade.toString()}
                   slot="panel"
-                  value={grade}
+                  value={grade.toString()}
                 >
                   <>
                     <p />
@@ -1183,14 +1277,14 @@ export default function Results() {
                                   <td>
                                     {choices
                                       .find((choice) => choice.id === result.id)
-                                      .name?.replace(/\[.*?\]/g, "")
+                                      ?.name?.replace(/\[.*?\]/g, "")
                                       .trim()}
                                   </td>
                                   <td>
                                     {
                                       options.find(
                                         (option) => option.id === result.result
-                                      ).title
+                                      )?.title
                                     }
                                   </td>
                                 </tr>
@@ -1224,13 +1318,13 @@ export default function Results() {
                           <td style={{ width: "50%" }}>
                             {choices
                               .find((choice) => choice.id === result.id)
-                              .name?.replace(/\[.*?\]/g, "")}
+                              ?.name?.replace(/\[.*?\]/g, "")}
                           </td>
                           <td>
                             {
                               options.find(
                                 (option) => option.id === result.result
-                              ).title
+                              )?.title
                             }
                           </td>
                         </tr>
@@ -1243,7 +1337,7 @@ export default function Results() {
             <tfoot>
               <p>
                 Generiert am {new Date().toLocaleDateString()} von{" "}
-                {auth.currentUser.email} mit WaldorfWahlen
+                {auth.currentUser?.email} mit WaldorfWahlen
               </p>
             </tfoot>
           </div>
@@ -1254,26 +1348,26 @@ export default function Results() {
 }
 
 Results.loader = async function loader({ params }) {
-  const { id } = params;
+  const { id } = params as { id: string };
   const vote = await getDoc(doc(db, `/votes/${id}`));
-  const voteData = { id, ...vote.data() };
+  const voteData = { id, ...vote.data() } as VoteData;
   const options = (
     await getDocs(collection(db, `/votes/${id}/options`))
   ).docs.map((doc) => {
     return { id: doc.id, ...doc.data() };
-  });
+  }) as OptionData[];
 
   const results = (
     await getDocs(collection(db, `/votes/${id}/results`))
   ).docs.map((doc) => {
     return { id: doc.id, ...doc.data() };
-  });
+  }) as ResultData[];
 
   const choices = (
     await getDocs(collection(db, `/votes/${id}/choices`))
   ).docs.map((doc) => {
     return { id: doc.id, ...doc.data() };
-  });
+  }) as ChoiceData[];
 
   return {
     vote: voteData,

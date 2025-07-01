@@ -1,4 +1,20 @@
-export function DrawerItem({ active, icon, title, onClick, ...props }) {
+import React from "react";
+
+interface DrawerItemProps {
+  active?: boolean;
+  icon?: string;
+  title: string;
+  onClick: (event: React.MouseEvent) => void;
+  [key: string]: any; // For ...props
+}
+
+export function DrawerItem({
+  active,
+  icon,
+  title,
+  onClick,
+  ...props
+}: DrawerItemProps) {
   if (active) {
     return (
       <mdui-list-item active {...props} rounded onClick={onClick} icon={icon}>

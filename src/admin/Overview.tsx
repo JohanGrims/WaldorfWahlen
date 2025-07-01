@@ -1,9 +1,22 @@
-import { collection, getDocs } from "firebase/firestore";
+import { collection, getDocs, Timestamp } from "firebase/firestore";
 import moment from "moment-timezone";
 import { useLoaderData, useNavigate } from "react-router-dom";
 import { db } from "../firebase";
+
+interface VoteData {
+  id: string;
+  title: string;
+  startTime: Timestamp;
+  endTime: Timestamp;
+  active: boolean;
+}
+
+interface LoaderData {
+  votes: VoteData[];
+}
+
 export default function Overview() {
-  const { votes } = useLoaderData();
+  const { votes } = useLoaderData() as LoaderData;
 
   const navigate = useNavigate();
 
@@ -146,7 +159,7 @@ Overview.loader = async function loader() {
   const votes = await getDocs(collection(db, "votes"));
   return {
     votes: votes.docs.map((e) => {
-      return { id: e.id, ...e.data() };
+      return { id: e.id, ...e.data() } as VoteData;
     }),
   };
 };
