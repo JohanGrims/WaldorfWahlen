@@ -14,10 +14,6 @@ export default function Settings() {
   const [password, setPassword] = React.useState<string>("");
   const [newPassword, setNewPassword] = React.useState<string>("");
 
-  const [darkMode, setDarkMode] = React.useState<boolean>(
-    localStorage.getItem("theme") === "light"
-  );
-
   function updateUser() {
     if (!auth.currentUser) return;
     const userCredentials = EmailAuthProvider.credential(
@@ -65,7 +61,6 @@ export default function Settings() {
   React.useEffect(() => {
     const handleToggle = () => {
       if (switchRef.current) {
-        setDarkMode(switchRef.current.checked);
         localStorage.setItem(
           "theme",
           switchRef.current.checked ? "dark" : "light"
