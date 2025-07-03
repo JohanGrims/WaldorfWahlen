@@ -1399,6 +1399,8 @@ export default function Results() {
           </mdui-tabs>
 
           <div className="print-table">
+            <h2>{vote.title}</h2>
+
             {customMessage && (
               <div
                 style={{
@@ -1409,10 +1411,14 @@ export default function Results() {
                   borderRadius: "4px",
                 }}
               >
-                {customMessage}
+                {customMessage.split("\n").map((line) => (
+                  <span key={line}>
+                    {line}
+                    <br />
+                  </span>
+                ))}
               </div>
             )}
-            <h2>{vote.title}</h2>
             {grades.map((grade) => (
               <div key={grade}>
                 <h3>Klasse {grade}</h3>
