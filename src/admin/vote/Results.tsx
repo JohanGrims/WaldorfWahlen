@@ -556,27 +556,29 @@ export default function Results() {
     let currentPage = 1;
     let currentY = margin;
 
-    // Add custom message if provided (only on first page)
-    if (customMessage) {
-      doc.setFontSize(10);
-      doc.setTextColor(70, 70, 70);
-      doc.setFillColor(245, 245, 245);
-      doc.rect(margin, currentY, usableWidth, 20, "F");
-      doc.setDrawColor(33, 150, 243);
-      doc.setLineWidth(0.5);
-      doc.line(margin, currentY, margin, currentY + 20);
-      doc.line(margin + 2, currentY, margin + 2, currentY + 20);
-      doc.setTextColor(0, 0, 0);
-      doc.text("Hinweis:", margin + 5, currentY + 6);
+    // Helper function to add custom message under project title
+    function addCustomMessage() {
+      if (customMessage) {
+        doc.setFontSize(10);
+        doc.setTextColor(70, 70, 70);
+        doc.setFillColor(245, 245, 245);
+        doc.rect(margin, currentY, usableWidth, 20, "F");
+        doc.setDrawColor(33, 150, 243);
+        doc.setLineWidth(0.5);
+        doc.line(margin, currentY, margin, currentY + 20);
+        doc.line(margin + 2, currentY, margin + 2, currentY + 20);
+        doc.setTextColor(0, 0, 0);
+        doc.text("Hinweis:", margin + 5, currentY + 6);
 
-      // Split message into multiple lines if needed
-      const maxWidth = usableWidth - 15;
-      const lines = doc.splitTextToSize(customMessage, maxWidth);
-      lines.forEach((line: string, index: number) => {
-        doc.text(line, margin + 5, currentY + 12 + index * 4);
-      });
+        // Split message into multiple lines if needed
+        const maxWidth = usableWidth - 15;
+        const lines = doc.splitTextToSize(customMessage, maxWidth);
+        lines.forEach((line: string, index: number) => {
+          doc.text(line, margin + 5, currentY + 12 + index * 4);
+        });
 
-      currentY += Math.max(20, 8 + lines.length * 4) + 10;
+        currentY += Math.max(20, 8 + lines.length * 4) + 10;
+      }
     }
 
     options.forEach((option, optionIndex) => {
@@ -600,6 +602,9 @@ export default function Results() {
       doc.setFontSize(12);
       doc.text(option.title.replace(/\[.*?\]/g, ""), margin, currentY + 8);
       currentY += 18;
+
+      // Add custom message under project title
+      addCustomMessage();
 
       // Table headers
       doc.setFontSize(10);
