@@ -63,6 +63,7 @@ export default function Results() {
   const [commentText, setCommentText] = React.useState<string>("");
   const [commentGroup, setCommentGroup] = React.useState<string>("");
   const [commenting, setCommenting] = React.useState<boolean>(false);
+  const [customMessage, setCustomMessage] = React.useState<string>("");
 
   const revalidator = useRevalidator();
 
@@ -81,8 +82,8 @@ export default function Results() {
 
     const frameDoc = printFrame.contentWindow || printFrame.contentDocument;
     if (!frameDoc) return;
-    frameDoc.document.open();
-    frameDoc.document.write(`
+    (frameDoc as any).document.open();
+    (frameDoc as any).document.write(`
       <html>
         <head>
           <title>Drucken</title>
@@ -96,11 +97,11 @@ export default function Results() {
         <body>${printContents}</body>
       </html>
     `);
-    frameDoc.document.close();
+    (frameDoc as any).document.close();
 
     // print()-Funktion des iframe verwenden
-    frameDoc.focus();
-    frameDoc.print();
+    (frameDoc as any).focus();
+    (frameDoc as any).print();
 
     // iframe nach dem Drucken entfernen
     setTimeout(() => {
@@ -115,10 +116,18 @@ export default function Results() {
       (result) => result.result === projectId
     );
 
+    // Add custom message if provided
+    const messageContent = customMessage
+      ? `<p><div style="background-color: #f5f5f5; padding: 15px; margin-bottom: 20px; border-left: 4px solid #2196F3; border-radius: 4px;"> ${customMessage
+          .split("\n")
+          .join("<br />")}</div></p>`
+      : "";
+
     const printContents = `
       <div>
         <h2>${vote.title}</h2>
         <h3>${project.title.replace(/\[.*?\]/g, "")}</h3>
+                ${messageContent}
         <table>
           <thead>
             <tr>
@@ -162,8 +171,8 @@ export default function Results() {
 
     const frameDoc = printFrame.contentWindow || printFrame.contentDocument;
     if (!frameDoc) return;
-    frameDoc.document.open();
-    frameDoc.document.write(`
+    (frameDoc as any).document.open();
+    (frameDoc as any).document.write(`
       <html>
         <head>
           <title>Drucken - ${project.title.replace(/\[.*?\]/g, "")}</title>
@@ -177,11 +186,11 @@ export default function Results() {
         <body>${printContents}</body>
       </html>
     `);
-    frameDoc.document.close();
+    (frameDoc as any).document.close();
 
     // print()-Funktion des iframe verwenden
-    frameDoc.focus();
-    frameDoc.print();
+    (frameDoc as any).focus();
+    (frameDoc as any).print();
 
     // iframe nach dem Drucken entfernen
     setTimeout(() => {
@@ -191,13 +200,21 @@ export default function Results() {
 
   function printClassResults(grade: number) {
     const classResults = filteredResults().filter(
-      (result) => result.grade === grade
+      (result) => result.grade == grade
     );
+
+    // Add custom message if provided
+    const messageContent = customMessage
+      ? `<p><div style="background-color: #f5f5f5; padding: 15px; margin-bottom: 20px; border-left: 4px solid #2196F3; border-radius: 4px;"> ${customMessage
+          .split("\n")
+          .join("<br />")}</div></p>`
+      : "";
 
     const printContents = `
       <div>
         <h2>${vote.title}</h2>
         <h3>Klasse ${grade}</h3>
+        ${messageContent}
         <table>
           <thead>
             <tr>
@@ -241,8 +258,8 @@ export default function Results() {
 
     const frameDoc = printFrame.contentWindow || printFrame.contentDocument;
     if (!frameDoc) return;
-    frameDoc.document.open();
-    frameDoc.document.write(`
+    (frameDoc as any).document.open();
+    (frameDoc as any).document.write(`
       <html>
         <head>
           <title>Drucken - Klasse ${grade}</title>
@@ -256,11 +273,11 @@ export default function Results() {
         <body>${printContents}</body>
       </html>
     `);
-    frameDoc.document.close();
+    (frameDoc as any).document.close();
 
     // print()-Funktion des iframe verwenden
-    frameDoc.focus();
-    frameDoc.print();
+    (frameDoc as any).focus();
+    (frameDoc as any).print();
 
     // iframe nach dem Drucken entfernen
     setTimeout(() => {
@@ -497,25 +514,31 @@ export default function Results() {
   }
 
   function exportAttendancePDF() {
-    // Ask for number of attendance columns
+    // Ask for number of attendance columns and empty rows
     prompt({
       headline: "Anwesenheitsliste exportieren",
       description:
-        "Wie viele Spalten sollen für die Anwesenheit erstellt werden?",
+        "Wie viele Spalten sollen für die Anwesenheit erstellt werden und wie viele leere Zeilen nach jedem Projekt?",
       textFieldOptions: {
-        placeholder: "5",
+        placeholder: "Spalten: 5, Leere Zeilen: 2",
+        helper: "Format: Spalten,Leere Zeilen (z.B. 5,3)",
       },
       icon: "picture_as_pdf",
       confirmText: "Exportieren",
       cancelText: "Abbrechen",
       onConfirm: (value: string) => {
-        const attendanceColumns = parseInt(value) || 5;
-        generateAttendancePDF(attendanceColumns);
+        const parts = value.split(",").map((p) => p.trim());
+        const attendanceColumns = parseInt(parts[0]) || 5;
+        const emptyRows = parseInt(parts[1]) || 2;
+        generateAttendancePDF(attendanceColumns, emptyRows);
       },
     });
   }
 
-  function generateAttendancePDF(attendanceColumns: number) {
+  function generateAttendancePDF(
+    attendanceColumns: number,
+    emptyRows: number = 2
+  ) {
     const doc = new jsPDF("landscape", "mm", "a4");
     const pageWidth = 297; // A4 landscape width
     const pageHeight = 210; // A4 landscape height
@@ -533,13 +556,36 @@ export default function Results() {
     let currentPage = 1;
     let currentY = margin;
 
+    // Add custom message if provided (only on first page)
+    if (customMessage) {
+      doc.setFontSize(10);
+      doc.setTextColor(70, 70, 70);
+      doc.setFillColor(245, 245, 245);
+      doc.rect(margin, currentY, usableWidth, 20, "F");
+      doc.setDrawColor(33, 150, 243);
+      doc.setLineWidth(0.5);
+      doc.line(margin, currentY, margin, currentY + 20);
+      doc.line(margin + 2, currentY, margin + 2, currentY + 20);
+      doc.setTextColor(0, 0, 0);
+      doc.text("Hinweis:", margin + 5, currentY + 6);
+
+      // Split message into multiple lines if needed
+      const maxWidth = usableWidth - 15;
+      const lines = doc.splitTextToSize(customMessage, maxWidth);
+      lines.forEach((line: string, index: number) => {
+        doc.text(line, margin + 5, currentY + 12 + index * 4);
+      });
+
+      currentY += Math.max(20, 8 + lines.length * 4) + 10;
+    }
+
     options.forEach((option, optionIndex) => {
       const projectStudents = filteredResults().filter(
         (result) => result.result === option.id
       );
 
-      // Calculate needed height for this project (header + students + 2 empty rows)
-      const totalRows = projectStudents.length + 2;
+      // Calculate needed height for this project (header + students + empty rows)
+      const totalRows = projectStudents.length + emptyRows;
       const headerHeight = 12;
       const neededHeight = headerHeight + 8; // Just for header check
 
@@ -896,6 +942,20 @@ export default function Results() {
       <p />
       <mdui-divider />
       <p />
+
+      <div style={{ marginBottom: "20px" }}>
+        <mdui-text-field
+          label="Benutzerdefinierte Nachricht (optional)"
+          value={customMessage}
+          onInput={(e: React.ChangeEvent<HTMLInputElement>) =>
+            setCustomMessage(e.target.value)
+          }
+          placeholder="Diese Nachricht wird oben auf allen gedruckten Dokumenten angezeigt..."
+          style={{ width: "100%" }}
+          rows={3}
+        />
+      </div>
+
       <div style={{ display: "flex", justifyContent: "space-between" }}>
         <mdui-radio-group value={mode}>
           <mdui-radio value="all" onClick={() => setMode("all")}>
@@ -1036,9 +1096,30 @@ export default function Results() {
                 ))}
               </tbody>
             </table>
-          </div>
+          </div>{" "}
           <div className="print-table">
             <h2>{vote.title}</h2>
+            {customMessage && (
+              <p>
+                <div
+                  style={{
+                    backgroundColor: "#f5f5f5",
+                    padding: "15px",
+                    marginBottom: "20px",
+                    borderLeft: "4px solid #2196F3",
+                    borderRadius: "4px",
+                  }}
+                >
+                  {customMessage.split("\n").map((line) => (
+                    <span key={line}>
+                      {line}
+                      <br />
+                    </span>
+                  ))}
+                </div>
+              </p>
+            )}
+
             <table>
               <thead>
                 <tr>
@@ -1164,6 +1245,25 @@ export default function Results() {
           </mdui-tabs>
           <div className="print-table">
             <h2>{vote.title}</h2>
+            {customMessage && (
+              <div
+                style={{
+                  backgroundColor: "#f5f5f5",
+                  padding: "15px",
+                  marginBottom: "20px",
+                  borderLeft: "4px solid #2196F3",
+                  borderRadius: "4px",
+                }}
+              >
+                {customMessage.split("\n").map((line) => (
+                  <span key={line}>
+                    {line}
+                    <br />
+                  </span>
+                ))}
+              </div>
+            )}
+
             {options.map((option) => (
               <div key={option.id}>
                 <h3>{option.title.replace(/\[.*?\]/g, "")}</h3>
@@ -1271,7 +1371,7 @@ export default function Results() {
                           </thead>
                           <tbody>
                             {filteredResults()
-                              .filter((result) => result.grade === grade)
+                              .filter((result) => result.grade == grade)
                               .map((result) => (
                                 <tr key={result.id}>
                                   <td>
@@ -1300,6 +1400,25 @@ export default function Results() {
 
           <div className="print-table">
             <h2>{vote.title}</h2>
+
+            {customMessage && (
+              <div
+                style={{
+                  backgroundColor: "#f5f5f5",
+                  padding: "15px",
+                  marginBottom: "20px",
+                  borderLeft: "4px solid #2196F3",
+                  borderRadius: "4px",
+                }}
+              >
+                {customMessage.split("\n").map((line) => (
+                  <span key={line}>
+                    {line}
+                    <br />
+                  </span>
+                ))}
+              </div>
+            )}
             {grades.map((grade) => (
               <div key={grade}>
                 <h3>Klasse {grade}</h3>
@@ -1312,7 +1431,7 @@ export default function Results() {
                   </thead>
                   <tbody>
                     {filteredResults()
-                      .filter((result) => result.grade === grade)
+                      .filter((result) => Number(result.grade) == Number(grade))
                       .map((result) => (
                         <tr key={result.id}>
                           <td style={{ width: "50%" }}>
