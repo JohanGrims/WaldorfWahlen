@@ -152,10 +152,10 @@ const EMAIL_TEMPLATES = {
         <p><strong>Wahlzeitraum:</strong> {{start_time}} bis {{end_time}}</p>
         <p>Bitte besuchen Sie die folgende Website, um Ihre Stimme abzugeben:</p>
         <p style="text-align: center;">
-            <a href="https://waldorfwahlen.web.app/v/{{vote_id}}?name={{student_name}}&grade={{student_grade}}&listIndex={{student_list_index}}" class="button">Zur Wahl</a>
+            <a href="https://waldorfwahlen.web.app/v/{{vote_id}}?name={{student_name_encoded}}&grade={{student_grade}}&listIndex={{student_list_index}}" class="button">Zur Wahl</a>
         </p>
         <p><strong>Direktlink (mit vorausgefüllten Daten):</strong></p>
-        <p class="link-box">https://waldorfwahlen.web.app/v/{{vote_id}}?name={{student_name}}&grade={{student_grade}}&listIndex={{student_list_index}}</p>
+        <p class="link-box">https://waldorfwahlen.web.app/v/{{vote_id}}?name={{student_name_encoded}}&grade={{student_grade}}&listIndex={{student_list_index}}</p>
         <p class="footer">Mit freundlichen Grüßen!</p>
     </div>
 </body>
@@ -240,11 +240,11 @@ const EMAIL_TEMPLATES = {
         <p><strong>Wahlende:</strong> {{end_time}}</p>
         <p>Bitte vergessen Sie nicht, Ihre Stimme abzugeben:</p>
         <p style="text-align: center;">
-            <a href="https://waldorfwahlen.web.app/v/{{vote_id}}?name={{student_name}}&grade={{student_grade}}&listIndex={{student_list_index}}" class="button">Jetzt abstimmen</a>
+            <a href="https://waldorfwahlen.web.app/v/{{vote_id}}?name={{student_name_encoded}}&grade={{student_grade}}&listIndex={{student_list_index}}" class="button">Jetzt abstimmen</a>
         </p>
         <p>Falls Sie diese E-Mail unerwartet erhalten haben, ignorieren Sie diese Nachricht einfach.</p>
         <p><strong>Direktlink (mit vorausgefüllten Daten):</strong></p>
-        <p class="link-box">https://waldorfwahlen.web.app/v/{{vote_id}}?name={{student_name}}&grade={{student_grade}}&listIndex={{student_list_index}}</p>
+        <p class="link-box">https://waldorfwahlen.web.app/v/{{vote_id}}?name={{student_name_encoded}}&grade={{student_grade}}&listIndex={{student_list_index}}</p>
         <p class="footer">Mit freundlichen Grüßen!</p>
     </div>
 </body>
@@ -596,6 +596,7 @@ export default function Email() {
           let personalVariables: Record<string, string> = {
             ...getTemplateVariables(),
             student_name: student.name,
+            student_name_encoded: encodeURIComponent(student.name),
             student_grade: student.grade.toString(),
             student_list_index: student.listIndex,
           };
@@ -1167,9 +1168,13 @@ export default function Email() {
             </li>
             <li>
               <code>{"{{end_time}}"}</code> - Endzeit
-            </li>
+            </li>{" "}
             <li>
               <code>{"{{student_name}}"}</code> - Name des Schülers
+            </li>
+            <li>
+              <code>{"{{student_name_encoded}}"}</code> - URL-kodierter Name des
+              Schülers
             </li>
             <li>
               <code>{"{{student_grade}}"}</code> - Klasse des Schülers

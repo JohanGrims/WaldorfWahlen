@@ -147,7 +147,7 @@ export default function VoteDrawer({ onClose = () => {} }: VoteDrawerProps) {
           onClick={() => navigateTo(`/admin/${id}/answers`)}
         />
         <DrawerItem
-          icon={"email"}
+          icon={"forward_to_inbox"}
           title={"E-Mail"}
           active={active === "email"}
           onClick={() => navigateTo(`/admin/${id}/email`)}

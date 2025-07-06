@@ -67,7 +67,10 @@ export default function Vote() {
   const urlGrade = urlParams.get("grade");
   const urlListIndex = urlParams.get("listIndex");
 
-  const [name, setName] = React.useState<string>(urlName || "");
+  // Decode URL-encoded name if present
+  const decodedUrlName = urlName ? decodeURIComponent(urlName) : null;
+
+  const [name, setName] = React.useState<string>(decodedUrlName || "");
   const [firstName, setFirstName] = React.useState<string>("");
   const [lastName, setLastName] = React.useState<string>("");
   const [grade, setGrade] = React.useState<string>(urlGrade || "");
@@ -89,7 +92,7 @@ export default function Vote() {
 
   const submitDisabled = (): boolean => {
     // If name is provided via URL, use it instead of firstName/lastName
-    if (urlName) {
+    if (decodedUrlName) {
       if (
         selected.includes("null") ||
         !name?.trim() ||
@@ -142,7 +145,9 @@ export default function Vote() {
     if (!id) return;
 
     // Use either prefilled name or firstName + lastName
-    const finalName = urlName ? name : `${firstName} ${lastName.charAt(0)}.`;
+    const finalName = decodedUrlName
+      ? name
+      : `${firstName} ${lastName.charAt(0)}.`;
 
     addDoc(collection(db, `/votes/${id}/choices`), {
       name: finalName,
@@ -224,7 +229,7 @@ export default function Vote() {
             Bitte überprüfen Sie Ihre Eingaben. Sie können diese nach dem
             Absenden nicht mehr ändern.
           </p>
-          Name: {urlName ? name : `${firstName} ${lastName}`}
+          Name: {decodedUrlName ? name : `${firstName} ${lastName}`}
           <br />
           Klasse: {grade}
           <br />
@@ -289,7 +294,7 @@ export default function Vote() {
       </mdui-dialog>
       <mdui-card
         variant={breakpointCondition.up("md") ? "outlined" : "elevated"}
-        class="card"
+        className="card"
       >
         <div className="mdui-prose">
           <h1 className="vote-title">{title}</h1>
@@ -309,7 +314,7 @@ export default function Vote() {
         )}
         <p />
         <br />
-        {urlName ? (
+        {decodedUrlName ? (
           // Single name field when name is prefilled from URL
           <mdui-text-field
             label="Name"
@@ -416,7 +421,7 @@ export default function Vote() {
                         ? "rgba(0, 0, 0, 0.1)"
                         : undefined,
                   }}
-                  class={`option-card ${
+                  className={`option-card ${
                     selected[index] === option.id ? "selected" : ""
                   } ${
                     selected[index] !== option.id &&

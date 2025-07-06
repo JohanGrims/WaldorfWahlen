@@ -127,7 +127,7 @@ export default function AdminVote() {
           <h3>E-Mail</h3>
           <p>
             <span style={{ fontSize: "50px" }}>
-              <mdui-icon name="email" style={{ fontSize: "50px" }} />
+              <mdui-icon name="forward_to_inbox" style={{ fontSize: "50px" }} />
             </span>
           </p>
         </mdui-card>
