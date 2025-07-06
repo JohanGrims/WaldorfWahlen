@@ -8,7 +8,12 @@ import {
 } from "firebase/firestore";
 import { confirm, snackbar } from "mdui";
 import React from "react";
-import { useBlocker, useLoaderData, useNavigate } from "react-router-dom";
+import {
+  LoaderFunctionArgs,
+  useBlocker,
+  useLoaderData,
+  useNavigate,
+} from "react-router-dom";
 import { appCheck, auth, db } from "../../firebase";
 import { getToken } from "firebase/app-check";
 
@@ -1380,7 +1385,7 @@ export default function Assign() {
   );
 }
 
-Assign.loader = async function loader({ params }) {
+Assign.loader = async function loader({ params }: LoaderFunctionArgs) {
   const { id } = params as { id: string };
 
   const vote = await getDoc(doc(db, `/votes/${id}`));

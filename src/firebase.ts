@@ -9,7 +9,7 @@ import {
 
 declare global {
   interface Window {
-    FIREBASE_APPCHECK_DEBUG_TOKEN?: boolean;
+    FIREBASE_APPCHECK_DEBUG_TOKEN?: string | boolean;
   }
 
   interface ImportMeta {

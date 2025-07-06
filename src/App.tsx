@@ -2,7 +2,7 @@ import { collection, getDocs, Timestamp, DocumentData } from "firebase/firestore
 import moment from "moment-timezone";
 import { useLoaderData } from "react-router-dom";
 import { db } from "./firebase";
-import VoteCard from './VoteCard.tsx'; // Import VoteCard
+import VoteCard from "./VoteCard";
 import { Helmet } from "react-helmet";
 
 interface VoteData extends DocumentData {

@@ -16,6 +16,7 @@ import {
   useNavigate,
   useRevalidator,
   useParams,
+  LoaderFunctionArgs,
 } from "react-router-dom";
 import { db } from "../../firebase";
 
@@ -34,8 +35,8 @@ interface OptionData extends DocumentData {
 interface AnswerData extends DocumentData {
   id: string;
   name: string;
-  grade: number;
-  listIndex: number;
+  grade: number | string;
+  listIndex: number | string;
   selected: string[];
   extraFields?: string[];
   timestamp: Timestamp;
@@ -558,7 +559,9 @@ export default function Answers() {
                     <tbody>
                       {answers
                         .filter((answer) => answer.grade === grade)
-                        .sort((a, b) => a.listIndex - b.listIndex)
+                        .sort(
+                          (a, b) => Number(a.listIndex) - Number(b.listIndex)
+                        )
                         .map((answer, i) => (
                           <tr key={i}>
                             <td>
@@ -835,7 +838,7 @@ export default function Answers() {
   );
 }
 
-Answers.loader = async function loader({ params }) {
+Answers.loader = async function loader({ params }: LoaderFunctionArgs) {
   const { id } = params as { id: string };
   const vote = await getDoc(doc(db, `/votes/${id}`));
   const voteData = { id, ...vote.data() } as VoteData;

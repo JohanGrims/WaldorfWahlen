@@ -1,5 +1,9 @@
 import { collection, doc, getDoc, getDocs, Timestamp, DocumentData } from "firebase/firestore";
-import { useLoaderData, useNavigate } from "react-router-dom";
+import {
+  LoaderFunctionArgs,
+  useLoaderData,
+  useNavigate,
+} from "react-router-dom";
 import { db } from "../../firebase";
 
 interface VoteData extends DocumentData {
@@ -199,7 +203,7 @@ export default function AdminVote() {
   );
 }
 
-AdminVote.loader = async function loader({ params }) {
+AdminVote.loader = async function loader({ params }: LoaderFunctionArgs) {
   const { id } = params as { id: string };
   const vote = await getDoc(doc(db, `/votes/${id}`));
   if (!vote.exists()) {
@@ -208,13 +212,22 @@ AdminVote.loader = async function loader({ params }) {
   const voteData = { id: vote.id, ...vote.data() } as VoteData;
 
   const choices = await getDocs(collection(db, `/votes/${id}/choices`));
-  const choiceData = choices.docs.map((doc) => ({ id: doc.id, ...doc.data() })) as ChoiceData[];
+  const choiceData = choices.docs.map((doc) => ({
+    id: doc.id,
+    ...doc.data(),
+  })) as ChoiceData[];
 
   const options = await getDocs(collection(db, `/votes/${id}/options`));
-  const optionData = options.docs.map((doc) => ({ id: doc.id, ...doc.data() })) as OptionData[];
+  const optionData = options.docs.map((doc) => ({
+    id: doc.id,
+    ...doc.data(),
+  })) as OptionData[];
 
   const results = await getDocs(collection(db, `/votes/${id}/results`));
-  const resultData = results.docs.map((doc) => ({ id: doc.id, ...doc.data() })) as ResultData[];
+  const resultData = results.docs.map((doc) => ({
+    id: doc.id,
+    ...doc.data(),
+  })) as ResultData[];
 
   const proposals = await getDocs(collection(db, `/votes/${id}/proposals`));
   const proposalData = proposals.docs.map((doc) => ({

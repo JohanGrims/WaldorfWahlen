@@ -8,7 +8,11 @@ import {
 } from "firebase/firestore";
 import { snackbar } from "mdui";
 import React from "react";
-import { useLoaderData, useRevalidator } from "react-router-dom";
+import {
+  LoaderFunctionArgs,
+  useLoaderData,
+  useRevalidator,
+} from "react-router-dom";
 import { db } from "../../firebase";
 import { Choice, Class, Option, Vote } from "../../types";
 
@@ -326,7 +330,7 @@ export default function Add() {
   );
 }
 
-Add.loader = async function loader({ params }) {
+Add.loader = async function loader({ params }: LoaderFunctionArgs) {
   const { id } = params;
   const vote = await getDoc(doc(db, `/votes/${id}`));
   if (!vote.exists()) {
