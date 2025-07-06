@@ -243,7 +243,7 @@ export default function Answers() {
                 const updatedAnswer: AnswerData = {
                   ...editingAnswer,
                   name: formData.get("name") as string,
-                  grade: parseInt(formData.get("grade") as string),
+                  grade: formData.get("grade") as string,
                   listIndex: parseInt(formData.get("listIndex") as string),
                   selected: Array.from(
                     { length: vote.selectCount },

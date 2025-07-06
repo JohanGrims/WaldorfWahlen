@@ -26,6 +26,7 @@ export type Vote = {
 export type Student = {
   listIndex: string;
   name: string;
+  email?: string;
 };
 
 export type Class = {

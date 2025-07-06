@@ -1,5 +1,11 @@
 import firebase_admin
 import pulp
+import smtplib
+import os
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+from email.mime.base import MIMEBase
+from email import encoders
 from firebase_admin import auth, credentials, app_check
 from flask import Flask, jsonify, request, abort
 from flask_cors import CORS
@@ -24,6 +30,173 @@ def authenticate(token, uid):
             return False
     except Exception as e:
         return None
+
+
+def send_email(recipient_emails, subject, body, smtp_config=None):
+    """
+    Send email using SMTP
+    
+    Args:
+        recipient_emails: List of email addresses or single email address
+        subject: Email subject
+        body: Email body (HTML supported)
+        smtp_config: Dictionary with SMTP configuration (required)
+                    {'server': 'smtp.gmail.com', 'port': 587, 'username': 'user@gmail.com', 'password': 'password'}
+    
+    Returns:
+        dict: Success status and detailed message
+    """
+    try:
+        # Validate SMTP configuration is provided
+        if smtp_config is None:
+            return {
+                'success': False, 
+                'message': 'SMTP configuration is required. Please provide server, port, username, and password.',
+                'error_type': 'missing_config'
+            }
+        
+        # Validate required SMTP configuration fields
+        required_fields = ['server', 'port', 'username', 'password']
+        missing_fields = [field for field in required_fields if not smtp_config.get(field)]
+        
+        if missing_fields:
+            return {
+                'success': False, 
+                'message': f'Missing required SMTP configuration fields: {", ".join(missing_fields)}',
+                'error_type': 'invalid_config',
+                'missing_fields': missing_fields
+            }
+        
+        # Validate email addresses
+        if not recipient_emails:
+            return {
+                'success': False, 
+                'message': 'No recipient email addresses provided',
+                'error_type': 'missing_recipients'
+            }
+        
+        # Ensure recipient_emails is a list
+        if isinstance(recipient_emails, str):
+            recipient_emails = [recipient_emails]
+        
+        # Validate email format (basic validation)
+        invalid_emails = [email for email in recipient_emails if '@' not in email or '.' not in email.split('@')[-1]]
+        if invalid_emails:
+            return {
+                'success': False, 
+                'message': f'Invalid email format detected: {", ".join(invalid_emails)}',
+                'error_type': 'invalid_email_format',
+                'invalid_emails': invalid_emails
+            }
+        
+        # Create message
+        msg = MIMEMultipart('alternative')
+        msg['From'] = smtp_config['username']
+        msg['Subject'] = subject
+        
+        # Add HTML body
+        html_part = MIMEText(body, 'html', 'utf-8')
+        msg.attach(html_part)
+        
+        # Connect to server and send emails
+        try:
+            server = smtplib.SMTP(smtp_config['server'], int(smtp_config['port']))
+            server.starttls()
+        except Exception as e:
+            return {
+                'success': False, 
+                'message': f'Failed to connect to SMTP server {smtp_config["server"]}:{smtp_config["port"]}. Error: {str(e)}',
+                'error_type': 'connection_failed',
+                'smtp_server': smtp_config['server'],
+                'smtp_port': smtp_config['port']
+            }
+        
+        try:
+            server.login(smtp_config['username'], smtp_config['password'])
+        except smtplib.SMTPAuthenticationError as e:
+            server.quit()
+            return {
+                'success': False, 
+                'message': f'SMTP authentication failed for {smtp_config["username"]}. Please check your username and password.',
+                'error_type': 'authentication_failed',
+                'username': smtp_config['username']
+            }
+        except Exception as e:
+            server.quit()
+            return {
+                'success': False, 
+                'message': f'Login failed: {str(e)}',
+                'error_type': 'login_failed'
+            }
+        
+        failed_emails = []
+        for email in recipient_emails:
+            try:
+                msg['To'] = email
+                text = msg.as_string()
+                server.sendmail(smtp_config['username'], email, text)
+                del msg['To']  # Remove To header for next iteration
+            except smtplib.SMTPRecipientsRefused as e:
+                failed_emails.append({
+                    'email': email, 
+                    'error': 'Recipient email address was refused by the server',
+                    'error_type': 'recipient_refused'
+                })
+            except smtplib.SMTPDataError as e:
+                failed_emails.append({
+                    'email': email, 
+                    'error': f'SMTP data error: {str(e)}',
+                    'error_type': 'data_error'
+                })
+            except Exception as e:
+                failed_emails.append({
+                    'email': email, 
+                    'error': f'Failed to send email: {str(e)}',
+                    'error_type': 'send_failed'
+                })
+        
+        server.quit()
+        
+        if failed_emails:
+            return {
+                'success': len(failed_emails) < len(recipient_emails), 
+                'message': f'Sent {len(recipient_emails) - len(failed_emails)} of {len(recipient_emails)} emails successfully',
+                'failed_emails': failed_emails,
+                'sent_count': len(recipient_emails) - len(failed_emails),
+                'total_count': len(recipient_emails)
+            }
+        else:
+            return {
+                'success': True, 
+                'message': f'Successfully sent all {len(recipient_emails)} emails',
+                'sent_count': len(recipient_emails),
+                'total_count': len(recipient_emails)
+            }
+            
+    except Exception as e:
+        return {
+            'success': False, 
+            'message': f'Unexpected error occurred while sending emails: {str(e)}',
+            'error_type': 'unexpected_error'
+        }
+
+
+def replace_template_variables(template, variables):
+    """
+    Replace template variables in the format {{variable_name}} with actual values
+    
+    Args:
+        template: String template with variables
+        variables: Dictionary of variable name -> value mappings
+    
+    Returns:
+        String with variables replaced
+    """
+    result = template
+    for key, value in variables.items():
+        placeholder = f"{{{{{key}}}}}"
+        result = result.replace(placeholder, str(value))
+    return result
 
 
 @app.before_request
@@ -269,6 +442,119 @@ def delete_user():
             return jsonify({"error": "not authorized"}), 401
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+
+@app.route("/send-email", methods=["POST"])
+def send_email_endpoint():
+    """
+    Send emails to a list of recipients
+    
+    Expected JSON payload:
+    {
+        "token": "firebase_token",
+        "uid": "user_id",
+        "emails": ["email1@example.com", "email2@example.com"],
+        "subject": "Email subject",
+        "body": "Email body with {{variables}}",
+        "variables": {"variable_name": "value"},
+        "smtp_config": {
+            "server": "smtp.gmail.com",
+            "port": 587,
+            "username": "sender@gmail.com",
+            "password": "app_password"
+        }
+    }
+    """
+    try:
+        data = request.get_json()
+        
+        if not data:
+            return jsonify({
+                "error": "No JSON data provided",
+                "error_type": "missing_data"
+            }), 400
+        
+        token = data.get("token")
+        uid = data.get("uid")
+        
+        if not token or not uid:
+            return jsonify({
+                "error": "Missing authentication token or user ID",
+                "error_type": "missing_auth"
+            }), 400
+        
+        if not authenticate(token, uid):
+            return jsonify({
+                "error": "Authentication failed. Invalid token or user ID.",
+                "error_type": "authentication_failed"
+            }), 401
+        
+        # Extract email data
+        emails = data.get("emails", [])
+        subject = data.get("subject", "")
+        body_template = data.get("body", "")
+        variables = data.get("variables", {})
+        smtp_config = data.get("smtp_config")
+        
+        # Validate required fields
+        if not emails:
+            return jsonify({
+                "error": "No email addresses provided in 'emails' field",
+                "error_type": "missing_emails"
+            }), 400
+        
+        if not subject:
+            return jsonify({
+                "error": "Email subject is required",
+                "error_type": "missing_subject"
+            }), 400
+            
+        if not body_template:
+            return jsonify({
+                "error": "Email body is required",
+                "error_type": "missing_body"
+            }), 400
+        
+        if not smtp_config:
+            return jsonify({
+                "error": "SMTP configuration is required. Please provide server, port, username, and password.",
+                "error_type": "missing_smtp_config"
+            }), 400
+        
+        # Replace template variables
+        try:
+            body = replace_template_variables(body_template, variables)
+            subject = replace_template_variables(subject, variables)
+        except Exception as e:
+            return jsonify({
+                "error": f"Failed to process template variables: {str(e)}",
+                "error_type": "template_processing_failed"
+            }), 400
+        
+        # Send emails
+        result = send_email(emails, subject, body, smtp_config)
+        
+        if result['success']:
+            return jsonify(result), 200
+        else:
+            # Return appropriate HTTP status based on error type
+            error_type = result.get('error_type', 'unknown')
+            status_code = 500
+            
+            if error_type in ['missing_config', 'invalid_config', 'missing_recipients', 'invalid_email_format']:
+                status_code = 400
+            elif error_type in ['authentication_failed']:
+                status_code = 401
+            elif error_type in ['connection_failed', 'login_failed']:
+                status_code = 503  # Service unavailable
+            
+            return jsonify(result), status_code
+            
+    except Exception as e:
+        return jsonify({
+            "error": f"Unexpected server error: {str(e)}",
+            "error_type": "server_error"
+        }), 500
 
 
 if __name__ == "__main__":
