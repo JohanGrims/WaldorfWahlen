@@ -465,6 +465,10 @@ button:not(:disabled):hover {
   justify-content: space-between;
 }
 
+mdui-divider {
+  margin: 20px 0;
+}
+
 @media (max-width: 800px) {
   .card {
     width: 100%;
