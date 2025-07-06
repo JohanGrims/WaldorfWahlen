@@ -366,10 +366,13 @@ export default function Students() {
               ) as HTMLFormElement;
               const formData = new FormData(form);
 
+              const email = formData.get("email") as string;
               const updatedStudent: Student = {
                 name: formData.get("name") as string,
                 listIndex: formData.get("listIndex") as string,
-                email: (formData.get("email") as string) || undefined,
+                ...(email && email.trim() !== ""
+                  ? { email: email.trim() }
+                  : {}),
               };
 
               saveStudentChanges(updatedStudent);

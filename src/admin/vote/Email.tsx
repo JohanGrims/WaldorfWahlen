@@ -152,10 +152,10 @@ const EMAIL_TEMPLATES = {
         <p><strong>Wahlzeitraum:</strong> {{start_time}} bis {{end_time}}</p>
         <p>Bitte besuchen Sie die folgende Website, um Ihre Stimme abzugeben:</p>
         <p style="text-align: center;">
-            <a href="https://waldorfwahlen.web.app/{{vote_id}}" class="button">Zur Wahl</a>
+            <a href="https://waldorfwahlen.web.app/v/{{vote_id}}?name={{student_name}}&grade={{student_grade}}&listIndex={{student_list_index}}" class="button">Zur Wahl</a>
         </p>
-        <p><strong>Direktlink:</strong></p>
-        <p class="link-box">https://waldorfwahlen.web.app/{{vote_id}}</p>
+        <p><strong>Direktlink (mit vorausgefüllten Daten):</strong></p>
+        <p class="link-box">https://waldorfwahlen.web.app/v/{{vote_id}}?name={{student_name}}&grade={{student_grade}}&listIndex={{student_list_index}}</p>
         <p class="footer">Mit freundlichen Grüßen!</p>
     </div>
 </body>
@@ -240,11 +240,11 @@ const EMAIL_TEMPLATES = {
         <p><strong>Wahlende:</strong> {{end_time}}</p>
         <p>Bitte vergessen Sie nicht, Ihre Stimme abzugeben:</p>
         <p style="text-align: center;">
-            <a href="https://waldorfwahlen.web.app/{{vote_id}}" class="button">Jetzt abstimmen</a>
+            <a href="https://waldorfwahlen.web.app/v/{{vote_id}}?name={{student_name}}&grade={{student_grade}}&listIndex={{student_list_index}}" class="button">Jetzt abstimmen</a>
         </p>
         <p>Falls Sie diese E-Mail unerwartet erhalten haben, ignorieren Sie diese Nachricht einfach.</p>
-        <p><strong>Direktlink:</strong></p>
-        <p class="link-box">https://waldorfwahlen.web.app/{{vote_id}}</p>
+        <p><strong>Direktlink (mit vorausgefüllten Daten):</strong></p>
+        <p class="link-box">https://waldorfwahlen.web.app/v/{{vote_id}}?name={{student_name}}&grade={{student_grade}}&listIndex={{student_list_index}}</p>
         <p class="footer">Mit freundlichen Grüßen!</p>
     </div>
 </body>
@@ -340,11 +340,11 @@ const EMAIL_TEMPLATES = {
         
         <p>Die vollständigen Ergebnisse können Sie hier einsehen:</p>
         <p style="text-align: center;">
-            <a href="https://waldorfwahlen.web.app/r/{{vote_id}}" class="button">Ergebnisse ansehen</a>
+            <a href="https://waldorfwahlen.web.app/r/{{vote_id}}?id={{choice_id}}" class="button">Ergebnisse ansehen</a>
         </p>
         
-        <p><strong>Direktlink:</strong></p>
-        <p class="link-box">https://waldorfwahlen.web.app/r/{{vote_id}}</p>
+        <p><strong>Direktlink (mit Identifikation):</strong></p>
+        <p class="link-box">https://waldorfwahlen.web.app/r/{{vote_id}}?id={{choice_id}}</p>
         
         <p class="footer">Mit freundlichen Grüßen!</p>
     </div>
@@ -590,13 +590,14 @@ export default function Email() {
 
       // All emails are now personalized
       for (const email of emails) {
-        setProgress((prev) => prev + 1);
         const student = selectedData.find((s) => s.email === email);
 
         if (student) {
           let personalVariables: Record<string, string> = {
             ...getTemplateVariables(),
             student_name: student.name,
+            student_grade: student.grade.toString(),
+            student_list_index: student.listIndex,
           };
 
           // Add result-specific variables for results emails
@@ -610,15 +611,12 @@ export default function Email() {
               ? results.find((r) => r.id === choice.id)
               : null;
             const assignedOption = studentResult
-              ? options.find((o) => o.id === studentResult.result)
+              ? options.find((o) => o.id === studentResult.assignedOption)
               : null;
-
-            console.log(
-              `Sending results email for student ${student.name} (${student.listIndex})`
-            );
 
             personalVariables = {
               ...personalVariables,
+              choice_id: choice?.id || "",
               assigned_option: assignedOption?.title || "Nicht zugewiesen",
               assigned_details: assignedOption
                 ? `<p><strong>Lehrer:</strong> ${
@@ -629,6 +627,11 @@ export default function Email() {
                 : "",
             };
           }
+
+          console.log(
+            `Sending email to ${email} with variables:`,
+            personalVariables
+          );
 
           const response = await fetch(
             `https://api.chatwithsteiner.de/waldorfwahlen/send`,
@@ -651,6 +654,8 @@ export default function Email() {
               }),
             }
           );
+
+          setProgress((prev) => prev + 1);
 
           if (!response.ok) {
             const error = await response.json();
@@ -691,7 +696,10 @@ export default function Email() {
           label="SMTP-Server"
           value={smtpConfig.server}
           onInput={(e) =>
-            setSmtpConfig({ ...smtpConfig, server: e.target.value })
+            setSmtpConfig({
+              ...smtpConfig,
+              server: (e.target as HTMLInputElement).value,
+            })
           }
           required
         ></mdui-text-field>
@@ -701,11 +709,11 @@ export default function Email() {
         <mdui-text-field
           label="Port"
           type="number"
-          value={smtpConfig.port}
+          value={smtpConfig.port?.toString() || "587"}
           onInput={(e) =>
             setSmtpConfig({
               ...smtpConfig,
-              port: parseInt(e.target.value, 10),
+              port: parseInt((e.target as HTMLInputElement).value, 10),
             })
           }
           required
@@ -717,7 +725,10 @@ export default function Email() {
           label="Benutzername"
           value={smtpConfig.username}
           onInput={(e) =>
-            setSmtpConfig({ ...smtpConfig, username: e.target.value })
+            setSmtpConfig({
+              ...smtpConfig,
+              username: (e.target as HTMLInputElement).value,
+            })
           }
           required
         ></mdui-text-field>
@@ -729,7 +740,10 @@ export default function Email() {
           type="password"
           value={smtpConfig.password}
           onInput={(e) =>
-            setSmtpConfig({ ...smtpConfig, password: e.target.value })
+            setSmtpConfig({
+              ...smtpConfig,
+              password: (e.target as HTMLInputElement).value,
+            })
           }
           required
         ></mdui-text-field>
@@ -1099,7 +1113,6 @@ export default function Email() {
         <Helmet>
           <title>E-Mail senden - {vote.title}</title>
         </Helmet>
-
         <div
           style={{
             display: "flex",
@@ -1115,9 +1128,7 @@ export default function Email() {
           />
           <h2 style={{ margin: 0 }}>E-Mail senden</h2>
         </div>
-
         <h3>E-Mail-Inhalt anpassen</h3>
-
         <mdui-text-field
           label="Betreff"
           value={customSubject}
@@ -1126,7 +1137,6 @@ export default function Email() {
           }
           style={{ width: "100%", marginBottom: "16px" }}
         />
-
         <mdui-text-field
           label="Nachricht (HTML unterstützt)"
           value={customBody}
@@ -1135,8 +1145,7 @@ export default function Email() {
           }
           rows={8}
           style={{ width: "100%" }}
-        />
-
+        />{" "}
         <div
           style={{
             marginTop: "16px",
@@ -1162,8 +1171,17 @@ export default function Email() {
             <li>
               <code>{"{{student_name}}"}</code> - Name des Schülers
             </li>
+            <li>
+              <code>{"{{student_grade}}"}</code> - Klasse des Schülers
+            </li>
+            <li>
+              <code>{"{{student_list_index}}"}</code> - Klassenlistennummer
+            </li>
             {selectedTemplate === "results" && (
               <>
+                <li>
+                  <code>{"{{choice_id}}"}</code> - ID der Wahl-Teilnahme
+                </li>
                 <li>
                   <code>{"{{assigned_option}}"}</code> - Zugewiesene Option
                 </li>
@@ -1174,7 +1192,6 @@ export default function Email() {
             )}
           </ul>
         </div>
-
         {/* Send Action */}
         <div
           style={{

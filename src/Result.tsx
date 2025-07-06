@@ -41,15 +41,33 @@ export default function Result() {
   const { vote, options } = useLoaderData() as LoaderData;
   const { result } = vote;
 
+  // Get URL parameters
+  const urlParams = new URLSearchParams(window.location.search);
+  const urlChoiceId = urlParams.get("id");
+  const urlName = urlParams.get("name");
+  const urlGrade = urlParams.get("grade");
+  const urlListIndex = urlParams.get("listIndex");
+
   const [voteResult, setVoteResult] = React.useState<
     VoteResultData | undefined
   >(undefined);
 
   React.useEffect(() => {
     if (vote.result && id) {
-      const storedItem = localStorage.getItem(id);
-      if (storedItem) {
-        const choiceId = JSON.parse(storedItem).choiceId;
+      let choiceId: string | null = null;
+
+      // First try to get choiceId from URL parameter
+      if (urlChoiceId) {
+        choiceId = urlChoiceId;
+      } else {
+        // Fallback to localStorage for backwards compatibility
+        const storedItem = localStorage.getItem(id);
+        if (storedItem) {
+          choiceId = JSON.parse(storedItem).choiceId;
+        }
+      }
+
+      if (choiceId) {
         getDoc(doc(db, `/votes/${id}/results/${choiceId}`)).then((docSnap) => {
           if (docSnap.exists()) {
             setVoteResult(docSnap.data() as VoteResultData);
@@ -57,7 +75,7 @@ export default function Result() {
         });
       }
     }
-  }, [id, vote.result]);
+  }, [id, vote.result, urlChoiceId]);
 
   if (!result) {
     return (
@@ -88,11 +106,23 @@ export default function Result() {
     return (
       <mdui-dialog open headline="Das Wahlergebnis ist da!" icon="done">
         <div className="mdui-prose">
-          <p>
-            Es sieht so aus, als hätten Sie aber nicht von diesem Gerät
-            gewählt...
-          </p>
-          <p>Kontaktieren Sie für die Ergebnisse den zuständigen Lehrer.</p>
+          {urlChoiceId ? (
+            <>
+              <p>
+                Die Ergebnisse konnten nicht gefunden werden. Möglicherweise ist
+                die ID ungültig.
+              </p>
+              <p>Kontaktieren Sie für die Ergebnisse den zuständigen Lehrer.</p>
+            </>
+          ) : (
+            <>
+              <p>
+                Es sieht so aus, als hätten Sie aber nicht von diesem Gerät
+                gewählt...
+              </p>
+              <p>Kontaktieren Sie für die Ergebnisse den zuständigen Lehrer.</p>
+            </>
+          )}
         </div>
         <p />
         <div className="button-container">

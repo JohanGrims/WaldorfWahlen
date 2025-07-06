@@ -62,10 +62,16 @@ export default function Vote() {
     description,
   } = vote;
 
+  // Get URL parameters for prefilling
+  const urlName = urlParams.get("name");
+  const urlGrade = urlParams.get("grade");
+  const urlListIndex = urlParams.get("listIndex");
+
+  const [name, setName] = React.useState<string>(urlName || "");
   const [firstName, setFirstName] = React.useState<string>("");
   const [lastName, setLastName] = React.useState<string>("");
-  const [grade, setGrade] = React.useState<string>("");
-  const [listIndex, setListIndex] = React.useState<string>("");
+  const [grade, setGrade] = React.useState<string>(urlGrade || "");
+  const [listIndex, setListIndex] = React.useState<string>(urlListIndex || "");
   const [selected, setSelected] = React.useState<string[]>(
     Array.from({ length: selectCount }, () => "null")
   );
@@ -82,20 +88,37 @@ export default function Vote() {
   const preview = urlParams.get("preview");
 
   const submitDisabled = (): boolean => {
-    if (
-      selected.includes("null") ||
-      !firstName?.trim() ||
-      !lastName?.trim() ||
-      !grade ||
-      !listIndex ||
-      firstName?.length < 2 ||
-      lastName?.length < 2 ||
-      (extraFields &&
-        (extraFieldsValues?.length !== extraFields?.length ||
-          extraFieldsValues?.some((value) => !value?.trim()))) ||
-      !accepted
-    ) {
-      return true;
+    // If name is provided via URL, use it instead of firstName/lastName
+    if (urlName) {
+      if (
+        selected.includes("null") ||
+        !name?.trim() ||
+        !grade ||
+        !listIndex ||
+        name?.length < 2 ||
+        (extraFields &&
+          (extraFieldsValues?.length !== extraFields?.length ||
+            extraFieldsValues?.some((value) => !value?.trim()))) ||
+        !accepted
+      ) {
+        return true;
+      }
+    } else {
+      if (
+        selected.includes("null") ||
+        !firstName?.trim() ||
+        !lastName?.trim() ||
+        !grade ||
+        !listIndex ||
+        firstName?.length < 2 ||
+        lastName?.length < 2 ||
+        (extraFields &&
+          (extraFieldsValues?.length !== extraFields?.length ||
+            extraFieldsValues?.some((value) => !value?.trim()))) ||
+        !accepted
+      ) {
+        return true;
+      }
     }
 
     return false;
@@ -117,8 +140,12 @@ export default function Vote() {
   function submit() {
     setSending(true);
     if (!id) return;
+
+    // Use either prefilled name or firstName + lastName
+    const finalName = urlName ? name : `${firstName} ${lastName.charAt(0)}.`;
+
     addDoc(collection(db, `/votes/${id}/choices`), {
-      name: `${firstName} ${lastName.charAt(0)}.`, // Ensure firstName and lastName are not null
+      name: finalName,
       grade: parseInt(grade),
       listIndex: parseInt(listIndex),
       selected,
@@ -197,7 +224,7 @@ export default function Vote() {
             Bitte überprüfen Sie Ihre Eingaben. Sie können diese nach dem
             Absenden nicht mehr ändern.
           </p>
-          Name: {firstName} {lastName}
+          Name: {urlName ? name : `${firstName} ${lastName}`}
           <br />
           Klasse: {grade}
           <br />
@@ -282,26 +309,40 @@ export default function Vote() {
         )}
         <p />
         <br />
-        <div className="flex-row">
+        {urlName ? (
+          // Single name field when name is prefilled from URL
           <mdui-text-field
-            label="Vorname(n)"
-            placeholder="Max Erika"
-            value={firstName}
+            label="Name"
+            placeholder="Max Erika Mustermann"
+            value={name}
             onInput={(e: React.ChangeEvent<HTMLInputElement>) =>
-              setFirstName(capitalizeWords(e.target.value))
+              setName(capitalizeWords(e.target.value))
             }
             icon="person"
           ></mdui-text-field>
-          <mdui-text-field
-            label="Nachname"
-            placeholder="Mustermann"
-            value={lastName}
-            onInput={(e: React.ChangeEvent<HTMLInputElement>) =>
-              setLastName(capitalizeWords(e.target.value))
-            }
-            icon="badge"
-          ></mdui-text-field>
-        </div>
+        ) : (
+          // Separate first/last name fields when not prefilled
+          <div className="flex-row">
+            <mdui-text-field
+              label="Vorname(n)"
+              placeholder="Max Erika"
+              value={firstName}
+              onInput={(e: React.ChangeEvent<HTMLInputElement>) =>
+                setFirstName(capitalizeWords(e.target.value))
+              }
+              icon="person"
+            ></mdui-text-field>
+            <mdui-text-field
+              label="Nachname"
+              placeholder="Mustermann"
+              value={lastName}
+              onInput={(e: React.ChangeEvent<HTMLInputElement>) =>
+                setLastName(capitalizeWords(e.target.value))
+              }
+              icon="badge"
+            ></mdui-text-field>
+          </div>
+        )}
         <p />
         <div style={{ display: "flex", gap: "20px" }}>
           <mdui-text-field
