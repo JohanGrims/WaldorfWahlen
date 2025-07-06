@@ -465,8 +465,10 @@ button:not(:disabled):hover {
   justify-content: space-between;
 }
 
-mdui-divider {
-  margin: 20px 0;
+@-moz-document url-prefix() {
+  mdui-divider {
+    margin: 20px 0;
+  }
 }
 
 .grecaptcha-badge { 
