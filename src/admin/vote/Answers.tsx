@@ -62,6 +62,10 @@ export default function Answers() {
     search || grade || listIndex ? "by-name" : "by-option"
   );
   const [answers, setAnswers] = React.useState<AnswerData[]>([]);
+  const [editingAnswer, setEditingAnswer] = React.useState<AnswerData | null>(
+    null
+  );
+  const [editMode, setEditMode] = React.useState<"visual" | "json">("visual");
 
   const grades = [...new Set(answers.map((answer) => answer.grade))];
 
@@ -170,6 +174,21 @@ export default function Answers() {
     }
   }
 
+  function openAnswerEditor(answer: AnswerData) {
+    setEditingAnswer(answer);
+  }
+
+  function closeAnswerEditor() {
+    setEditingAnswer(null);
+    setEditMode("visual");
+  }
+
+  async function saveAnswerChanges(updatedAnswer: AnswerData) {
+    const { id, ...data } = updatedAnswer;
+    await updateAnswer({ id, data });
+    closeAnswerEditor();
+  }
+
   if (loading) {
     return <mdui-linear-progress />;
   }
@@ -200,6 +219,151 @@ export default function Answers() {
 
   return (
     <div className="mdui-prose">
+      {/* Answer Editor Dialog */}
+      {editingAnswer && (
+        <mdui-dialog open>
+          <div slot="headline">Antwort bearbeiten</div>
+          <div slot="description">
+            Bearbeiten Sie die Antwort von {editingAnswer.name}
+          </div>
+          <mdui-button slot="action" variant="text" onClick={closeAnswerEditor}>
+            Abbrechen
+          </mdui-button>
+          <mdui-button
+            slot="action"
+            variant="filled"
+            onClick={() => {
+              if (editMode === "visual") {
+                // Get form data and save
+                const form = document.querySelector(
+                  "#answer-edit-form"
+                ) as HTMLFormElement;
+                const formData = new FormData(form);
+
+                const updatedAnswer: AnswerData = {
+                  ...editingAnswer,
+                  name: formData.get("name") as string,
+                  grade: parseInt(formData.get("grade") as string),
+                  listIndex: parseInt(formData.get("listIndex") as string),
+                  selected: Array.from(
+                    { length: vote.selectCount },
+                    (_, i) => formData.get(`selected_${i}`) as string
+                  ).filter(Boolean),
+                  extraFields:
+                    vote.extraFields?.map(
+                      (_, i) => formData.get(`extraField_${i}`) as string
+                    ) || [],
+                };
+
+                saveAnswerChanges(updatedAnswer);
+              } else {
+                // JSON mode - get from textarea
+                const textarea = document.querySelector(
+                  "#json-editor"
+                ) as HTMLTextAreaElement;
+                try {
+                  const data = JSON.parse(textarea.value);
+                  updateAnswer({ id: editingAnswer.id, data });
+                  closeAnswerEditor();
+                } catch (error) {
+                  snackbar({
+                    message: "Ungültige JSON-Daten.",
+                    autoCloseDelay: 5000,
+                  });
+                }
+              }
+            }}
+          >
+            Speichern
+          </mdui-button>
+          <div style={{ padding: "16px" }}>
+            <mdui-radio-group value={editMode} style={{ marginBottom: "16px" }}>
+              <mdui-radio value="visual" onClick={() => setEditMode("visual")}>
+                Visueller Editor
+              </mdui-radio>
+              <mdui-radio value="json" onClick={() => setEditMode("json")}>
+                JSON Editor
+              </mdui-radio>
+            </mdui-radio-group>
+
+            {editMode === "visual" ? (
+              <form id="answer-edit-form">
+                <mdui-text-field
+                  label="Name"
+                  name="name"
+                  value={editingAnswer.name}
+                  style={{ width: "100%", marginBottom: "12px" }}
+                />
+
+                <div
+                  style={{ display: "flex", gap: "12px", marginBottom: "12px" }}
+                >
+                  <mdui-text-field
+                    label="Klasse"
+                    name="grade"
+                    type="number"
+                    value={editingAnswer.grade.toString()}
+                    style={{ flex: 1 }}
+                  />
+                  <mdui-text-field
+                    label="Listennummer"
+                    name="listIndex"
+                    type="number"
+                    value={editingAnswer.listIndex.toString()}
+                    style={{ flex: 1 }}
+                  />
+                </div>
+
+                <div style={{ marginBottom: "16px" }}>
+                  <h4>Wahlen</h4>
+                  {Array.from({ length: vote.selectCount }, (_, i) => (
+                    <mdui-select
+                      key={i}
+                      label={`${i + 1}. Wahl`}
+                      name={`selected_${i}`}
+                      value={editingAnswer.selected[i] || ""}
+                      style={{ width: "100%", marginBottom: "8px" }}
+                      placement="top"
+                    >
+                      <mdui-menu-item value="">Keine Auswahl</mdui-menu-item>
+                      {options.map((option) => (
+                        <mdui-menu-item key={option.id} value={option.id}>
+                          {option.title}
+                        </mdui-menu-item>
+                      ))}
+                    </mdui-select>
+                  ))}
+                </div>
+
+                {vote.extraFields && vote.extraFields.length > 0 && (
+                  <div>
+                    <h4>Zusätzliche Felder</h4>
+                    {vote.extraFields.map((field, i) => (
+                      <mdui-text-field
+                        key={i}
+                        label={field}
+                        name={`extraField_${i}`}
+                        value={editingAnswer.extraFields?.[i] || ""}
+                        style={{ width: "100%", marginBottom: "8px" }}
+                      />
+                    ))}
+                  </div>
+                )}
+              </form>
+            ) : (
+              <mdui-text-field
+                id="json-editor"
+                label="JSON-Daten"
+                rows={15}
+                autosize
+                value={JSON.stringify(editingAnswer, null, 2)}
+                style={{ width: "100%" }}
+              />
+            )}
+          </div>
+        </mdui-dialog>
+      )}
+
       <div
         style={{
           display: "flex",
@@ -286,15 +450,36 @@ export default function Answers() {
                         .map((answer, i) => (
                           <tr key={i}>
                             <td>
-                              <a
-                                style={{ cursor: "pointer" }}
-                                onClick={() => {
-                                  setMode("by-name");
-                                  navigate(`.?search=${answer.id}`);
+                              <div
+                                style={{
+                                  display: "flex",
+                                  gap: "8px",
+                                  alignItems: "center",
                                 }}
                               >
-                                {answer.name}
-                              </a>
+                                <a
+                                  style={{ cursor: "pointer" }}
+                                  onClick={() => {
+                                    setMode("by-name");
+                                    navigate(`.?search=${answer.id}`);
+                                  }}
+                                >
+                                  {answer.name}
+                                </a>
+                                <mdui-icon
+                                  name="edit"
+                                  style={{
+                                    fontSize: "16px",
+                                    cursor: "pointer",
+                                    color:
+                                      "rgb(var(--mdui-color-tertiary-dark))",
+                                  }}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    openAnswerEditor(answer);
+                                  }}
+                                />
+                              </div>
                             </td>
                             <td>{answer.grade}</td>
                             {vote.extraFields?.map((field, i) => (
@@ -377,15 +562,36 @@ export default function Answers() {
                         .map((answer, i) => (
                           <tr key={i}>
                             <td>
-                              <a
-                                style={{ cursor: "pointer" }}
-                                onClick={() => {
-                                  setMode("by-name");
-                                  navigate(`.?search=${answer.id}`);
+                              <div
+                                style={{
+                                  display: "flex",
+                                  gap: "8px",
+                                  alignItems: "center",
                                 }}
                               >
-                                {answer.name}
-                              </a>
+                                <a
+                                  style={{ cursor: "pointer" }}
+                                  onClick={() => {
+                                    setMode("by-name");
+                                    navigate(`.?search=${answer.id}`);
+                                  }}
+                                >
+                                  {answer.name}
+                                </a>
+                                <mdui-icon
+                                  name="edit"
+                                  style={{
+                                    fontSize: "16px",
+                                    cursor: "pointer",
+                                    color:
+                                      "rgb(var(--mdui-color-tertiary-dark))",
+                                  }}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    openAnswerEditor(answer);
+                                  }}
+                                />
+                              </div>
                             </td>
                             <td>{answer.grade}</td>
                             <td>{answer.listIndex}</td>
@@ -499,45 +705,7 @@ export default function Answers() {
                           cursor: "pointer",
                           color: "rgb(var(--mdui-color-tertiary-dark))",
                         }}
-                        onClick={() => {
-                          let data = JSON.stringify(answer, null, 2);
-                          prompt({
-                            icon: "edit",
-                            confirmText: "Speichern",
-                            cancelText: "Abbrechen",
-                            headline: "Antwort bearbeiten",
-                            description:
-                              "Beachten Sie: bei fehlerhaften Daten kann diese Antwort unbrauchbar werden. Stellen Sie vor dem Speichern sicher, dass die Daten korrekt sind.",
-                            onConfirm: (value: string) => {
-                              try {
-                                const data = JSON.parse(value);
-                                updateAnswer({ id: answer.id, data });
-                              } catch (error) {
-                                snackbar({
-                                  message: "Ungültige JSON-Daten.",
-                                  autoCloseDelay: 5000,
-                                });
-                              }
-                            },
-                            textFieldOptions: {
-                              value: data,
-                              oninput: (e: Event) => {
-                                data = (e.target as HTMLTextAreaElement).value;
-                              },
-                              autosize: true,
-                              placeholder: "JSON-Daten",
-                              rows: 5,
-                            },
-                            validator: (value: string) => {
-                              try {
-                                JSON.parse(value);
-                                return true;
-                              } catch (error) {
-                                return false;
-                              }
-                            },
-                          });
-                        }}
+                        onClick={() => openAnswerEditor(answer)}
                       >
                         Bearbeiten
                       </td>
@@ -611,15 +779,35 @@ export default function Answers() {
                   .map((answer, i) => (
                     <tr key={answer.id}>
                       <td>
-                        <a
-                          style={{ cursor: "pointer" }}
-                          onClick={() => {
-                            setMode("by-name");
-                            navigate(`.?search=${answer.id}`);
+                        <div
+                          style={{
+                            display: "flex",
+                            gap: "8px",
+                            alignItems: "center",
                           }}
                         >
-                          {answer.name}
-                        </a>
+                          <a
+                            style={{ cursor: "pointer" }}
+                            onClick={() => {
+                              setMode("by-name");
+                              navigate(`.?search=${answer.id}`);
+                            }}
+                          >
+                            {answer.name}
+                          </a>
+                          <mdui-icon
+                            name="edit"
+                            style={{
+                              fontSize: "16px",
+                              cursor: "pointer",
+                              color: "rgb(var(--mdui-color-tertiary-dark))",
+                            }}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              openAnswerEditor(answer);
+                            }}
+                          />
+                        </div>
                       </td>
                       <td>{answer.grade}</td>
                       <td>

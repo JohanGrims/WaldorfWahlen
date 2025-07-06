@@ -39,6 +39,12 @@ export default function Students() {
   const [updatedStudents, setUpdatedStudents] = React.useState("[]");
 
   const [updateMethod, setUpdateMethod] = React.useState("by-text");
+  const [editingStudent, setEditingStudent] = React.useState<Student | null>(
+    null
+  );
+  const [editingClassId, setEditingClassId] = React.useState<string | null>(
+    null
+  );
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -109,6 +115,81 @@ export default function Students() {
     if (goBack) {
       navigate(`/admin/students/${classId}`);
     }
+  }
+
+  function openStudentEditor(student: Student, classId: string) {
+    setEditingStudent(student);
+    setEditingClassId(classId);
+  }
+
+  function closeStudentEditor() {
+    setEditingStudent(null);
+    setEditingClassId(null);
+  }
+
+  async function saveStudentChanges(updatedStudent: Student) {
+    if (!editingClassId) return;
+
+    const currentClass = classes.find((c) => c.id === editingClassId);
+    if (!currentClass) return;
+
+    const updatedStudents = currentClass.students.map((student) =>
+      student === editingStudent ? updatedStudent : student
+    );
+
+    await updateClass(editingClassId, { students: updatedStudents });
+    revalidator.revalidate();
+    closeStudentEditor();
+  }
+
+  async function deleteStudent(studentToDelete: Student, classId: string) {
+    const currentClass = classes.find((c) => c.id === classId);
+    if (!currentClass) return;
+
+    const updatedStudents = currentClass.students.filter(
+      (student) => student !== studentToDelete
+    );
+    await updateClass(classId, { students: updatedStudents });
+    revalidator.revalidate();
+  }
+
+  async function addNewStudent(classId: string) {
+    const name = await prompt({
+      icon: "person_add",
+      headline: "SchülerIn hinzufügen",
+      description: "Geben Sie die Daten der neuen SchülerIn ein.",
+      confirmText: "Hinzufügen",
+      cancelText: "Abbrechen",
+      textFieldOptions: {
+        label: "Name",
+        placeholder: "Max Mustermann",
+      },
+    });
+
+    if (!name) return;
+
+    const listIndex = await prompt({
+      icon: "numbers",
+      headline: "Listennummer",
+      description: "Geben Sie die Listennummer ein.",
+      confirmText: "Hinzufügen",
+      cancelText: "Abbrechen",
+      textFieldOptions: {
+        label: "Listennummer",
+        placeholder: "1",
+      },
+    });
+
+    if (!listIndex) return;
+
+    const currentClass = classes.find((c) => c.id === classId);
+    if (!currentClass) return;
+
+    const newStudent: Student = { name, listIndex };
+    const updatedStudents = [...currentClass.students, newStudent];
+
+    await updateClass(classId, { students: updatedStudents });
+    revalidator.revalidate();
   }
 
   async function upgradeClasses() {
@@ -244,6 +325,62 @@ export default function Students() {
       <Helmet>
         <title>SchülerInnen - WaldorfWahlen</title>
       </Helmet>
+
+      {/* Student Editor Dialog */}
+      {editingStudent && (
+        <mdui-dialog open>
+          <div slot="headline">SchülerIn bearbeiten</div>
+          <div slot="description">
+            Bearbeiten Sie die Daten von {editingStudent.name}
+          </div>
+          <mdui-button
+            slot="action"
+            variant="text"
+            onClick={closeStudentEditor}
+          >
+            Abbrechen
+          </mdui-button>
+          <mdui-button
+            slot="action"
+            variant="filled"
+            onClick={() => {
+              const form = document.querySelector(
+                "#student-edit-form"
+              ) as HTMLFormElement;
+              const formData = new FormData(form);
+
+              const updatedStudent: Student = {
+                name: formData.get("name") as string,
+                listIndex: formData.get("listIndex") as string,
+              };
+
+              saveStudentChanges(updatedStudent);
+            }}
+          >
+            Speichern
+          </mdui-button>
+          <div style={{ padding: "16px" }}>
+            <form id="student-edit-form">
+              <mdui-text-field
+                label="Name"
+                name="name"
+                value={editingStudent.name}
+                style={{ width: "100%", marginBottom: "12px" }}
+                required
+              />
+
+              <mdui-text-field
+                label="Listennummer"
+                name="listIndex"
+                value={editingStudent.listIndex.toString()}
+                style={{ width: "100%", marginBottom: "12px" }}
+                required
+              />
+            </form>
+          </div>
+        </mdui-dialog>
+      )}
+
       <div className="flex-gap justify-between">
         <h2>SchülerInnen</h2>
         <mdui-tooltip
@@ -332,6 +469,25 @@ export default function Students() {
         {sortedClasses.map((c) => (
           <mdui-tab-panel slot="panel" value={c.id}>
             <div className="p-10">
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  marginBottom: "16px",
+                }}
+              >
+                <h3>
+                  Klasse {c.grade} ({c.students.length} SchülerInnen)
+                </h3>
+                <mdui-button
+                  icon="person_add"
+                  variant="outlined"
+                  onClick={() => addNewStudent(c.id!)}
+                >
+                  SchülerIn hinzufügen
+                </mdui-button>
+              </div>
               <div className="mdui-table w-100">
                 <table>
                   <thead>
@@ -342,15 +498,49 @@ export default function Students() {
                       <th>
                         <b>#</b>
                       </th>
+                      <th>
+                        <b>Aktionen</b>
+                      </th>
                     </tr>
                   </thead>
                   <tbody>
                     {c.students
                       .sort((a, b) => Number(a.listIndex) - Number(b.listIndex))
-                      .map((s) => (
-                        <tr>
+                      .map((s, i) => (
+                        <tr key={i}>
                           <td>{s.name}</td>
                           <td>{s.listIndex}</td>
+                          <td>
+                            <div style={{ display: "flex", gap: "8px" }}>
+                              <mdui-icon
+                                name="edit"
+                                style={{
+                                  fontSize: "16px",
+                                  cursor: "pointer",
+                                  color: "rgb(var(--mdui-color-tertiary-dark))",
+                                }}
+                                onClick={() => openStudentEditor(s, c.id!)}
+                              />
+                              <mdui-icon
+                                name="delete"
+                                style={{
+                                  fontSize: "16px",
+                                  cursor: "pointer",
+                                  color: "rgb(var(--mdui-color-error-dark))",
+                                }}
+                                onClick={() => {
+                                  confirm({
+                                    icon: "delete",
+                                    headline: "SchülerIn löschen",
+                                    description: `Möchten Sie ${s.name} wirklich aus der ${c.grade}. Klasse löschen?`,
+                                    confirmText: "Löschen",
+                                    cancelText: "Abbrechen",
+                                    onConfirm: () => deleteStudent(s, c.id!),
+                                  });
+                                }}
+                              />
+                            </div>
+                          </td>
                         </tr>
                       ))}
                   </tbody>
@@ -407,13 +597,35 @@ export default function Students() {
                       <th>
                         <b>#</b>
                       </th>
+                      <th>
+                        <b>Aktionen</b>
+                      </th>
                     </tr>
                   </thead>
                   <tbody>
                     {newClass.students.map((s, i) => (
-                      <tr>
+                      <tr key={i}>
                         <td>{s.name}</td>
                         <td>{s.listIndex}</td>
+                        <td>
+                          <mdui-icon
+                            name="delete"
+                            style={{
+                              fontSize: "16px",
+                              cursor: "pointer",
+                              color: "rgb(var(--mdui-color-error-dark))",
+                            }}
+                            onClick={() => {
+                              const updatedStudents = newClass.students.filter(
+                                (_, index) => index !== i
+                              );
+                              setNewClass((cl) => ({
+                                ...cl,
+                                students: updatedStudents,
+                              }));
+                            }}
+                          />
+                        </td>
                       </tr>
                     ))}
                   </tbody>
