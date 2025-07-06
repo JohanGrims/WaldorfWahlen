@@ -4,7 +4,6 @@ import saveAs from "file-saver";
 import { Choice, Class, Option, Student, Vote } from "../types";
 import { collection, doc, getDoc, getDocs } from "firebase/firestore";
 import { db } from "../firebase";
-import { snackbar } from "mdui";
 
 /**
  * Downloads the selected votes in the specified file format.

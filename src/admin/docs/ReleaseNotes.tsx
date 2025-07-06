@@ -60,9 +60,11 @@ ReleaseNotes.loader = async function loader() {
     }
     return { releaseNotes: data };
   } catch (error) {
+    const errorMessage =
+      error instanceof Error ? error.message : "Unknown error";
     throw new Response("Daten konnten nicht geladen werden", {
-      status: error.message === "Release notes not found" ? 404 : 500,
-      statusText: error.message,
+      status: errorMessage === "Release notes not found" ? 404 : 500,
+      statusText: errorMessage,
     });
   }
 };

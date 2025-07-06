@@ -7,7 +7,12 @@ import {
 } from "firebase/firestore";
 import { snackbar } from "mdui";
 import React from "react";
-import { useLoaderData, useNavigate, useParams } from "react-router-dom";
+import {
+  LoaderFunctionArgs,
+  useLoaderData,
+  useNavigate,
+  useParams,
+} from "react-router-dom";
 import { db } from "../../firebase";
 
 import moment from "moment-timezone";
@@ -123,7 +128,7 @@ export default function Schedule() {
   );
 }
 
-export async function loader({ params }) {
+export async function loader({ params }: LoaderFunctionArgs) {
   const { id } = params as { id: string };
   const vote = await getDoc(doc(db, `/votes/${id}`));
   const data = vote.data() as VoteData;

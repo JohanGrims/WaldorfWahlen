@@ -7,7 +7,11 @@ import {
   setDoc,
   DocumentData,
 } from "firebase/firestore";
-import { useLoaderData, useRevalidator } from "react-router-dom";
+import {
+  LoaderFunctionArgs,
+  useLoaderData,
+  useRevalidator,
+} from "react-router-dom";
 import { db } from "../../firebase";
 
 import { confirm, snackbar } from "mdui";
@@ -353,9 +357,10 @@ export default function Edit() {
     };
 
     const changes = Object.keys(newVote).reduce(
-      (result: Record<string, any[]>, key: keyof VoteData) => {
-        if (!deepEqual(newVote[key], vote[key])) {
-          result[key] = [vote[key], newVote[key]];
+      (result: Record<string, any[]>, key: string) => {
+        const typedKey = key as keyof typeof newVote;
+        if (!deepEqual(newVote[typedKey], vote[typedKey])) {
+          result[key] = [vote[typedKey], newVote[typedKey]];
         }
         return result;
       },
@@ -1126,7 +1131,7 @@ export default function Edit() {
   );
 }
 
-Edit.loader = async function loader({ params }) {
+Edit.loader = async function loader({ params }: LoaderFunctionArgs) {
   try {
     const { id } = params;
     const vote = await getDoc(doc(db, `/votes/${id}`));

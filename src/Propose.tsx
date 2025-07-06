@@ -173,7 +173,7 @@ export default function Propose() {
           {/* Show custom field values */}
           {vote.proposeFields &&
             vote.proposeFields.map(
-              (field) =>
+              (field: any) =>
                 customFieldValues[field.id] && (
                   <React.Fragment key={field.id}>
                     {field.label}: {customFieldValues[field.id]}
@@ -234,7 +234,7 @@ export default function Propose() {
           counter
           value={teacher}
           onInput={(e) => setTeacher((e.target as HTMLInputElement).value)}
-          icon="person" 
+          icon="person"
         ></mdui-text-field>
         <p />
         <mdui-text-field
@@ -261,17 +261,20 @@ export default function Propose() {
         ></mdui-text-field>
         <p />
 
-        {vote.proposeFields && (<>
-        <mdui-divider/>
-        <p>
-          Die folgenden Antworten sind nicht öffentlich und nur für Administratoren sichtbar.
-        </ p>
-        </>)}
+        {vote.proposeFields && (
+          <>
+            <mdui-divider />
+            <p>
+              Die folgenden Antworten sind nicht öffentlich und nur für
+              Administratoren sichtbar.
+            </p>
+          </>
+        )}
 
         {/* Custom Fields */}
         {vote.proposeFields && vote.proposeFields.length > 0 && (
           <>
-            {vote.proposeFields.map((field) => {
+            {vote.proposeFields.map((field: any) => {
               const getFieldIcon = (type: string) => {
                 switch (type) {
                   case "email":
@@ -402,26 +405,28 @@ export default function Propose() {
           />
           <CheckItem
             label={"Leitung"}
-            checked={teacher && teacher.length <= 25}
+            checked={!!(teacher && teacher.length <= 25)}
             uncheckedIcon="toggle_off"
             checkedIcon="toggle_on"
           />
           <CheckItem
             label={"Beschreibung"}
-            checked={description || description.length <= 100}
+            checked={!!(description && description.length <= 100)}
             uncheckedIcon="toggle_off"
             checkedIcon="toggle_on"
           />
 
           {/* CheckItems for custom fields */}
           {vote.proposeFields &&
-            vote.proposeFields.map((field) => (
+            vote.proposeFields.map((field: any) => (
               <CheckItem
                 key={field.id}
                 label={field.label}
                 checked={
-                  customFieldValues[field.id] &&
-                  customFieldValues[field.id].length <= field.maxLength
+                  !!(
+                    customFieldValues[field.id] &&
+                    customFieldValues[field.id].length <= field.maxLength
+                  )
                 }
                 uncheckedIcon={field.required ? "close" : "toggle_off"}
                 checkedIcon={field.required ? "check" : "toggle_on"}

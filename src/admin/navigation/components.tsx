@@ -1,5 +1,13 @@
 import React from "react";
 
+declare global {
+  namespace JSX {
+    interface IntrinsicElements {
+      "mdui-list-item-content": any;
+    }
+  }
+}
+
 interface DrawerItemProps {
   active?: boolean;
   icon?: string;

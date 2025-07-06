@@ -1,6 +1,6 @@
 import { collection, getDocs } from "firebase/firestore";
 import React from "react";
-import { Link, useLoaderData } from "react-router-dom";
+import { Link, LoaderFunctionArgs, useLoaderData } from "react-router-dom";
 import { db } from "../../firebase";
 import { Class, Student } from "../../types";
 
@@ -977,7 +977,7 @@ export default function Match() {
   );
 }
 
-Match.loader = async function loader({ params }) {
+Match.loader = async function loader({ params }: LoaderFunctionArgs) {
   const { id } = params;
   const choices = await getDocs(collection(db, `/votes/${id}/choices`));
   const choiceData = choices.docs.map((doc) => ({ id: doc.id, ...doc.data() }));

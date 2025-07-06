@@ -48,29 +48,39 @@ export default function Students() {
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  function uploadStudents(event) {
-    const file = event.target.files[0];
-    const reader = new FileReader();
-    reader.onload = async (e) => {
+  interface FileUploadEvent extends React.ChangeEvent<HTMLInputElement> {
+    target: HTMLInputElement & EventTarget;
+  }
+
+  function uploadStudents(event: FileUploadEvent): void {
+    if (!event.target.files || event.target.files.length === 0) return;
+    const file: File = event.target.files[0];
+    const reader: FileReader = new FileReader();
+    reader.onload = async (e: ProgressEvent<FileReader>): Promise<void> => {
       if (!e.target) return;
-      const data = new Uint8Array(e.target.result as ArrayBuffer);
-      const workbook = XLSX.read(data, { type: "array" });
-      const sheet = workbook.Sheets[workbook.SheetNames[0]];
-      const students = XLSX.utils.sheet_to_json(sheet);
-      setNewClass((cl) => ({ ...cl, students: students as Student[] }));
+      const data: Uint8Array = new Uint8Array(e.target.result as ArrayBuffer);
+      const workbook: XLSX.WorkBook = XLSX.read(data, { type: "array" });
+      const sheet: XLSX.WorkSheet = workbook.Sheets[workbook.SheetNames[0]];
+      const students: unknown[] = XLSX.utils.sheet_to_json(sheet);
+      setNewClass((cl: Class) => ({ ...cl, students: students as Student[] }));
     };
     reader.readAsArrayBuffer(file);
   }
 
-  function updateStudents(event) {
-    const file = event.target.files[0];
-    const reader = new FileReader();
-    reader.onload = async (e) => {
+  interface FileUpdateEvent extends React.ChangeEvent<HTMLInputElement> {
+    target: HTMLInputElement & EventTarget;
+  }
+
+  function updateStudents(event: FileUpdateEvent): void {
+    if (!event.target.files || event.target.files.length === 0) return;
+    const file: File = event.target.files[0];
+    const reader: FileReader = new FileReader();
+    reader.onload = async (e: ProgressEvent<FileReader>): Promise<void> => {
       if (!e.target) return;
-      const data = new Uint8Array(e.target.result as ArrayBuffer);
-      const workbook = XLSX.read(data, { type: "array" });
-      const sheet = workbook.Sheets[workbook.SheetNames[0]];
-      const students = XLSX.utils.sheet_to_json(sheet);
+      const data: Uint8Array = new Uint8Array(e.target.result as ArrayBuffer);
+      const workbook: XLSX.WorkBook = XLSX.read(data, { type: "array" });
+      const sheet: XLSX.WorkSheet = workbook.Sheets[workbook.SheetNames[0]];
+      const students: unknown[] = XLSX.utils.sheet_to_json(sheet);
       setUpdatedStudents(JSON.stringify(students, null, 2));
       if (classId) {
         updateClass(classId, { students: students as Student[] }, true);

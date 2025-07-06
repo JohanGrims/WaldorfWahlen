@@ -11,7 +11,7 @@ export default function Share({}: ShareProps) {
     React.useState<boolean>(false);
 
   const switchRef = React.useRef<HTMLInputElement>(null);
-  const qrCodeRef = React.useRef<SVGSVGElement>(null);
+  const qrCodeRef = React.useRef<any>(null);
 
   React.useEffect(() => {
     const handleToggle = () => {
@@ -81,7 +81,7 @@ export default function Share({}: ShareProps) {
           <mdui-segmented-button
             icon="download"
             onClick={() => {
-              const qrCodeElement = qrCodeRef.current;
+              const qrCodeElement = qrCodeRef.current?.querySelector("svg");
               if (!qrCodeElement) return;
               const serializer = new XMLSerializer();
               const svgString = serializer.serializeToString(qrCodeElement);

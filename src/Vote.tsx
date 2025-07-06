@@ -9,7 +9,12 @@ import {
   DocumentData,
 } from "firebase/firestore";
 import React, { useRef } from "react";
-import { useLoaderData, useNavigate, useParams } from "react-router-dom";
+import {
+  LoaderFunctionArgs,
+  useLoaderData,
+  useNavigate,
+  useParams,
+} from "react-router-dom";
 import { db } from "./firebase";
 
 import moment from "moment-timezone";
@@ -583,7 +588,7 @@ export default function Vote() {
   );
 }
 
-Vote.loader = async function loader({ params, request }) {
+Vote.loader = async function loader({ params, request }: LoaderFunctionArgs) {
   const vote = await getDoc(doc(db, `/votes/${params.id}`));
   if (!vote.exists()) {
     throw new Response("Wahl nicht gefunden.", {
@@ -604,6 +609,7 @@ Vote.loader = async function loader({ params, request }) {
     const preview = new URL(request.url).searchParams.get("preview");
 
     if (
+      params.id &&
       localStorage.getItem(params.id) &&
       !new URL(request.url).searchParams.get("preview")
     ) {

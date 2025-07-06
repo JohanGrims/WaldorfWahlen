@@ -41,9 +41,13 @@ let def = `{
 
 const CodeBlock = ({ codeString = def }) => {
   // Funktion, um Kommentare zu markieren
-  const highlightComments = (code) => {
-    return code.split("\n").map((line, index) => {
-      const parts = line.split("//");
+  interface HighlightCommentsProps {
+    code: string;
+  }
+
+  const highlightComments = (code: string): JSX.Element[] => {
+    return code.split("\n").map((line: string, index: number) => {
+      const parts: string[] = line.split("//");
       return (
         <div key={index}>
           {parts[0]}

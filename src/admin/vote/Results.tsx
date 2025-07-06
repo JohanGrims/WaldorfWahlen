@@ -7,7 +7,11 @@ import {
   DocumentData,
   Timestamp,
 } from "firebase/firestore";
-import { useLoaderData, useRevalidator } from "react-router-dom";
+import {
+  LoaderFunctionArgs,
+  useLoaderData,
+  useRevalidator,
+} from "react-router-dom";
 import { auth, db } from "../../firebase";
 
 import { confirm, prompt, snackbar } from "mdui";
@@ -1471,7 +1475,7 @@ export default function Results() {
   );
 }
 
-Results.loader = async function loader({ params }) {
+Results.loader = async function loader({ params }: LoaderFunctionArgs) {
   const { id } = params as { id: string };
   const vote = await getDoc(doc(db, `/votes/${id}`));
   const voteData = { id, ...vote.data() } as VoteData;

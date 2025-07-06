@@ -673,7 +673,11 @@ export default function Email() {
       setSelectedStudents(new Set());
     } catch (error) {
       console.error("Error sending emails:", error);
-      snackbar({ message: `Fehler beim Senden: ${error.message}` });
+      snackbar({
+        message: `Fehler beim Senden: ${
+          error instanceof Error ? error.message : "Unbekannter Fehler"
+        }`,
+      });
     } finally {
       setSending(false);
     }
