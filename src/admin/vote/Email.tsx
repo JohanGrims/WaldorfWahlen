@@ -696,9 +696,29 @@ export default function Email() {
     return (
       <mdui-dialog open fullscreen>
         <h1>SMTP-Einstellungen </h1>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "8px",
+            marginBottom: "8px",
+          }}
+        >
+          <mdui-icon name="warning" style={{ marginBottom: "0" }}></mdui-icon>
+          <h2 style={{ marginBottom: "0", marginTop: "0" }}>
+            Wichtiger Hinweis
+          </h2>
+        </div>
+        <ul>
+          <li>Verwenden Sie keinen privaten E-Mail-Account</li>
+          <li>Zugangsdaten werden lokal im Browser gespeichert</li>
+          <li>Und sind dadurch möglicherweise für Dritte einsehbar</li>
+          <li>Für Massen-E-Mails geeigneten SMTP-Server nutzen</li>
+        </ul>
 
         <mdui-text-field
           label="SMTP-Server"
+          placeholder="z.B. smtp.gmail.com"
           value={smtpConfig.server}
           onInput={(e) =>
             setSmtpConfig({
@@ -713,6 +733,7 @@ export default function Email() {
 
         <mdui-text-field
           label="Port"
+          placeholder="Standard: 587 (TLS) oder 465 (SSL)"
           type="number"
           value={smtpConfig.port?.toString() || "587"}
           onInput={(e) =>
@@ -728,6 +749,7 @@ export default function Email() {
 
         <mdui-text-field
           label="Benutzername"
+          placeholder="E-Mail-Adresse oder SMTP-Benutzername"
           value={smtpConfig.username}
           onInput={(e) =>
             setSmtpConfig({
@@ -742,6 +764,7 @@ export default function Email() {
 
         <mdui-text-field
           label="Passwort"
+          placeholder="SMTP-Passwort"
           type="password"
           value={smtpConfig.password}
           onInput={(e) =>
@@ -759,6 +782,7 @@ export default function Email() {
         <mdui-button
           variant="filled"
           onClick={() => setShowSmtpSettings(false)}
+          slot="action"
         >
           Schließen
         </mdui-button>
@@ -1210,34 +1234,38 @@ export default function Email() {
           }}
         >
           {!smtpConfig.username || !smtpConfig.password ? (
-            <p
-              style={{ color: "var(--mdui-color-error)", fontSize: "0.875rem" }}
+            <mdui-fab
+              icon="settings"
+              style={{
+                position: "fixed",
+                right: "20px",
+                bottom: "20px",
+              }}
+              extended
+              onClick={() => setShowSmtpSettings(true)}
             >
-              <strong>SMTP-Konfiguration erforderlich:</strong> Bitte
-              konfigurieren Sie die E-Mail-Server-Einstellungen.
-            </p>
+              SMTP-Einstellungen
+            </mdui-fab>
           ) : (
-            <div />
+            <mdui-fab
+              icon="send"
+              style={{
+                position: "fixed",
+                right: "20px",
+                bottom: "20px",
+              }}
+              extended
+              onClick={sendEmails}
+              disabled={
+                sending ||
+                !smtpConfig.username ||
+                !smtpConfig.password ||
+                !emailList
+              }
+            >
+              Senden
+            </mdui-fab>
           )}
-
-          <mdui-fab
-            icon="send"
-            style={{
-              position: "fixed",
-              right: "20px",
-              bottom: "20px",
-            }}
-            extended
-            onClick={sendEmails}
-            disabled={
-              sending ||
-              !smtpConfig.username ||
-              !smtpConfig.password ||
-              !emailList
-            }
-          >
-            Senden
-          </mdui-fab>
         </div>
       </div>
     );
