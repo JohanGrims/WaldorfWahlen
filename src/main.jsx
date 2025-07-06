@@ -320,6 +320,23 @@ const routes = [
                     },
                   },
                   {
+                    path: "email",
+                    lazy: async () => {
+                      const loaderModule = await import(
+                        /* webpackChunkName: "VoteAdmin" */
+                        "./admin/vote/index"
+                      );
+                      const componentModule = await import(
+                        /* webpackChunkName: "Email" */
+                        "./admin/vote/Email"
+                      );
+                      return {
+                        loader: loaderModule.default.loader,
+                        Component: componentModule.default,
+                      };
+                    },
+                  },
+                  {
                     path: "share",
                     lazy: async () => {
                       const module = await import(

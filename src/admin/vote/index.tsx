@@ -122,25 +122,12 @@ export default function AdminVote() {
           variant="filled"
           style={{ padding: "20px", flex: 1 }}
           clickable
-          onClick={() => navigate(`/admin/${vote.id}/share`)}
+          onClick={() => navigate(`/admin/${vote.id}/email`)}
         >
-          <h3>Teilen</h3>
+          <h3>E-Mail</h3>
           <p>
             <span style={{ fontSize: "50px" }}>
-              <mdui-icon name="share" style={{ fontSize: "50px" }} />
-            </span>
-          </p>
-        </mdui-card>
-        <mdui-card
-          variant="filled"
-          style={{ padding: "20px", flex: 1 }}
-          clickable
-          onClick={() => navigate(`/admin/${vote.id}/add`)}
-        >
-          <h3>Hinzufügen</h3>
-          <p>
-            <span style={{ fontSize: "50px" }}>
-              <mdui-icon name="add" style={{ fontSize: "50px" }} />
+              <mdui-icon name="email" style={{ fontSize: "50px" }} />
             </span>
           </p>
         </mdui-card>
@@ -172,12 +159,25 @@ export default function AdminVote() {
           variant="filled"
           style={{ padding: "20px", flex: 1 }}
           clickable
-          onClick={() => navigate(`/v/${vote.id}?preview=true`)}
+          onClick={() => navigate(`/admin/${vote.id}/results`)}
         >
-          <h3>Vorschau</h3>
+          <h3>Ergebnisse</h3>
           <p>
             <span style={{ fontSize: "50px" }}>
-              <mdui-icon name="visibility" style={{ fontSize: "50px" }} />
+              <mdui-icon name="bar_chart" style={{ fontSize: "50px" }} />
+            </span>
+          </p>
+        </mdui-card>
+        <mdui-card
+          variant="filled"
+          style={{ padding: "20px", flex: 1 }}
+          clickable
+          onClick={() => navigate(`/admin/${vote.id}/share`)}
+        >
+          <h3>Teilen</h3>
+          <p>
+            <span style={{ fontSize: "50px" }}>
+              <mdui-icon name="share" style={{ fontSize: "50px" }} />
             </span>
           </p>
         </mdui-card>

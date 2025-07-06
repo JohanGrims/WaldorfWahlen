@@ -1,5 +1,11 @@
 import firebase_admin
 import pulp
+import smtplib
+import os
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+from email.mime.base import MIMEBase
+from email import encoders
 from firebase_admin import auth, credentials, app_check
 from flask import Flask, jsonify, request, abort
 from flask_cors import CORS
@@ -24,6 +30,100 @@ def authenticate(token, uid):
             return False
     except Exception as e:
         return None
+
+
+def send_email(recipient_emails, subject, body, smtp_config=None):
+    """
+    Send email using SMTP
+    
+    Args:
+        recipient_emails: List of email addresses or single email address
+        subject: Email subject
+        body: Email body (HTML supported)
+        smtp_config: Dictionary with SMTP configuration
+                    {'server': 'smtp.gmail.com', 'port': 587, 'username': 'user@gmail.com', 'password': 'password'}
+    
+    Returns:
+        dict: Success status and message
+    """
+    try:
+        # Default SMTP configuration - can be overridden by environment variables
+        if smtp_config is None:
+            smtp_config = {
+                'server': os.getenv('SMTP_SERVER', 'smtp.gmail.com'),
+                'port': int(os.getenv('SMTP_PORT', 587)),
+                'username': os.getenv('SMTP_USERNAME'),
+                'password': os.getenv('SMTP_PASSWORD')
+            }
+        
+        # Validate configuration
+        if not smtp_config.get('username') or not smtp_config.get('password'):
+            return {'success': False, 'message': 'SMTP credentials not configured'}
+        
+        # Ensure recipient_emails is a list
+        if isinstance(recipient_emails, str):
+            recipient_emails = [recipient_emails]
+        
+        # Create message
+        msg = MIMEMultipart('alternative')
+        msg['From'] = smtp_config['username']
+        msg['Subject'] = subject
+        
+        # Add HTML body
+        html_part = MIMEText(body, 'html', 'utf-8')
+        msg.attach(html_part)
+        
+        # Connect to server and send emails
+        server = smtplib.SMTP(smtp_config['server'], smtp_config['port'])
+        server.starttls()
+        server.login(smtp_config['username'], smtp_config['password'])
+        
+        failed_emails = []
+        for email in recipient_emails:
+            try:
+                msg['To'] = email
+                text = msg.as_string()
+                server.sendmail(smtp_config['username'], email, text)
+                del msg['To']  # Remove To header for next iteration
+            except Exception as e:
+                failed_emails.append({'email': email, 'error': str(e)})
+        
+        server.quit()
+        
+        if failed_emails:
+            return {
+                'success': False, 
+                'message': f'Failed to send {len(failed_emails)} emails',
+                'failed_emails': failed_emails,
+                'sent_count': len(recipient_emails) - len(failed_emails)
+            }
+        else:
+            return {
+                'success': True, 
+                'message': f'Successfully sent {len(recipient_emails)} emails',
+                'sent_count': len(recipient_emails)
+            }
+            
+    except Exception as e:
+        return {'success': False, 'message': f'SMTP Error: {str(e)}'}
+
+
+def replace_template_variables(template, variables):
+    """
+    Replace template variables in the format {{variable_name}} with actual values
+    
+    Args:
+        template: String template with variables
+        variables: Dictionary of variable name -> value mappings
+    
+    Returns:
+        String with variables replaced
+    """
+    result = template
+    for key, value in variables.items():
+        placeholder = f"{{{{{key}}}}}"
+        result = result.replace(placeholder, str(value))
+    return result
 
 
 @app.before_request
@@ -267,6 +367,65 @@ def delete_user():
             return jsonify({"message": "User deleted"})
         else:
             return jsonify({"error": "not authorized"}), 401
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/send-email", methods=["POST"])
+def send_email_endpoint():
+    """
+    Send emails to a list of recipients
+    
+    Expected JSON payload:
+    {
+        "token": "firebase_token",
+        "uid": "user_id",
+        "emails": ["email1@example.com", "email2@example.com"],
+        "subject": "Email subject",
+        "body": "Email body with {{variables}}",
+        "variables": {"variable_name": "value"},
+        "smtp_config": {
+            "server": "smtp.gmail.com",
+            "port": 587,
+            "username": "sender@gmail.com",
+            "password": "app_password"
+        }
+    }
+    """
+    try:
+        data = request.get_json()
+        token = data.get("token")
+        uid = data.get("uid")
+        
+        if not authenticate(token, uid):
+            return jsonify({"error": "not authorized"}), 401
+        
+        # Extract email data
+        emails = data.get("emails", [])
+        subject = data.get("subject", "")
+        body_template = data.get("body", "")
+        variables = data.get("variables", {})
+        smtp_config = data.get("smtp_config")
+        
+        # Validate required fields
+        if not emails:
+            return jsonify({"error": "No email addresses provided"}), 400
+        
+        if not subject or not body_template:
+            return jsonify({"error": "Subject and body are required"}), 400
+        
+        # Replace template variables
+        body = replace_template_variables(body_template, variables)
+        subject = replace_template_variables(subject, variables)
+        
+        # Send emails
+        result = send_email(emails, subject, body, smtp_config)
+        
+        if result['success']:
+            return jsonify(result), 200
+        else:
+            return jsonify(result), 500
+            
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 

@@ -469,6 +469,10 @@ mdui-divider {
   margin: 20px 0;
 }
 
+.grecaptcha-badge { 
+  visibility: hidden;
+}
+
 @media (max-width: 800px) {
   .card {
     width: 100%;

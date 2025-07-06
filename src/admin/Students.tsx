@@ -182,10 +182,27 @@ export default function Students() {
 
     if (!listIndex) return;
 
+    const email = await prompt({
+      icon: "email",
+      headline: "E-Mail (optional)",
+      description: "Geben Sie die E-Mail-Adresse ein (optional).",
+      confirmText: "Hinzufügen",
+      cancelText: "Überspringen",
+      textFieldOptions: {
+        label: "E-Mail",
+        placeholder: "max.mustermann@example.com",
+        type: "email",
+      },
+    });
+
     const currentClass = classes.find((c) => c.id === classId);
     if (!currentClass) return;
 
-    const newStudent: Student = { name, listIndex };
+    const newStudent: Student = {
+      name,
+      listIndex,
+      ...(email && { email }),
+    };
     const updatedStudents = [...currentClass.students, newStudent];
 
     await updateClass(classId, { students: updatedStudents });
@@ -302,7 +319,7 @@ export default function Students() {
               className="no-display"
             />
             <mdui-tooltip
-              content="Bitte stellen Sie sicher, dass die Datei im .xlsx-Format vorliegt und das Format wie folgt ist: 1. Zeile — name | listIndex als Überschrift, danach für jede Zeile die individuellen Daten. Die Reihenfolge der Spalten ist nicht relevant. Es wird immer nur das erste Tabellenblatt gelesen."
+              content="Bitte stellen Sie sicher, dass die Datei im .xlsx-Format vorliegt und das Format wie folgt ist: 1. Zeile — name | listIndex | email (optional) als Überschrift, danach für jede Zeile die individuellen Daten. Die Reihenfolge der Spalten ist nicht relevant. Es wird immer nur das erste Tabellenblatt gelesen."
               headline="Hinweis"
               variant="rich"
             >
@@ -352,6 +369,7 @@ export default function Students() {
               const updatedStudent: Student = {
                 name: formData.get("name") as string,
                 listIndex: formData.get("listIndex") as string,
+                email: (formData.get("email") as string) || undefined,
               };
 
               saveStudentChanges(updatedStudent);
@@ -375,6 +393,15 @@ export default function Students() {
                 value={editingStudent.listIndex.toString()}
                 style={{ width: "100%", marginBottom: "12px" }}
                 required
+              />
+
+              <mdui-text-field
+                label="E-Mail"
+                name="email"
+                type="email"
+                value={editingStudent.email || ""}
+                placeholder="max.mustermann@example.com"
+                style={{ width: "100%", marginBottom: "12px" }}
               />
             </form>
           </div>
@@ -477,7 +504,7 @@ export default function Students() {
                   marginBottom: "16px",
                 }}
               >
-                <h3>
+                <h3 style={{ margin: 0 }}>
                   Klasse {c.grade} ({c.students.length} SchülerInnen)
                 </h3>
                 <mdui-button
@@ -499,6 +526,9 @@ export default function Students() {
                         <b>#</b>
                       </th>
                       <th>
+                        <b>E-Mail</b>
+                      </th>
+                      <th>
                         <b>Aktionen</b>
                       </th>
                     </tr>
@@ -510,6 +540,7 @@ export default function Students() {
                         <tr key={i}>
                           <td>{s.name}</td>
                           <td>{s.listIndex}</td>
+                          <td>{s.email || "-"}</td>
                           <td>
                             <div style={{ display: "flex", gap: "8px" }}>
                               <mdui-icon
@@ -572,7 +603,7 @@ export default function Students() {
                 className="no-display"
               />
               <mdui-tooltip
-                content="Bitte stellen Sie sicher, dass die Datei im .xlsx-Format vorliegt und das Format wie folgt ist: 1. Zeile — name | listIndex als Überschrift, danach für jede Zeile die individuellen Daten. Die Reihenfolge der Spalten ist nicht relevant. Es wird immer nur das erste Tabellenblatt gelesen."
+                content="Bitte stellen Sie sicher, dass die Datei im .xlsx-Format vorliegt und das Format wie folgt ist: 1. Zeile — name | listIndex | email (optional) als Überschrift, danach für jede Zeile die individuellen Daten. Die Reihenfolge der Spalten ist nicht relevant. Es wird immer nur das erste Tabellenblatt gelesen."
                 headline="Hinweis"
                 variant="rich"
               >
@@ -598,6 +629,9 @@ export default function Students() {
                         <b>#</b>
                       </th>
                       <th>
+                        <b>E-Mail</b>
+                      </th>
+                      <th>
                         <b>Aktionen</b>
                       </th>
                     </tr>
@@ -607,6 +641,7 @@ export default function Students() {
                       <tr key={i}>
                         <td>{s.name}</td>
                         <td>{s.listIndex}</td>
+                        <td>{s.email || "-"}</td>
                         <td>
                           <mdui-icon
                             name="delete"

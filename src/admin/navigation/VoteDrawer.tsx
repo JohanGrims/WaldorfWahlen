@@ -146,6 +146,12 @@ export default function VoteDrawer({ onClose = () => {} }: VoteDrawerProps) {
           active={active === "answers"}
           onClick={() => navigateTo(`/admin/${id}/answers`)}
         />
+        <DrawerItem
+          icon={"email"}
+          title={"E-Mail"}
+          active={active === "email"}
+          onClick={() => navigateTo(`/admin/${id}/email`)}
+        />
         <br />
         <mdui-divider></mdui-divider>
         <br />
@@ -168,7 +174,7 @@ export default function VoteDrawer({ onClose = () => {} }: VoteDrawerProps) {
           onClick={() => navigateTo(`/admin/${id}/assign`)}
         />
         <DrawerItem
-          icon={"table"}
+          icon={"bar_chart"}
           title={"Ergebnisse"}
           active={active === "results"}
           onClick={() => navigateTo(`/admin/${id}/results`)}

@@ -93,7 +93,6 @@ export default function Vote() {
       (extraFields &&
         (extraFieldsValues?.length !== extraFields?.length ||
           extraFieldsValues?.some((value) => !value?.trim()))) ||
-      preview ||
       !accepted
     ) {
       return true;
@@ -221,6 +220,16 @@ export default function Vote() {
                 }`
             )
             .join(", ")}
+          <p />
+          <small>
+            Diese Website ist durch reCAPTCHA geschützt und es gelten die{" "}
+            <a href="https://policies.google.com/privacy">
+              Datenschutzbestimmungen
+            </a>{" "}
+            und{" "}
+            <a href="https://policies.google.com/terms">Nutzungsbedingungen</a>{" "}
+            von Google.
+          </small>
           <p />
           {!sending ? (
             <div className="button-container">
