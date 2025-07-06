@@ -41,7 +41,8 @@ def send_email(recipient_emails, subject, body, smtp_config=None):
         subject: Email subject
         body: Email body (HTML supported)
         smtp_config: Dictionary with SMTP configuration (required)
-                    {'server': 'smtp.gmail.com', 'port': 587, 'username': 'user@gmail.com', 'password': 'password'}
+                    {'server': 'smtp.gmail.com', 'port': 587, 'username': 'user@gmail.com', 'password': 'password', 'from_address': 'sender@example.com'}
+                    Note: 'from_address' is optional. If not provided, 'username' will be used as the from address.
     
     Returns:
         dict: Success status and detailed message
@@ -91,7 +92,7 @@ def send_email(recipient_emails, subject, body, smtp_config=None):
         
         # Create message
         msg = MIMEMultipart('alternative')
-        msg['From'] = smtp_config['username']
+        msg['From'] = smtp_config.get('from_address', smtp_config['username'])
         msg['Subject'] = subject
         
         # Add HTML body
@@ -134,7 +135,7 @@ def send_email(recipient_emails, subject, body, smtp_config=None):
             try:
                 msg['To'] = email
                 text = msg.as_string()
-                server.sendmail(smtp_config['username'], email, text)
+                server.sendmail(smtp_config.get('from_address', smtp_config['username']), email, text)
                 del msg['To']  # Remove To header for next iteration
             except smtplib.SMTPRecipientsRefused as e:
                 failed_emails.append({
@@ -461,7 +462,8 @@ def send_email_endpoint():
             "server": "smtp.gmail.com",
             "port": 587,
             "username": "sender@gmail.com",
-            "password": "app_password"
+            "password": "app_password",
+            "from_address": "noreply@example.com"  // Optional: if not provided, username will be used
         }
     }
     """

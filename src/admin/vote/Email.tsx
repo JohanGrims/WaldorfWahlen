@@ -69,6 +69,7 @@ interface SmtpConfig {
   server: string;
   port: number;
   username: string;
+  from_address?: string;
   password: string;
 }
 
@@ -385,6 +386,7 @@ export default function Email() {
           server: "smtp.gmail.com",
           port: 587,
           username: "",
+          from_address: "",
           password: "",
         };
   });
@@ -609,11 +611,17 @@ export default function Email() {
             );
 
             const studentResult = choice
-              ? results.find((r) => r.id === choice.id)
+              ? results.find((r) => r.id == choice.id)
               : null;
             const assignedOption = studentResult
-              ? options.find((o) => o.id === studentResult.assignedOption)
+              ? options.find((o) => o.id == studentResult.result)
               : null;
+
+            // DEBUG
+            console.log(
+              `Processing result for student ${student.name} (${student.listIndex})`
+            );
+            console.log(choice, studentResult, assignedOption);
 
             personalVariables = {
               ...personalVariables,
@@ -755,6 +763,21 @@ export default function Email() {
             setSmtpConfig({
               ...smtpConfig,
               username: (e.target as HTMLInputElement).value,
+            })
+          }
+          required
+        ></mdui-text-field>
+
+        <p />
+
+        <mdui-text-field
+          label="Absender-E-Mail"
+          placeholder="E-Mail-Adresse des Absenders"
+          value={smtpConfig.from_address || ""}
+          onInput={(e) =>
+            setSmtpConfig({
+              ...smtpConfig,
+              from_address: (e.target as HTMLInputElement).value,
             })
           }
           required
