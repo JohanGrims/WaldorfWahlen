@@ -723,6 +723,11 @@ export default function Email() {
           <li>Und sind dadurch möglicherweise für Dritte einsehbar</li>
           <li>Für Massen-E-Mails geeigneten SMTP-Server nutzen</li>
         </ul>
+        <p>
+          Für einen vorkonfigurierten SMTP-Server nutzen Sie den Account
+          "waldorfwahlen@praktikum.click". Die Zugangsdaten finden Sie in der{" "}
+          <a href="/admin/help">Hilfe</a> unter dem Abschnitt "E-Mails".
+        </p>
 
         <mdui-text-field
           label="SMTP-Server"
