@@ -8,7 +8,7 @@ import React from "react";
 import { useLoaderData, useParams } from "react-router-dom";
 import { db, auth, appCheck } from "../../firebase";
 import { Helmet } from "react-helmet";
-import { snackbar } from "mdui";
+import { prompt, snackbar } from "mdui";
 import { getToken } from "firebase/app-check";
 
 interface VoteData extends DocumentData {
@@ -691,6 +691,159 @@ export default function Email() {
     }
   };
 
+  const sendTestEmail = async () => {
+    if (!smtpConfig.username || !smtpConfig.password) {
+      snackbar({ message: "SMTP-Konfiguration unvollständig" });
+      return;
+    }
+
+    const testEmailAddress = await prompt({
+      headline: "Test-E-Mail senden",
+      description:
+        "Geben Sie die E-Mail-Adresse ein, an die die Test-E-Mail gesendet werden soll:",
+      icon: "email",
+      textFieldOptions: {
+        value: auth.currentUser?.email || "",
+      },
+    });
+
+    if (!testEmailAddress || !testEmailAddress.trim()) {
+      return; // User cancelled or entered empty email
+    }
+
+    // Basic email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(testEmailAddress.trim())) {
+      snackbar({ message: "Ungültige E-Mail-Adresse" });
+      return;
+    }
+
+    setSending(true);
+
+    try {
+      const user = auth.currentUser;
+      if (!user) {
+        throw new Error("Nicht angemeldet");
+      }
+
+      const token = await user.getIdToken();
+
+      // Get a random student from the selected ones, or any student with email if none selected
+      const selectedData = getSelectedStudentsData();
+      let randomStudent;
+
+      if (selectedData.length > 0) {
+        randomStudent =
+          selectedData[Math.floor(Math.random() * selectedData.length)];
+      } else {
+        // Fallback: get any student with email
+        const allStudentsWithEmail: (StudentData & {
+          grade: number;
+          classId: string;
+        })[] = [];
+        classes.forEach((cls) => {
+          cls.students.forEach((student) => {
+            if (student.email) {
+              allStudentsWithEmail.push({
+                ...student,
+                grade: cls.grade,
+                classId: cls.id!,
+              });
+            }
+          });
+        });
+
+        if (allStudentsWithEmail.length === 0) {
+          throw new Error("Keine Schüler mit E-Mail-Adresse gefunden");
+        }
+
+        randomStudent =
+          allStudentsWithEmail[
+            Math.floor(Math.random() * allStudentsWithEmail.length)
+          ];
+      }
+
+      let personalVariables: Record<string, string> = {
+        ...getTemplateVariables(),
+        student_name: randomStudent.name,
+        student_name_encoded: encodeURIComponent(randomStudent.name),
+        student_grade: randomStudent.grade.toString(),
+        student_list_index: randomStudent.listIndex,
+      };
+
+      // Add result-specific variables for results emails
+      if (selectedTemplate === "results" && results) {
+        const choice = choices.find(
+          (c) =>
+            c.listIndex == randomStudent.listIndex &&
+            c.grade == randomStudent.grade
+        );
+
+        const studentResult = choice
+          ? results.find((r) => r.id == choice.id)
+          : null;
+        const assignedOption = studentResult
+          ? options.find((o) => o.id == studentResult.result)
+          : null;
+
+        personalVariables = {
+          ...personalVariables,
+          choice_id: choice?.id || "",
+          assigned_option: assignedOption?.title || "Nicht zugewiesen",
+          assigned_details: assignedOption
+            ? `<p><strong>Lehrer:</strong> ${
+                assignedOption.teacher || "N/A"
+              }</p><p><strong>Beschreibung:</strong> ${
+                assignedOption.description || "Keine Beschreibung verfügbar"
+              }</p>`
+            : "",
+        };
+      }
+
+      const response = await fetch(
+        `https://api.chatwithsteiner.de/waldorfwahlen/send`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-Firebase-AppCheck": await getToken(appCheck).then(
+              (res) => res.token
+            ),
+          },
+          body: JSON.stringify({
+            token,
+            uid: user.uid,
+            emails: [testEmailAddress.trim()],
+            subject: `[TEST] ${customSubject}`,
+            body: customBody,
+            variables: personalVariables,
+            smtp_config: smtpConfig,
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || "Test email sending failed");
+      }
+
+      snackbar({
+        message: `Test-E-Mail erfolgreich an ${testEmailAddress.trim()} gesendet! (mit Daten von ${
+          randomStudent.name
+        })`,
+      });
+    } catch (error) {
+      console.error("Error sending test email:", error);
+      snackbar({
+        message: `Fehler beim Senden der Test-E-Mail: ${
+          error instanceof Error ? error.message : "Unbekannter Fehler"
+        }`,
+      });
+    } finally {
+      setSending(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="mdui-prose">
@@ -1256,6 +1409,29 @@ export default function Email() {
             )}
           </ul>
         </div>
+        {/* Test Email Section */}
+        <div
+          style={{
+            marginTop: "24px",
+            padding: "16px",
+            backgroundColor: "var(--mdui-color-surface-variant)",
+            borderRadius: "8px",
+          }}
+        >
+          <h4 style={{ margin: "0 0 12px 0" }}>Test-E-Mail</h4>
+          <p style={{ margin: "0 0 12px 0", fontSize: "14px" }}>
+            Senden Sie eine Test-E-Mail mit zufälligen Schülerdaten an Ihre
+            E-Mail-Adresse, um die Vorlage zu überprüfen.
+          </p>
+          <mdui-button
+            variant="outlined"
+            icon="mail"
+            onClick={sendTestEmail}
+            disabled={sending || !smtpConfig.username || !smtpConfig.password}
+          >
+            Test-E-Mail senden
+          </mdui-button>
+        </div>
         {/* Send Action */}
         <div
           style={{
@@ -1309,6 +1485,30 @@ export default function Email() {
     return (
       <div className="mdui-prose">
         <h2>E-Mails werden gesendet...</h2>
+
+        {/* Warning notice */}
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "12px",
+            padding: "16px",
+            backgroundColor: "var(--mdui-color-warning-container)",
+            color: "var(--mdui-color-on-warning-container)",
+            borderRadius: "8px",
+            marginBottom: "16px",
+          }}
+        >
+          <mdui-icon name="warning" style={{ fontSize: "24px" }}></mdui-icon>
+          <div>
+            <strong>Wichtiger Hinweis:</strong>
+            <br />
+            Schließen Sie diesen Tab nicht und navigieren Sie nicht weg, bis
+            alle E-Mails gesendet wurden. Der Sendevorgang wird sonst
+            unterbrochen.
+          </div>
+        </div>
+
         <mdui-linear-progress
           value={progress}
           max={emailCount}
