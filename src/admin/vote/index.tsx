@@ -5,7 +5,6 @@ import {
   useNavigate,
 } from "react-router-dom";
 import { db } from "../../firebase";
-import { act } from "react";
 
 interface VoteData extends DocumentData {
   id: string;
