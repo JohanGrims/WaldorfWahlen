@@ -235,7 +235,7 @@ export default function Edit() {
 
   // Calculate total max value from all options
   const [totalMax, setTotalMax] = React.useState<number>(() =>
-    loadedOptions.reduce((sum, option) => sum + (option.max || 0), 0)
+    loadedOptions.reduce((sum, option) => sum + (Number(option.max) || 0), 0)
   );
 
   const [name, setName] = React.useState<string>("");

@@ -179,6 +179,12 @@ export default function VoteDrawer({ onClose = () => {} }: VoteDrawerProps) {
           active={active === "results"}
           onClick={() => navigateTo(`/admin/${id}/results`)}
         />
+        <DrawerItem
+          icon={"trending_up"}
+          title={"Statistiken"}
+          active={active === "stats"}
+          onClick={() => navigateTo(`/admin/${id}/stats`)}
+        />
         <br />
         <mdui-divider></mdui-divider>
         <br />

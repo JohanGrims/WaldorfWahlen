@@ -93,111 +93,121 @@ export default function AdminVote() {
           <h3>{pendingProposals.length} Vorschläge für Optionen</h3>
         </mdui-card>
       )}
-      <div
-        style={{
-          display: "grid",
-          gap: "20px",
-          gridTemplateColumns: mobile ? "1fr 1fr" : "1fr 1fr 1fr 1fr",
-        }}
-      >
-        <mdui-card
-          variant="filled"
-          style={{ padding: "20px", flex: 1 }}
-          clickable
-          onClick={() => navigate(`/admin/${vote.id}/edit`)}
-        >
-          <h3>Optionen</h3>
-          <p>
-            <span style={{ fontSize: "50px" }}>{options.length}</span>
-          </p>
-        </mdui-card>
-        <mdui-card
-          variant="filled"
-          style={{ padding: "20px", flex: 1 }}
-          clickable
-          onClick={() => navigate(`/admin/${vote.id}/answers`)}
-        >
-          <h3>Antworten</h3>
-          <p>
-            <span style={{ fontSize: "50px" }}>{choices.length}</span>
-          </p>
-        </mdui-card>
-        <mdui-card
-          variant="filled"
-          style={{ padding: "20px", flex: 1 }}
-          clickable
-          onClick={() => navigate(`/admin/${vote.id}/email`)}
-        >
-          <h3>E-Mail</h3>
-          <p>
-            <span style={{ fontSize: "50px" }}>
-              <mdui-icon name="forward_to_inbox" style={{ fontSize: "50px" }} />
-            </span>
-          </p>
-        </mdui-card>
-        <mdui-card
-          variant="filled"
-          style={{ padding: "20px", flex: 1 }}
-          clickable
-          onClick={() => navigate(`/admin/${vote.id}/match`)}
-        >
-          <h3>Abgleichen</h3>
-          <p style={{ fontSize: "50px" }}>
-            <mdui-icon name={"fact_check"} style={{ fontSize: "50px" }} />
-          </p>
-        </mdui-card>
-        <mdui-card
-          variant="filled"
-          style={{ padding: "20px", flex: 1 }}
-          clickable
-          onClick={() => navigate(`/admin/${vote.id}/assign`)}
-        >
-          <h3>Zuteilen</h3>
-          <p>
-            <span style={{ fontSize: "50px" }}>
-              <mdui-icon name="auto_awesome" style={{ fontSize: "50px" }} />
-            </span>
-          </p>
-        </mdui-card>
-        <mdui-card
-          variant="filled"
-          style={{ padding: "20px", flex: 1 }}
-          clickable
-          onClick={() => navigate(`/admin/${vote.id}/results`)}
-        >
-          <h3>Ergebnisse</h3>
-          <p>
-            <span style={{ fontSize: "50px" }}>
-              <mdui-icon name="bar_chart" style={{ fontSize: "50px" }} />
-            </span>
-          </p>
-        </mdui-card>
-        <mdui-card
-          variant="filled"
-          style={{ padding: "20px", flex: 1 }}
-          clickable
-          onClick={() => navigate(`/admin/${vote.id}/share`)}
-        >
-          <h3>Teilen</h3>
-          <p>
-            <span style={{ fontSize: "50px" }}>
-              <mdui-icon name="share" style={{ fontSize: "50px" }} />
-            </span>
-          </p>
-        </mdui-card>
-        <mdui-card
-          variant="filled"
-          style={{ padding: "20px", flex: 1 }}
-          clickable
-          onClick={() => navigate(`/admin/${vote.id}/delete`)}
-        >
-          <h3>Löschen</h3>
-          <p>
-            <span style={{ fontSize: "50px" }}>
-              <mdui-icon name="delete" style={{ fontSize: "50px" }} />
-            </span>
-          </p>
-        </mdui-card>
+      <div style={{ display: "flex", flexDirection: "column", gap: "2rem" }}>
+        <div>
+          <h3 style={{ marginTop: 0, marginBottom: "1rem" }}>Vorbereitung</h3>
+          <mdui-list>
+            <mdui-list-item
+              headline="Optionen"
+              description="Die Wahl und die Projekte verwalten"
+              icon="edit"
+              onClick={() => navigate(`/admin/${vote.id}/edit`)}
+              rounded
+            >
+              <mdui-badge slot="end-icon">{options.length}</mdui-badge>
+            </mdui-list-item>
+            <mdui-list-item
+              headline="Teilen"
+              description="Einladungslinks für SchülerInnen generieren"
+              icon="share"
+              onClick={() => navigate(`/admin/${vote.id}/share`)}
+              rounded
+            ></mdui-list-item>
+            <mdui-list-item
+              headline="Vorschau"
+              description="Die Wahl aus der Sicht einer Schülerin betrachten"
+              icon="visibility"
+              onClick={() =>
+                window.open(`/v/${vote.id}?preview=true`, "_blank")
+              }
+              rounded
+            ></mdui-list-item>
+          </mdui-list>
+        </div>
+
+        <div>
+          <h3 style={{ marginTop: 0, marginBottom: "1rem" }}>Durchführung</h3>
+          <mdui-list>
+            <mdui-list-item
+              headline="Antworten"
+              description="Eingegangene Wahlen der SchülerInnen einsehen"
+              icon="people"
+              onClick={() => navigate(`/admin/${vote.id}/answers`)}
+              rounded
+            >
+              <mdui-badge slot="end-icon">{choices.length}</mdui-badge>
+            </mdui-list-item>
+            <mdui-list-item
+              headline="E-Mail"
+              description="Erinnerungen oder Informationen an Teilnehmer senden"
+              icon="forward_to_inbox"
+              onClick={() => navigate(`/admin/${vote.id}/email`)}
+              rounded
+            ></mdui-list-item>
+            <mdui-list-item
+              headline="Teilnehmer hinzufügen"
+              description="SchülerInnen manuell zur Wahl hinzufügen"
+              icon="person_add"
+              onClick={() => navigate(`/admin/${vote.id}/add`)}
+              rounded
+            ></mdui-list-item>
+          </mdui-list>
+        </div>
+
+        <div>
+          <h3 style={{ marginTop: 0, marginBottom: "1rem" }}>Auswertung</h3>
+          <mdui-list>
+            <mdui-list-item
+              headline="Abgleichen"
+              description="SchülerInnen mit Klassenlisten abgleichen"
+              icon="fact_check"
+              onClick={() => navigate(`/admin/${vote.id}/match`)}
+              rounded
+            ></mdui-list-item>
+            <mdui-list-item
+              headline="Zuteilen"
+              description="SchülerInnen (automatisch) den Projekten zuordnen"
+              icon="auto_awesome"
+              onClick={() => navigate(`/admin/${vote.id}/assign`)}
+              rounded
+            ></mdui-list-item>
+            <mdui-list-item
+              headline="Ergebnisse"
+              description="Die finalen Ergebnisse einsehen und veröffentlichen"
+              icon="bar_chart"
+              onClick={() => navigate(`/admin/${vote.id}/results`)}
+              rounded
+            ></mdui-list-item>
+            <mdui-list-item
+              headline="Statistiken"
+              description="Detaillierte Statistiken und Analysen der Wahl"
+              icon="trending_up"
+              onClick={() => navigate(`/admin/${vote.id}/stats`)}
+              rounded
+            ></mdui-list-item>
+          </mdui-list>
+        </div>
+
+        <div>
+          <h3
+            style={{
+              marginTop: 0,
+              marginBottom: "1rem",
+              color: "var(--mdui-color-error)",
+            }}
+          >
+            Gefahrenzone
+          </h3>
+          <mdui-list>
+            <mdui-list-item
+              headline="Löschen"
+              description="Diese Wahl vom Dashboard löschen"
+              icon="delete"
+              onClick={() => navigate(`/admin/${vote.id}/delete`)}
+              rounded
+            ></mdui-list-item>
+          </mdui-list>
+        </div>
       </div>
     </div>
   );
