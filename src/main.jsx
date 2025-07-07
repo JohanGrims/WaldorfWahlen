@@ -8,6 +8,7 @@ import { alert, setColorScheme, setTheme } from "mdui";
 import "mdui/mdui.css";
 import { getToken } from "firebase/app-check";
 import { appCheck } from "./firebase";
+import ScrollToTop from "./admin/utils";
 
 setColorScheme("#f89e24");
 setTheme(localStorage.getItem("theme") || "dark");
@@ -17,6 +18,7 @@ const routes = [
     path: "/",
     errorElement: <ErrorPage />,
     HydrateFallback: () => <mdui-linear-progress />,
+    element: <ScrollToTop />,
     children: [
       {
         path: "/",
@@ -434,6 +436,19 @@ const routes = [
                       };
                     },
                   },
+                  {
+                    path: "stats",
+                    lazy: async () => {
+                      const module = await import(
+                        /* webpackChunkName: "Stats" */
+                        "./admin/vote/Stats"
+                      );
+                      return {
+                        loader: module.default.loader,
+                        Component: module.default,
+                      };
+                    },
+                  },
                 ],
               },
             ],
@@ -514,7 +529,6 @@ script.onload = () => {
 };
 
 document.body.appendChild(script);
-
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <div className="wrapper">

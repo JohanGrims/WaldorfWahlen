@@ -1,3 +1,6 @@
+import { Outlet, useLocation } from "react-router-dom";
+import { useEffect } from "react";
+
 /**
  * Generates a random hash string of a specified length.
  *
@@ -70,8 +73,6 @@ export const capitalizeWords = (str: string): string => {
     }); // Capitalize words correctly
 };
 
-
-
 /**
  * Sorts a list of votes based on a search query and date range.
  *
@@ -112,4 +113,19 @@ export function sortVotes(
     .sort((a, b) => {
       return b.startTime.seconds - a.startTime.seconds;
     });
+}
+
+export default function ScrollToTop() {
+  const { pathname } = useLocation();
+
+  useEffect(() => {
+    // "document.documentElement.scrollTo" is the magic for React Router Dom v6
+    document.documentElement.scrollTo({
+      top: 0,
+      left: 0,
+      behavior: "instant", // Optional if you want to skip the scrolling animation
+    });
+  }, [pathname]);
+
+  return <Outlet />;
 }

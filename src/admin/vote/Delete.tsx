@@ -29,15 +29,17 @@ export default function Delete() {
       <mdui-dialog open={true} headline="Wahl löschen" icon="delete">
         <p>
           Wollen Sie diese Wahl wirklich löschen? Sie können Sie danach nicht
-          mehr aufrufen. Antworten können nur noch über die API abgerufen
-          werden.
+          mehr aufrufen. Die Daten können wiederhergestellt werden, kontaktieren
+          Sie mich dafür.
         </p>
         <p>
           Geben Sie zur Bestätigung <code>{id}</code> ein:{" "}
         </p>
         <mdui-text-field
           value={confirmtion}
-          onInput={(e: React.ChangeEvent<HTMLInputElement>) => setConfirmation(e.target.value)}
+          onInput={(e: React.ChangeEvent<HTMLInputElement>) =>
+            setConfirmation(e.target.value)
+          }
           label="Bestätigung"
           onPaste={(e: React.ClipboardEvent<HTMLInputElement>) => {
             return e.preventDefault();
