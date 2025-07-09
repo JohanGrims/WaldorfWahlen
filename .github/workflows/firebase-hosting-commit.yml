@@ -35,9 +35,6 @@ jobs:
       - name: Build project
         run: pnpm run build
 
-      - name: Install Firebase CLI
-        run: pnpm install -g firebase-tools
-
       - name: Deploy to Firebase Hosting
         uses: FirebaseExtended/action-hosting-deploy@v0
         with:
