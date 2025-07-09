@@ -68,6 +68,17 @@ export default function Results() {
   const [commentGroup, setCommentGroup] = React.useState<string>("");
   const [commenting, setCommenting] = React.useState<boolean>(false);
   const [customMessage, setCustomMessage] = React.useState<string>("");
+  const [showAttendanceDialog, setShowAttendanceDialog] =
+    React.useState<boolean>(false);
+  const [attendanceColumns, setAttendanceColumns] = React.useState<number>(5);
+  const [emptyRows, setEmptyRows] = React.useState<number>(2);
+  const [columnHeaders, setColumnHeaders] = React.useState<string[]>([
+    "Anwesenheit 1",
+    "Anwesenheit 2",
+    "Anwesenheit 3",
+    "Anwesenheit 4",
+    "Anwesenheit 5",
+  ]);
 
   const revalidator = useRevalidator();
 
@@ -518,30 +529,13 @@ export default function Results() {
   }
 
   function exportAttendancePDF() {
-    // Ask for number of attendance columns and empty rows
-    prompt({
-      headline: "Anwesenheitsliste exportieren",
-      description:
-        "Wie viele Spalten sollen für die Anwesenheit erstellt werden und wie viele leere Zeilen nach jedem Projekt?",
-      textFieldOptions: {
-        placeholder: "Spalten: 5, Leere Zeilen: 2",
-        helper: "Format: Spalten,Leere Zeilen (z.B. 5,3)",
-      },
-      icon: "picture_as_pdf",
-      confirmText: "Exportieren",
-      cancelText: "Abbrechen",
-      onConfirm: (value: string) => {
-        const parts = value.split(",").map((p) => p.trim());
-        const attendanceColumns = parseInt(parts[0]) || 5;
-        const emptyRows = parseInt(parts[1]) || 2;
-        generateAttendancePDF(attendanceColumns, emptyRows);
-      },
-    });
+    setShowAttendanceDialog(true);
   }
 
   function generateAttendancePDF(
     attendanceColumns: number,
-    emptyRows: number = 2
+    emptyRows: number = 2,
+    headers: string[] = []
   ) {
     const doc = new jsPDF("landscape", "mm", "a4");
     const pageWidth = 297; // A4 landscape width
@@ -565,23 +559,26 @@ export default function Results() {
       if (customMessage) {
         doc.setFontSize(10);
         doc.setTextColor(70, 70, 70);
-        doc.setFillColor(245, 245, 245);
-        doc.rect(margin, currentY, usableWidth, 20, "F");
-        doc.setDrawColor(33, 150, 243);
-        doc.setLineWidth(0.5);
-        doc.line(margin, currentY, margin, currentY + 20);
-        doc.line(margin + 2, currentY, margin + 2, currentY + 20);
-        doc.setTextColor(0, 0, 0);
-        doc.text("Hinweis:", margin + 5, currentY + 6);
 
         // Split message into multiple lines if needed
         const maxWidth = usableWidth - 15;
         const lines = doc.splitTextToSize(customMessage, maxWidth);
+        const messageHeight = Math.max(20, 10 + lines.length * 4);
+
+        doc.setFillColor(245, 245, 245);
+        doc.rect(margin, currentY, usableWidth, messageHeight, "F");
+        doc.setDrawColor(33, 150, 243);
+        doc.setLineWidth(0.5);
+        doc.line(margin, currentY, margin, currentY + messageHeight);
+        doc.line(margin + 2, currentY, margin + 2, currentY + messageHeight);
+        doc.setTextColor(0, 0, 0);
+        doc.text("Hinweis:", margin + 5, currentY + 6);
+
         lines.forEach((line: string, index: number) => {
           doc.text(line, margin + 5, currentY + 12 + index * 4);
         });
 
-        currentY += Math.max(20, 8 + lines.length * 4) + 10;
+        currentY += messageHeight + 10;
       }
     }
 
@@ -592,11 +589,9 @@ export default function Results() {
 
       // Calculate needed height for this project (header + students + empty rows)
       const totalRows = projectStudents.length + emptyRows;
-      const headerHeight = 12;
-      const neededHeight = headerHeight + 8; // Just for header check
 
-      // Check if we need a new page for the header
-      if (currentY + neededHeight > pageHeight - margin) {
+      // Always start a new page for each project (except the first one)
+      if (optionIndex > 0) {
         doc.addPage();
         currentPage++;
         currentY = margin;
@@ -622,6 +617,15 @@ export default function Results() {
       doc.setTextColor(0, 0, 0);
       doc.text("Name", margin + 2, headerY);
       doc.text("Klasse", margin + nameWidth + 2, headerY);
+
+      // Add column headers
+      for (let col = 0; col < attendanceColumns; col++) {
+        const headerText = headers[col];
+        if (headerText && headerText.trim() !== "") {
+          const headerX = margin + nameWidth + gradeWidth + col * checkboxWidth;
+          doc.text(headerText, headerX + 2, headerY);
+        }
+      }
 
       currentY += 8;
       const dataStartY = currentY;
@@ -656,6 +660,16 @@ export default function Results() {
           doc.setTextColor(0, 0, 0);
           doc.text("Name", margin + 2, newHeaderY);
           doc.text("Klasse", margin + nameWidth + 2, newHeaderY);
+
+          // Add column headers
+          for (let col = 0; col < attendanceColumns; col++) {
+            const headerText = headers[col];
+            if (headerText && headerText.trim() !== "") {
+              const headerX =
+                margin + nameWidth + gradeWidth + col * checkboxWidth;
+              doc.text(headerText, headerX + 2, newHeaderY);
+            }
+          }
 
           currentY += 8;
         }
@@ -740,25 +754,8 @@ export default function Results() {
         currentY += rowHeight;
       }
 
-      currentY += 10; // Add spacing after each project
-
-      // Add cutting line between projects (except after the last project)
-      if (optionIndex < options.length - 1) {
-        // Check if there's enough space for the cutting line, otherwise add it to next page
-        if (currentY + 5 > pageHeight - margin) {
-          doc.addPage();
-          currentPage++;
-          currentY = margin;
-        }
-
-        // Draw dotted cutting line
-        doc.setDrawColor(150, 150, 150);
-        doc.setLineDashPattern([2, 2], 0); // 2mm dash, 2mm gap
-        doc.line(margin, currentY, pageWidth - margin, currentY);
-        doc.setLineDashPattern([], 0); // Reset to solid lines
-
-        currentY += 5; // Small spacing after cutting line
-      }
+      // Add spacing after each project (no cutting line needed since each project starts on a new page)
+      currentY += 10;
     });
 
     // Footer on each page
@@ -784,6 +781,29 @@ export default function Results() {
     snackbar({
       message: "PDF wurde erfolgreich erstellt und heruntergeladen.",
     });
+  }
+
+  function handleColumnCountChange(newCount: number) {
+    setAttendanceColumns(newCount);
+    const newHeaders = [...columnHeaders];
+
+    // If we need more headers, add them
+    while (newHeaders.length < newCount) {
+      newHeaders.push(`Anwesenheit ${newHeaders.length + 1}`);
+    }
+
+    // If we have too many headers, remove the excess
+    if (newHeaders.length > newCount) {
+      newHeaders.splice(newCount);
+    }
+
+    setColumnHeaders(newHeaders);
+  }
+
+  function handleHeaderChange(index: number, value: string) {
+    const newHeaders = [...columnHeaders];
+    newHeaders[index] = value;
+    setColumnHeaders(newHeaders);
   }
 
   return (
@@ -884,6 +904,88 @@ export default function Results() {
           Hinzufügen
         </mdui-button>
       </mdui-dialog>
+
+      <mdui-dialog fullscreen open={showAttendanceDialog}>
+        <mdui-button-icon
+          icon="close"
+          onClick={() => setShowAttendanceDialog(false)}
+        ></mdui-button-icon>
+        <div className="mdui-prose" style={{ padding: "20px" }}>
+          <h2>Anwesenheitsliste konfigurieren</h2>
+
+          <div style={{ marginBottom: "20px" }}>
+            <mdui-text-field
+              label="Anzahl Spalten"
+              type="number"
+              value={attendanceColumns.toString()}
+              onInput={(e: React.ChangeEvent<HTMLInputElement>) =>
+                handleColumnCountChange(parseInt(e.target.value) || 1)
+              }
+              min={1}
+              max={10}
+              style={{ width: "200px", marginRight: "20px" }}
+            />
+            <mdui-text-field
+              label="Leere Zeilen nach Projekt"
+              type="number"
+              value={emptyRows.toString()}
+              onInput={(e: React.ChangeEvent<HTMLInputElement>) =>
+                setEmptyRows(parseInt(e.target.value) || 0)
+              }
+              min={0}
+              max={10}
+              style={{ width: "200px" }}
+            />
+          </div>
+
+          <h3>Spaltenüberschriften</h3>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))",
+              gap: "15px",
+              marginBottom: "30px",
+            }}
+          >
+            {columnHeaders.slice(0, attendanceColumns).map((header, index) => (
+              <mdui-text-field
+                key={index}
+                label={`Spalte ${index + 1}`}
+                value={header}
+                onInput={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  handleHeaderChange(index, e.target.value)
+                }
+                style={{ width: "100%" }}
+              />
+            ))}
+          </div>
+
+          <div
+            style={{ display: "flex", gap: "10px", justifyContent: "flex-end" }}
+          >
+            <mdui-button
+              variant="outlined"
+              onClick={() => setShowAttendanceDialog(false)}
+            >
+              Abbrechen
+            </mdui-button>
+            <mdui-button
+              onClick={() => {
+                generateAttendancePDF(
+                  attendanceColumns,
+                  emptyRows,
+                  columnHeaders
+                );
+                setShowAttendanceDialog(false);
+              }}
+              icon="picture_as_pdf"
+            >
+              PDF erstellen
+            </mdui-button>
+          </div>
+        </div>
+      </mdui-dialog>
+
       <h2>Ergebnisse</h2>
       <mdui-card
         variant="outlined"
