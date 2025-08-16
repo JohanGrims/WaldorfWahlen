@@ -18,7 +18,7 @@ export default function Gateway() {
   );
 }
 
-Gateway.loader = async function loader({ params }: { params: { id: string } }) {
+Gateway.loader = async function loader({ params, request }: { params: { id: string }; request: Request }) {
   const { id } = params;
   const vote = await getDoc(doc(db, `/votes/${id}`));
   if (!vote.exists()) {
@@ -60,6 +60,10 @@ Gateway.loader = async function loader({ params }: { params: { id: string } }) {
     if the user has already voted in this vote,
     redirect to the already voted page
     */
+    const url = new URL(request.url);
+    if (url.searchParams.get("allowResubmission")) {
+      return redirect(`/x/${id}?allowResubmission=true`);
+    }
     return redirect(`/x/${id}`);
   }
   /*
