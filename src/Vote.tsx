@@ -360,109 +360,64 @@ export default function Vote() {
           
           <div style={{ marginTop: "24px", marginBottom: "16px" }}>
             <h4>Wie zufrieden sind Sie mit den Optionen?</h4>
-            <div style={{ display: "flex", gap: "4px", justifyContent: "center", margin: "12px 0", alignItems: "center" }}>
-              <span style={{ fontSize: "0.8em", color: "#666", marginRight: "8px" }}>Schlecht</span>
+            <div style={{ display: "flex", gap: "8px", justifyContent: "center", margin: "12px 0" }}>
               {[1, 2, 3, 4, 5].map((rating) => {
-                const isSelected = satisfaction === rating;
-                const colors = ["#f44336", "#ff9800", "#ffc107", "#8bc34a", "#4caf50"];
-                const emojis = ["😞", "😐", "🙂", "😃", "😍"];
+                const icons = ["sentiment_very_dissatisfied", "sentiment_dissatisfied", "sentiment_neutral", "sentiment_satisfied", "sentiment_very_satisfied"];
+                const isSelected = satisfaction >= rating;
                 return (
-                  <div
+                  <mdui-button-icon
                     key={`satisfaction-${rating}`}
+                    icon={icons[rating - 1]}
                     onClick={() => setSatisfaction(rating)}
                     style={{
-                      width: "48px",
-                      height: "48px",
-                      borderRadius: "50%",
-                      backgroundColor: isSelected ? colors[rating - 1] : "#f5f5f5",
-                      border: `2px solid ${isSelected ? colors[rating - 1] : "#ddd"}`,
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      cursor: "pointer",
-                      fontSize: "1.5em",
-                      transition: "all 0.2s ease",
-                      transform: isSelected ? "scale(1.1)" : "scale(1)",
-                      boxShadow: isSelected ? `0 4px 8px ${colors[rating - 1]}40` : "none"
+                      color: isSelected ? "#4CAF50" : "#999",
+                      fontSize: "2rem"
                     }}
-                  >
-                    {emojis[rating - 1]}
-                  </div>
+                  />
                 );
               })}
-              <span style={{ fontSize: "0.8em", color: "#666", marginLeft: "8px" }}>Sehr gut</span>
             </div>
           </div>
 
           <div style={{ marginBottom: "16px" }}>
             <h4>Freuen Sie sich auf die Projekte?</h4>
-            <div style={{ display: "flex", gap: "4px", justifyContent: "center", margin: "12px 0", alignItems: "center" }}>
-              <span style={{ fontSize: "0.8em", color: "#666", marginRight: "8px" }}>Gar nicht</span>
+            <div style={{ display: "flex", gap: "8px", justifyContent: "center", margin: "12px 0" }}>
               {[1, 2, 3, 4, 5].map((rating) => {
-                const isSelected = excitement === rating;
-                const colors = ["#f44336", "#ff9800", "#ffc107", "#8bc34a", "#4caf50"];
-                const emojis = ["😞", "😐", "🙂", "😃", "🎉"];
+                const icons = ["sentiment_very_dissatisfied", "sentiment_dissatisfied", "sentiment_neutral", "sentiment_satisfied", "sentiment_very_satisfied"];
+                const isSelected = excitement >= rating;
                 return (
-                  <div
+                  <mdui-button-icon
                     key={`excitement-${rating}`}
+                    icon={icons[rating - 1]}
                     onClick={() => setExcitement(rating)}
                     style={{
-                      width: "48px",
-                      height: "48px",
-                      borderRadius: "50%",
-                      backgroundColor: isSelected ? colors[rating - 1] : "#f5f5f5",
-                      border: `2px solid ${isSelected ? colors[rating - 1] : "#ddd"}`,
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      cursor: "pointer",
-                      fontSize: "1.5em",
-                      transition: "all 0.2s ease",
-                      transform: isSelected ? "scale(1.1)" : "scale(1)",
-                      boxShadow: isSelected ? `0 4px 8px ${colors[rating - 1]}40` : "none"
+                      color: isSelected ? "#FF9800" : "#999",
+                      fontSize: "2rem"
                     }}
-                  >
-                    {emojis[rating - 1]}
-                  </div>
+                  />
                 );
               })}
-              <span style={{ fontSize: "0.8em", color: "#666", marginLeft: "8px" }}>Sehr</span>
             </div>
           </div>
 
           <div style={{ marginBottom: "24px" }}>
             <h4>Wie einfach war der Wahlprozess?</h4>
-            <div style={{ display: "flex", gap: "4px", justifyContent: "center", margin: "12px 0", alignItems: "center" }}>
-              <span style={{ fontSize: "0.8em", color: "#666", marginRight: "8px" }}>Schwer</span>
+            <div style={{ display: "flex", gap: "8px", justifyContent: "center", margin: "12px 0" }}>
               {[1, 2, 3, 4, 5].map((rating) => {
-                const isSelected = easeOfProcess === rating;
-                const colors = ["#f44336", "#ff9800", "#ffc107", "#8bc34a", "#4caf50"];
-                const emojis = ["😞", "😐", "🙂", "😃", "👍"];
+                const icons = ["sentiment_very_dissatisfied", "sentiment_dissatisfied", "sentiment_neutral", "sentiment_satisfied", "sentiment_very_satisfied"];
+                const isSelected = easeOfProcess >= rating;
                 return (
-                  <div
+                  <mdui-button-icon
                     key={`ease-${rating}`}
+                    icon={icons[rating - 1]}
                     onClick={() => setEaseOfProcess(rating)}
                     style={{
-                      width: "48px",
-                      height: "48px",
-                      borderRadius: "50%",
-                      backgroundColor: isSelected ? colors[rating - 1] : "#f5f5f5",
-                      border: `2px solid ${isSelected ? colors[rating - 1] : "#ddd"}`,
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      cursor: "pointer",
-                      fontSize: "1.5em",
-                      transition: "all 0.2s ease",
-                      transform: isSelected ? "scale(1.1)" : "scale(1)",
-                      boxShadow: isSelected ? `0 4px 8px ${colors[rating - 1]}40` : "none"
+                      color: isSelected ? "#2196F3" : "#999",
+                      fontSize: "2rem"
                     }}
-                  >
-                    {emojis[rating - 1]}
-                  </div>
+                  />
                 );
               })}
-              <span style={{ fontSize: "0.8em", color: "#666", marginLeft: "8px" }}>Sehr einfach</span>
             </div>
           </div>
 
