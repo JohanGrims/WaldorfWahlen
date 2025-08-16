@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react";
+import React, { useRef } from "react";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -11,7 +11,7 @@ import {
   PointElement,
   LineElement,
 } from "chart.js";
-import { Bar, Pie, Line, Doughnut } from "react-chartjs-2";
+import { Bar, Pie, Line } from "react-chartjs-2";
 import {
   collection,
   doc,
@@ -81,60 +81,13 @@ interface LoaderData {
 
 export default function Stats() {
   const { vote, options, choices, results, feedback } = useLoaderData() as LoaderData;
-  const [selectedGrade, setSelectedGrade] = useState<string>("all");
-  const [dateRange, setDateRange] = useState<string>("all");
 
   // Refs for downloading charts
   const gradeDistributionRef = useRef<HTMLDivElement>(null);
   const projectPopularityRef = useRef<HTMLDivElement>(null);
+  const choiceAssignmentRef = useRef<HTMLDivElement>(null);
   const assignmentStatsRef = useRef<HTMLDivElement>(null);
   const submissionsTimelineRef = useRef<HTMLDivElement>(null);
-
-  // Get unique grades for filtering
-  const getUniqueGrades = () => {
-    const grades = new Set(choices.map(c => c.grade.toString()));
-    return Array.from(grades).sort();
-  };
-
-  // Filter data based on current filters
-  const getFilteredChoices = () => {
-    let filtered = choices;
-    
-    if (selectedGrade !== "all") {
-      filtered = filtered.filter(choice => choice.grade.toString() === selectedGrade);
-    }
-    
-    if (dateRange !== "all") {
-      const now = new Date();
-      let cutoff: Date;
-      
-      switch (dateRange) {
-        case "24h":
-          cutoff = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-          break;
-        case "7d":
-          cutoff = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-          break;
-        case "30d":
-          cutoff = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-          break;
-        default:
-          return filtered;
-      }
-      
-      filtered = filtered.filter(choice => 
-        new Date(choice.timestamp.seconds * 1000) >= cutoff
-      );
-    }
-    
-    return filtered;
-  };
-
-  // Get filtered results based on filtered choices
-  const getFilteredResults = () => {
-    const filteredChoiceIds = new Set(getFilteredChoices().map(c => c.id));
-    return results.filter(result => filteredChoiceIds.has(result.id));
-  };
 
   // Download chart as PNG
   const downloadChart = async (
@@ -166,14 +119,19 @@ export default function Stats() {
     }
   };
 
-  // Submissions over time data (simplified)
+  // Get unique grades for table
+  const getUniqueGrades = () => {
+    const grades = new Set(choices.map(c => c.grade.toString()));
+    return Array.from(grades).sort();
+  };
+
+  // Submissions over time data
   const getSubmissionsTimelineData = () => {
-    const filteredChoices = getFilteredChoices();
-    if (filteredChoices.length === 0) return { labels: [], datasets: [] };
+    if (choices.length === 0) return { labels: [], datasets: [] };
 
     const dayGroups = new Map<string, number>();
 
-    filteredChoices.forEach((choice) => {
+    choices.forEach((choice) => {
       const date = new Date(choice.timestamp.seconds * 1000);
       const key = date.toISOString().slice(0, 10);
       dayGroups.set(key, (dayGroups.get(key) || 0) + 1);
@@ -189,7 +147,7 @@ export default function Stats() {
       ),
       datasets: [
         {
-          label: "Abgaben",
+          label: "Teilnahmen pro Tag",
           data: sortedEntries.map(([, count]) => count),
           backgroundColor: "rgba(25, 118, 210, 0.1)",
           borderColor: "rgb(25, 118, 210)",
@@ -202,10 +160,9 @@ export default function Stats() {
 
   // Grade distribution
   const getGradeDistributionData = () => {
-    const filteredChoices = getFilteredChoices();
     const gradeCounts = new Map<number, number>();
 
-    filteredChoices.forEach((choice) => {
+    choices.forEach((choice) => {
       const grade = Number(choice.grade);
       gradeCounts.set(grade, (gradeCounts.get(grade) || 0) + 1);
     });
@@ -218,7 +175,7 @@ export default function Stats() {
       labels: sortedGrades.map(([grade]) => `Klasse ${grade}`),
       datasets: [
         {
-          label: "Anzahl Schüler",
+          label: "Anzahl Teilnehmer",
           data: sortedGrades.map(([, count]) => count),
           backgroundColor: "rgb(25, 118, 210)",
           borderColor: "rgb(25, 118, 210)",
@@ -228,12 +185,11 @@ export default function Stats() {
     };
   };
 
-  // Project popularity (simplified)
+  // Project popularity
   const getProjectPopularityData = () => {
-    const filteredChoices = getFilteredChoices();
     const projectCounts = new Map<string, number>();
 
-    filteredChoices.forEach((choice) => {
+    choices.forEach((choice) => {
       choice.selected.forEach((optionId) => {
         projectCounts.set(optionId, (projectCounts.get(optionId) || 0) + 1);
       });
@@ -241,7 +197,7 @@ export default function Stats() {
 
     const sortedProjects = Array.from(projectCounts.entries())
       .sort((a, b) => b[1] - a[1])
-      .slice(0, 10); // Top 10 projects
+      .slice(0, 10);
 
     const labels = sortedProjects.map(([optionId]) => {
       const option = options.find((o) => o.id === optionId);
@@ -252,7 +208,7 @@ export default function Stats() {
       labels,
       datasets: [
         {
-          label: "Anzahl Wahlen",
+          label: "Anzahl Wahlen (alle Prioritäten)",
           data: sortedProjects.map(([, count]) => count),
           backgroundColor: "rgb(76, 175, 80)",
           borderColor: "rgb(76, 175, 80)",
@@ -262,15 +218,71 @@ export default function Stats() {
     };
   };
 
-  // Assignment stats (simplified)
+  // Choice assignments per option (stacked bar chart showing 1st, 2nd, 3rd choice assignments)
+  const getChoiceAssignmentPerOptionData = () => {
+    const optionChoiceStats = new Map<string, number[]>();
+
+    options.forEach((option) => {
+      optionChoiceStats.set(option.id, new Array(vote.selectCount).fill(0));
+    });
+
+    results.forEach((result) => {
+      const choice = choices.find((c) => c.id === result.id);
+      if (choice && result.result) {
+        const choiceIndex = choice.selected.findIndex(
+          (selected) => selected === result.result
+        );
+        if (choiceIndex !== -1 && choiceIndex < vote.selectCount) {
+          const stats = optionChoiceStats.get(result.result);
+          if (stats) {
+            stats[choiceIndex]++;
+          }
+        }
+      }
+    });
+
+    const optionsWithAssignments = Array.from(optionChoiceStats.entries())
+      .filter(([, stats]) => stats.some((count) => count > 0))
+      .sort((a, b) => {
+        const sumA = a[1].reduce((sum, count) => sum + count, 0);
+        const sumB = b[1].reduce((sum, count) => sum + count, 0);
+        return sumB - sumA;
+      });
+
+    const labels = optionsWithAssignments.map(([optionId]) => {
+      const option = options.find((o) => o.id === optionId);
+      return option ? option.title : optionId;
+    });
+
+    const datasets = [];
+    const colors = [
+      "rgb(76, 175, 80)",   // Green for 1st choice
+      "rgb(255, 152, 0)",   // Orange for 2nd choice
+      "rgb(244, 67, 54)",   // Red for 3rd choice
+      "rgb(156, 39, 176)",  // Purple for 4th choice
+      "rgb(33, 150, 243)",  // Blue for 5th choice
+      "rgb(96, 125, 139)",  // Blue Grey for 6th choice
+    ];
+
+    for (let i = 0; i < vote.selectCount; i++) {
+      datasets.push({
+        label: `${i + 1}. Priorität`,
+        data: optionsWithAssignments.map(([, stats]) => stats[i]),
+        backgroundColor: colors[i] || "rgb(158, 158, 158)",
+        borderColor: colors[i] || "rgb(158, 158, 158)",
+        borderWidth: 1,
+      });
+    }
+
+    return { labels, datasets };
+  };
+
+  // Assignment distribution pie chart
   const getAssignmentStatsData = () => {
-    const filteredResults = getFilteredResults();
-    const filteredChoices = getFilteredChoices();
-    
     const assignmentCounts = new Array(vote.selectCount + 1).fill(0);
 
-    filteredResults.forEach((result) => {
-      const choice = filteredChoices.find((c) => c.id === result.id);
+    results.forEach((result) => {
+      const choice = choices.find((c) => c.id === result.id);
       if (choice && result.result) {
         const choiceIndex = choice.selected.findIndex(
           (selected) => selected === result.result
@@ -286,8 +298,8 @@ export default function Stats() {
     });
 
     const labels = [
-      ...Array.from({ length: vote.selectCount }, (_, i) => `${i + 1}. Wahl`),
-      "Andere",
+      ...Array.from({ length: vote.selectCount }, (_, i) => `${i + 1}. Priorität`),
+      "Nicht zugewiesen",
     ];
 
     return {
@@ -303,27 +315,25 @@ export default function Stats() {
             "rgb(33, 150, 243)",  // Blue
             "rgb(96, 125, 139)",  // Blue Grey
           ],
+          borderWidth: 1,
         },
       ],
     };
   };
 
-  // Get basic stats
+  // Calculate basic statistics
   const getBasicStats = () => {
-    const filteredChoices = getFilteredChoices();
-    const filteredResults = getFilteredResults();
-    
-    const firstChoiceSuccess = filteredResults.length > 0
+    const firstChoiceSuccess = results.length > 0
       ? Math.round(
-          (filteredResults.filter((r) => {
-            const choice = filteredChoices.find((c) => c.id === r.id);
+          (results.filter((r) => {
+            const choice = choices.find((c) => c.id === r.id);
             return (
               choice &&
               choice.selected.length > 0 &&
               choice.selected[0] === r.result
             );
           }).length /
-            filteredResults.length) *
+            results.length) *
             100
         )
       : 0;
@@ -333,16 +343,17 @@ export default function Stats() {
       : null;
 
     return {
-      totalParticipants: filteredChoices.length,
+      totalParticipants: choices.length,
       totalProjects: options.length,
-      totalAssigned: filteredResults.length,
+      totalAssigned: results.length,
       firstChoiceSuccess,
       avgFeedback,
       feedbackCount: feedback.length,
+      participationRate: choices.length > 0 ? Math.round((results.length / choices.length) * 100) : 0,
     };
   };
 
-  // Simple chart options
+  // Chart options
   const chartOptions = {
     responsive: true,
     maintainAspectRatio: false,
@@ -350,6 +361,36 @@ export default function Stats() {
       legend: {
         display: true,
         position: 'bottom' as const,
+      },
+    },
+    scales: {
+      y: {
+        beginAtZero: true,
+        ticks: {
+          stepSize: 1,
+        },
+      },
+    },
+  };
+
+  const stackedBarOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        position: "bottom" as const,
+      },
+    },
+    scales: {
+      x: {
+        stacked: true,
+      },
+      y: {
+        stacked: true,
+        beginAtZero: true,
+        ticks: {
+          stepSize: 1,
+        },
       },
     },
   };
@@ -364,112 +405,135 @@ export default function Stats() {
     },
   };
 
+  const stats = getBasicStats();
+
   return (
     <div className="mdui-prose">
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
-        <h2>Statistiken</h2>
+        <h2>Statistiken und Auswertung</h2>
         <p style={{ color: "rgba(var(--mdui-color-on-surface), 0.6)" }}>{vote.title}</p>
       </div>
 
-      {/* Filters */}
-      <mdui-card variant="outlined" style={{ padding: "20px", marginBottom: "20px" }}>
-        <div style={{ display: "flex", gap: "16px", flexWrap: "wrap", alignItems: "center" }}>
-          <mdui-select 
-            label="Klasse" 
-            value={selectedGrade}
-            style={{ minWidth: "120px" }}
-            onInput={(e: any) => setSelectedGrade(e.target.value)}
-          >
-            <mdui-menu-item value="all">Alle Klassen</mdui-menu-item>
-            {getUniqueGrades().map(grade => (
-              <mdui-menu-item key={grade} value={grade}>Klasse {grade}</mdui-menu-item>
-            ))}
-          </mdui-select>
-
-          <mdui-select 
-            label="Zeitraum" 
-            value={dateRange}
-            style={{ minWidth: "130px" }}
-            onInput={(e: any) => setDateRange(e.target.value)}
-          >
-            <mdui-menu-item value="all">Gesamter Zeitraum</mdui-menu-item>
-            <mdui-menu-item value="24h">Letzte 24h</mdui-menu-item>
-            <mdui-menu-item value="7d">Letzte 7 Tage</mdui-menu-item>
-            <mdui-menu-item value="30d">Letzte 30 Tage</mdui-menu-item>
-          </mdui-select>
-
-          {(selectedGrade !== "all" || dateRange !== "all") && (
-            <mdui-button 
-              variant="outlined" 
-              icon="clear"
-              onClick={() => {
-                setSelectedGrade("all");
-                setDateRange("all");
-              }}
-            >
-              Filter zurücksetzen
-            </mdui-button>
-          )}
-        </div>
-      </mdui-card>
-
-      {/* Key Stats */}
+      {/* Key Statistics */}
       <div style={{
         display: "grid",
         gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
         gap: "20px",
         marginBottom: "30px",
       }}>
-        {(() => {
-          const stats = getBasicStats();
-          
-          return [
-            {
-              icon: "how_to_vote",
-              label: "Teilnehmer",
-              value: stats.totalParticipants,
-            },
-            {
-              icon: "assignment",
-              label: "Projekte",
-              value: stats.totalProjects,
-            },
-            {
-              icon: "assignment_turned_in",
-              label: "Zugeteilte",
-              value: stats.totalAssigned,
-            },
-            {
-              icon: "thumb_up",
-              label: "Erstwunsch-Rate",
-              value: `${stats.firstChoiceSuccess}%`,
-            },
-            ...(stats.avgFeedback ? [{
-              icon: "star",
-              label: "Durchschnittsbewertung",
-              value: `${stats.avgFeedback}/5`,
-            }] : []),
-          ].map((stat, index) => (
-            <mdui-card key={index} variant="outlined" style={{ padding: "20px", textAlign: "center" }}>
-              <mdui-icon name={stat.icon} style={{ fontSize: "2rem", marginBottom: "8px" }}></mdui-icon>
-              <h3 style={{ margin: "0 0 4px 0", fontSize: "1.5rem" }}>{stat.value}</h3>
-              <p style={{ margin: 0, color: "rgba(var(--mdui-color-on-surface), 0.6)" }}>{stat.label}</p>
-            </mdui-card>
-          ));
-        })()}
+        {[
+          {
+            icon: "how_to_vote",
+            label: "Gesamte Teilnehmer",
+            value: stats.totalParticipants,
+            description: "Anzahl eingegangener Wahlen"
+          },
+          {
+            icon: "assignment",
+            label: "Verfügbare Projekte",
+            value: stats.totalProjects,
+            description: "Zur Auswahl stehende Projekte"
+          },
+          {
+            icon: "assignment_turned_in",
+            label: "Zugewiesene Schüler",
+            value: stats.totalAssigned,
+            description: "Bereits einem Projekt zugewiesen"
+          },
+          {
+            icon: "trending_up",
+            label: "Zuteilungsrate",
+            value: `${stats.participationRate}%`,
+            description: "Anteil der zugewiesenen Teilnehmer"
+          },
+          {
+            icon: "thumb_up",
+            label: "Erstwunsch-Erfolg",
+            value: `${stats.firstChoiceSuccess}%`,
+            description: "Erhielten ihr erstes Wahlziel"
+          },
+          ...(stats.avgFeedback ? [{
+            icon: "star",
+            label: "Durchschnittsbewertung",
+            value: `${stats.avgFeedback}/5`,
+            description: `Basierend auf ${stats.feedbackCount} Antworten`
+          }] : []),
+        ].map((stat, index) => (
+          <mdui-card key={index} variant="outlined" style={{ padding: "20px", textAlign: "center" }}>
+            <mdui-icon name={stat.icon} style={{ fontSize: "2rem", marginBottom: "8px", color: "rgba(var(--mdui-color-primary), 1)" }}></mdui-icon>
+            <h3 style={{ margin: "0 0 4px 0", fontSize: "1.5rem" }}>{stat.value}</h3>
+            <p style={{ margin: "0 0 4px 0", fontWeight: "500" }}>{stat.label}</p>
+            <p style={{ margin: 0, fontSize: "0.875rem", color: "rgba(var(--mdui-color-on-surface), 0.6)" }}>{stat.description}</p>
+          </mdui-card>
+        ))}
       </div>
 
-      {/* Charts */}
+      {/* Main Charts */}
       <div style={{
         display: "grid",
-        gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
+        gridTemplateColumns: "repeat(auto-fit, minmax(400px, 1fr))",
+        gap: "20px",
+        marginBottom: "30px",
+      }}>
+        {/* Choice Assignment Breakdown (Stacked Bar) */}
+        {results.length > 0 && (
+          <mdui-card variant="outlined" style={{ padding: "20px" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
+              <div>
+                <h3 style={{ margin: "0 0 4px 0" }}>Zuteilungen nach Priorität</h3>
+                <p style={{ margin: 0, fontSize: "0.875rem", color: "rgba(var(--mdui-color-on-surface), 0.6)" }}>
+                  Zeigt für jedes Projekt, wie viele Schüler es als 1., 2., 3. etc. Priorität erhalten haben
+                </p>
+              </div>
+              <mdui-button-icon 
+                icon="download"
+                onClick={() => downloadChart(choiceAssignmentRef, "zuteilungen-nach-prioritaet")}
+              />
+            </div>
+            <div ref={choiceAssignmentRef} style={{ height: "400px" }}>
+              <Bar data={getChoiceAssignmentPerOptionData()} options={stackedBarOptions} />
+            </div>
+          </mdui-card>
+        )}
+
+        {/* Assignment Distribution Pie */}
+        {results.length > 0 && (
+          <mdui-card variant="outlined" style={{ padding: "20px" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
+              <div>
+                <h3 style={{ margin: "0 0 4px 0" }}>Gesamtverteilung der Zuteilungen</h3>
+                <p style={{ margin: 0, fontSize: "0.875rem", color: "rgba(var(--mdui-color-on-surface), 0.6)" }}>
+                  Übersicht über alle Prioritäts-Zuteilungen
+                </p>
+              </div>
+              <mdui-button-icon 
+                icon="download"
+                onClick={() => downloadChart(assignmentStatsRef, "zuteilungsverteilung")}
+              />
+            </div>
+            <div ref={assignmentStatsRef} style={{ height: "400px" }}>
+              <Pie data={getAssignmentStatsData()} options={pieChartOptions} />
+            </div>
+          </mdui-card>
+        )}
+      </div>
+
+      {/* Secondary Charts */}
+      <div style={{
+        display: "grid",
+        gridTemplateColumns: "repeat(auto-fit, minmax(350px, 1fr))",
         gap: "20px",
         marginBottom: "30px",
       }}>
         {/* Grade Distribution */}
         <mdui-card variant="outlined" style={{ padding: "20px" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
-            <h3 style={{ margin: 0 }}>Klassenverteilung</h3>
+            <div>
+              <h3 style={{ margin: "0 0 4px 0" }}>Teilnahme nach Klassenstufen</h3>
+              <p style={{ margin: 0, fontSize: "0.875rem", color: "rgba(var(--mdui-color-on-surface), 0.6)" }}>
+                Verteilung der Teilnehmer auf Klassenstufen
+              </p>
+            </div>
             <mdui-button-icon 
               icon="download"
               onClick={() => downloadChart(gradeDistributionRef, "klassenverteilung")}
@@ -480,24 +544,15 @@ export default function Stats() {
           </div>
         </mdui-card>
 
-        {/* Submissions Timeline */}
-        <mdui-card variant="outlined" style={{ padding: "20px" }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
-            <h3 style={{ margin: 0 }}>Abgaben über Zeit</h3>
-            <mdui-button-icon 
-              icon="download"
-              onClick={() => downloadChart(submissionsTimelineRef, "abgaben-verlauf")}
-            />
-          </div>
-          <div ref={submissionsTimelineRef} style={{ height: "300px" }}>
-            <Line data={getSubmissionsTimelineData()} options={chartOptions} />
-          </div>
-        </mdui-card>
-
         {/* Project Popularity */}
         <mdui-card variant="outlined" style={{ padding: "20px" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
-            <h3 style={{ margin: 0 }}>Beliebteste Projekte</h3>
+            <div>
+              <h3 style={{ margin: "0 0 4px 0" }}>Beliebteste Projekte</h3>
+              <p style={{ margin: 0, fontSize: "0.875rem", color: "rgba(var(--mdui-color-on-surface), 0.6)" }}>
+                Top 10 Projekte nach Gesamtzahl der Wahlen
+              </p>
+            </div>
             <mdui-button-icon 
               icon="download"
               onClick={() => downloadChart(projectPopularityRef, "projektbeliebtheit")}
@@ -508,43 +563,52 @@ export default function Stats() {
           </div>
         </mdui-card>
 
-        {/* Assignment Results */}
-        {getFilteredResults().length > 0 && (
-          <mdui-card variant="outlined" style={{ padding: "20px" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
-              <h3 style={{ margin: 0 }}>Zuteilungsergebnis</h3>
-              <mdui-button-icon 
-                icon="download"
-                onClick={() => downloadChart(assignmentStatsRef, "zuteilungsergebnis")}
-              />
+        {/* Submissions Timeline */}
+        <mdui-card variant="outlined" style={{ padding: "20px" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
+            <div>
+              <h3 style={{ margin: "0 0 4px 0" }}>Teilnahme-Verlauf</h3>
+              <p style={{ margin: 0, fontSize: "0.875rem", color: "rgba(var(--mdui-color-on-surface), 0.6)" }}>
+                Zeitlicher Verlauf der eingegangenen Wahlen
+              </p>
             </div>
-            <div ref={assignmentStatsRef} style={{ height: "300px" }}>
-              <Doughnut data={getAssignmentStatsData()} options={pieChartOptions} />
-            </div>
-          </mdui-card>
-        )}
+            <mdui-button-icon 
+              icon="download"
+              onClick={() => downloadChart(submissionsTimelineRef, "teilnahme-verlauf")}
+            />
+          </div>
+          <div ref={submissionsTimelineRef} style={{ height: "300px" }}>
+            <Line data={getSubmissionsTimelineData()} options={chartOptions} />
+          </div>
+        </mdui-card>
       </div>
 
-      {/* Detailed Data Tables */}
-      {getFilteredChoices().length > 0 && (
+      {/* Detailed Data Table */}
+      {choices.length > 0 && (
         <mdui-card variant="outlined" style={{ padding: "20px", marginBottom: "20px" }}>
-          <h3 style={{ marginTop: 0 }}>Detaillierte Übersicht</h3>
-          <div className="mdui-table">
-            <table>
+          <h3 style={{ marginTop: 0, marginBottom: "16px" }}>Detailübersicht nach Klassenstufen</h3>
+          <div style={{ overflowX: "auto" }}>
+            <table className="mdui-table">
               <thead>
                 <tr>
-                  <th>Klasse</th>
+                  <th>Klassenstufe</th>
                   <th>Anzahl Teilnehmer</th>
-                  <th>Abgaben (%)</th>
-                  {feedback.length > 0 && <th>Feedback (%)</th>}
+                  <th>Zugeteilte Schüler</th>
+                  <th>Zuteilungsrate</th>
+                  <th>Erstwunsch-Erfolg</th>
+                  {feedback.length > 0 && <th>Feedback-Rücklauf</th>}
                 </tr>
               </thead>
               <tbody>
                 {getUniqueGrades().map(grade => {
-                  const gradeChoices = getFilteredChoices().filter(c => c.grade.toString() === grade);
-                  const gradeResults = getFilteredResults().filter(r => 
+                  const gradeChoices = choices.filter(c => c.grade.toString() === grade);
+                  const gradeResults = results.filter(r => 
                     gradeChoices.some(c => c.id === r.id)
                   );
+                  const gradeFirstChoiceSuccess = gradeResults.filter(r => {
+                    const choice = gradeChoices.find(c => c.id === r.id);
+                    return choice && choice.selected.length > 0 && choice.selected[0] === r.result;
+                  }).length;
                   const gradeFeedback = feedback.filter(f => 
                     gradeChoices.some(c => 
                       Math.abs(c.timestamp.seconds - f.timestamp.seconds) < 300
@@ -553,9 +617,11 @@ export default function Stats() {
                   
                   return (
                     <tr key={grade}>
-                      <td>Klasse {grade}</td>
+                      <td><strong>Klasse {grade}</strong></td>
                       <td>{gradeChoices.length}</td>
+                      <td>{gradeResults.length}</td>
                       <td>{gradeChoices.length > 0 ? Math.round((gradeResults.length / gradeChoices.length) * 100) : 0}%</td>
+                      <td>{gradeResults.length > 0 ? Math.round((gradeFirstChoiceSuccess / gradeResults.length) * 100) : 0}%</td>
                       {feedback.length > 0 && (
                         <td>{gradeChoices.length > 0 ? Math.round((gradeFeedback.length / gradeChoices.length) * 100) : 0}%</td>
                       )}
@@ -568,40 +634,63 @@ export default function Stats() {
         </mdui-card>
       )}
 
-      {/* Feedback Section */}
+      {/* Feedback Analysis */}
       {feedback.length > 0 && (
-        <mdui-card variant="outlined" style={{ padding: "20px" }}>
-          <h3 style={{ marginTop: 0 }}>Feedback-Übersicht</h3>
+        <mdui-card variant="outlined" style={{ padding: "20px", marginBottom: "20px" }}>
+          <h3 style={{ marginTop: 0, marginBottom: "16px" }}>Feedback-Auswertung</h3>
           <div style={{
             display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
+            gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))",
             gap: "16px",
             marginBottom: "20px",
           }}>
             {[
-              { key: "satisfaction", label: "Zufriedenheit", value: (feedback.reduce((s, f) => s + f.satisfaction, 0) / feedback.length).toFixed(1) },
-              { key: "excitement", label: "Vorfreude", value: (feedback.reduce((s, f) => s + f.excitement, 0) / feedback.length).toFixed(1) },
-              { key: "easeOfProcess", label: "Einfachheit", value: (feedback.reduce((s, f) => s + f.easeOfProcess, 0) / feedback.length).toFixed(1) },
+              { 
+                key: "satisfaction", 
+                label: "Zufriedenheit mit den Optionen", 
+                value: (feedback.reduce((s, f) => s + f.satisfaction, 0) / feedback.length).toFixed(1),
+                icon: "sentiment_satisfied"
+              },
+              { 
+                key: "excitement", 
+                label: "Vorfreude auf die Projekte", 
+                value: (feedback.reduce((s, f) => s + f.excitement, 0) / feedback.length).toFixed(1),
+                icon: "celebration"
+              },
+              { 
+                key: "easeOfProcess", 
+                label: "Einfachheit des Wahlprozesses", 
+                value: (feedback.reduce((s, f) => s + f.easeOfProcess, 0) / feedback.length).toFixed(1),
+                icon: "thumb_up"
+              },
             ].map(metric => (
-              <div key={metric.key} style={{ textAlign: "center", padding: "16px", backgroundColor: "rgba(var(--mdui-color-surface-variant), 0.1)", borderRadius: "8px" }}>
+              <div key={metric.key} style={{ 
+                textAlign: "center", 
+                padding: "20px", 
+                backgroundColor: "rgba(var(--mdui-color-surface-variant), 0.1)", 
+                borderRadius: "8px",
+                border: "1px solid rgba(var(--mdui-color-outline), 0.2)"
+              }}>
+                <mdui-icon name={metric.icon} style={{ fontSize: "2rem", marginBottom: "8px", color: "rgba(var(--mdui-color-primary), 1)" }}></mdui-icon>
                 <h4 style={{ margin: "0 0 8px 0" }}>{metric.label}</h4>
-                <p style={{ margin: 0, fontSize: "1.25rem", fontWeight: "500" }}>{metric.value}/5</p>
+                <p style={{ margin: 0, fontSize: "1.5rem", fontWeight: "500" }}>{metric.value}/5</p>
               </div>
             ))}
           </div>
-          <p style={{ color: "rgba(var(--mdui-color-on-surface), 0.6)", margin: 0 }}>
-            Basierend auf {feedback.length} Antworten ({Math.round((feedback.length / getFilteredChoices().length) * 100)}% Rücklaufquote)
+          <p style={{ color: "rgba(var(--mdui-color-on-surface), 0.6)", margin: 0, textAlign: "center" }}>
+            Basierend auf {feedback.length} Feedback-Antworten 
+            ({Math.round((feedback.length / choices.length) * 100)}% Rücklaufquote der Teilnehmer)
           </p>
         </mdui-card>
       )}
 
       {/* Empty State */}
-      {getFilteredChoices().length === 0 && (
+      {choices.length === 0 && (
         <mdui-card variant="outlined" style={{ padding: "40px", textAlign: "center" }}>
-          <mdui-icon name="bar_chart" style={{ fontSize: "3rem", color: "rgba(var(--mdui-color-on-surface), 0.3)", marginBottom: "16px" }}></mdui-icon>
-          <h3 style={{ color: "rgba(var(--mdui-color-on-surface), 0.6)" }}>Keine Daten verfügbar</h3>
+          <mdui-icon name="analytics" style={{ fontSize: "4rem", color: "rgba(var(--mdui-color-on-surface), 0.3)", marginBottom: "16px" }}></mdui-icon>
+          <h3 style={{ color: "rgba(var(--mdui-color-on-surface), 0.6)", marginBottom: "8px" }}>Noch keine Daten verfügbar</h3>
           <p style={{ color: "rgba(var(--mdui-color-on-surface), 0.4)", margin: 0 }}>
-            Es sind noch keine Wahlen eingegangen oder die Filter zeigen keine Ergebnisse.
+            Es sind noch keine Wahlen eingegangen. Sobald Schüler ihre Wahlen abgeben, werden hier umfassende Statistiken und Auswertungen angezeigt.
           </p>
         </mdui-card>
       )}
