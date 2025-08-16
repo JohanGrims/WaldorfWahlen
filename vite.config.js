@@ -5,6 +5,7 @@ import momentTimezonePlugin from "vite-plugin-moment-timezone";
 import { manualChunksPlugin } from "vite-plugin-webpackchunkname";
 import { readFileSync } from "fs";
 import { join } from "path";
+import process from "node:process";
 
 // Read package.json to get dependencies
 const packageJson = JSON.parse(
@@ -36,7 +37,7 @@ const allPackages = [...new Set([...dependencies, ...commonLargePackages])];
 const packageToChunk = {};
 allPackages.forEach((pkg) => {
   // Convert package names to valid chunk names
-  const chunkName = `vendor-${pkg.replace(/[@\/]/g, "-")}`;
+  const chunkName = `vendor-${pkg.replace(/[@/]/g, "-")}`;
   packageToChunk[pkg] = chunkName;
 });
 
