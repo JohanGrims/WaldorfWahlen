@@ -52,7 +52,6 @@ interface FeedbackData {
   satisfaction: number; // 1-5
   excitement: number; // 1-5
   easeOfProcess: number; // 1-5
-  timestamp: Date;
 }
 
 export default function Vote() {
@@ -235,13 +234,9 @@ export default function Vote() {
       satisfaction,
       excitement,
       easeOfProcess,
-      timestamp: new Date(),
     };
 
-    addDoc(collection(db, `/votes/${id}/feedback`), {
-      ...feedbackData,
-      timestamp: serverTimestamp(),
-    })
+    addDoc(collection(db, `/votes/${id}/feedback`), feedbackData)
       .then(() => {
         setShowFeedbackDialog(false);
         navigateToSubmitted();

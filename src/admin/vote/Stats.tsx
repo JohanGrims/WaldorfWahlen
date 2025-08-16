@@ -68,7 +68,6 @@ interface FeedbackData extends DocumentData {
   satisfaction: number;
   excitement: number;
   easeOfProcess: number;
-  timestamp: Timestamp;
 }
 
 interface LoaderData {
@@ -342,14 +341,38 @@ export default function Stats() {
       ? (feedback.reduce((sum, f) => sum + f.satisfaction + f.excitement + f.easeOfProcess, 0) / (feedback.length * 3)).toFixed(1)
       : null;
 
+    // Calculate additional insightful stats
+    const unassigned = choices.length - results.length;
+    
+    // Calculate most popular project
+    const projectCounts = new Map<string, number>();
+    choices.forEach((choice) => {
+      choice.selected.forEach((optionId) => {
+        projectCounts.set(optionId, (projectCounts.get(optionId) || 0) + 1);
+      });
+    });
+    const mostPopularProject = Array.from(projectCounts.entries()).sort((a, b) => b[1] - a[1])[0];
+    const mostPopularProjectName = mostPopularProject 
+      ? options.find(o => o.id === mostPopularProject[0])?.title || "Unbekannt"
+      : "Keine Daten";
+    
+    // Calculate average choices per participant
+    const avgChoicesPerParticipant = choices.length > 0 
+      ? (choices.reduce((sum, c) => sum + c.selected.filter(s => s !== "null").length, 0) / choices.length).toFixed(1)
+      : "0";
+
     return {
       totalParticipants: choices.length,
       totalProjects: options.length,
       totalAssigned: results.length,
+      unassigned,
       firstChoiceSuccess,
       avgFeedback,
       feedbackCount: feedback.length,
       participationRate: choices.length > 0 ? Math.round((results.length / choices.length) * 100) : 0,
+      mostPopularProjectName,
+      mostPopularProjectVotes: mostPopularProject ? mostPopularProject[1] : 0,
+      avgChoicesPerParticipant,
     };
   };
 
@@ -417,8 +440,8 @@ export default function Stats() {
       {/* Key Statistics */}
       <div style={{
         display: "grid",
-        gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
-        gap: "20px",
+        gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
+        gap: "16px",
         marginBottom: "30px",
       }}>
         {[
@@ -452,6 +475,24 @@ export default function Stats() {
             value: `${stats.firstChoiceSuccess}%`,
             description: "Erhielten ihr erstes Wahlziel"
           },
+          ...(stats.unassigned > 0 ? [{
+            icon: "pending",
+            label: "Nicht zugeteilt",
+            value: stats.unassigned,
+            description: "Noch ohne Projekt-Zuteilung"
+          }] : []),
+          ...(stats.mostPopularProjectVotes > 0 ? [{
+            icon: "trending_up",
+            label: "Beliebtestes Projekt",
+            value: stats.mostPopularProjectVotes,
+            description: `${stats.mostPopularProjectName.length > 20 ? stats.mostPopularProjectName.substring(0, 20) + "..." : stats.mostPopularProjectName}`
+          }] : []),
+          ...(stats.totalParticipants > 0 ? [{
+            icon: "list",
+            label: "⌀ Wahlen pro Person",
+            value: stats.avgChoicesPerParticipant,
+            description: "Durchschnittlich gewählte Projekte"
+          }] : []),
           ...(stats.avgFeedback ? [{
             icon: "star",
             label: "Durchschnittsbewertung",
@@ -459,11 +500,11 @@ export default function Stats() {
             description: `Basierend auf ${stats.feedbackCount} Antworten`
           }] : []),
         ].map((stat, index) => (
-          <mdui-card key={index} variant="outlined" style={{ padding: "20px", textAlign: "center" }}>
+          <mdui-card key={index} variant="outlined" style={{ padding: "16px", textAlign: "center", minHeight: "140px", display: "flex", flexDirection: "column", justifyContent: "center" }}>
             <mdui-icon name={stat.icon} style={{ fontSize: "2rem", marginBottom: "8px", color: "rgba(var(--mdui-color-primary), 1)" }}></mdui-icon>
-            <h3 style={{ margin: "0 0 4px 0", fontSize: "1.5rem" }}>{stat.value}</h3>
-            <p style={{ margin: "0 0 4px 0", fontWeight: "500" }}>{stat.label}</p>
-            <p style={{ margin: 0, fontSize: "0.875rem", color: "rgba(var(--mdui-color-on-surface), 0.6)" }}>{stat.description}</p>
+            <h3 style={{ margin: "0 0 4px 0", fontSize: "1.5rem", lineHeight: "1.2" }}>{stat.value}</h3>
+            <p style={{ margin: "0 0 4px 0", fontWeight: "500", fontSize: "0.9rem" }}>{stat.label}</p>
+            <p style={{ margin: 0, fontSize: "0.75rem", color: "rgba(var(--mdui-color-on-surface), 0.6)" }}>{stat.description}</p>
           </mdui-card>
         ))}
       </div>
@@ -471,17 +512,17 @@ export default function Stats() {
       {/* Main Charts */}
       <div style={{
         display: "grid",
-        gridTemplateColumns: "repeat(auto-fit, minmax(400px, 1fr))",
-        gap: "20px",
+        gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
+        gap: "16px",
         marginBottom: "30px",
       }}>
         {/* Choice Assignment Breakdown (Stacked Bar) */}
         {results.length > 0 && (
-          <mdui-card variant="outlined" style={{ padding: "20px" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
-              <div>
-                <h3 style={{ margin: "0 0 4px 0" }}>Zuteilungen nach Priorität</h3>
-                <p style={{ margin: 0, fontSize: "0.875rem", color: "rgba(var(--mdui-color-on-surface), 0.6)" }}>
+          <mdui-card variant="outlined" style={{ padding: "16px" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "16px", flexWrap: "wrap", gap: "8px" }}>
+              <div style={{ flex: 1, minWidth: "200px" }}>
+                <h3 style={{ margin: "0 0 4px 0", fontSize: "1.1rem" }}>Zuteilungen nach Priorität</h3>
+                <p style={{ margin: 0, fontSize: "0.8rem", color: "rgba(var(--mdui-color-on-surface), 0.6)" }}>
                   Zeigt für jedes Projekt, wie viele Schüler es als 1., 2., 3. etc. Priorität erhalten haben
                 </p>
               </div>
@@ -490,7 +531,7 @@ export default function Stats() {
                 onClick={() => downloadChart(choiceAssignmentRef, "zuteilungen-nach-prioritaet")}
               />
             </div>
-            <div ref={choiceAssignmentRef} style={{ height: "400px" }}>
+            <div ref={choiceAssignmentRef} style={{ height: "350px" }}>
               <Bar data={getChoiceAssignmentPerOptionData()} options={stackedBarOptions} />
             </div>
           </mdui-card>
@@ -498,11 +539,11 @@ export default function Stats() {
 
         {/* Assignment Distribution Pie */}
         {results.length > 0 && (
-          <mdui-card variant="outlined" style={{ padding: "20px" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
-              <div>
-                <h3 style={{ margin: "0 0 4px 0" }}>Gesamtverteilung der Zuteilungen</h3>
-                <p style={{ margin: 0, fontSize: "0.875rem", color: "rgba(var(--mdui-color-on-surface), 0.6)" }}>
+          <mdui-card variant="outlined" style={{ padding: "16px" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "16px", flexWrap: "wrap", gap: "8px" }}>
+              <div style={{ flex: 1, minWidth: "200px" }}>
+                <h3 style={{ margin: "0 0 4px 0", fontSize: "1.1rem" }}>Gesamtverteilung der Zuteilungen</h3>
+                <p style={{ margin: 0, fontSize: "0.8rem", color: "rgba(var(--mdui-color-on-surface), 0.6)" }}>
                   Übersicht über alle Prioritäts-Zuteilungen
                 </p>
               </div>
@@ -511,7 +552,7 @@ export default function Stats() {
                 onClick={() => downloadChart(assignmentStatsRef, "zuteilungsverteilung")}
               />
             </div>
-            <div ref={assignmentStatsRef} style={{ height: "400px" }}>
+            <div ref={assignmentStatsRef} style={{ height: "350px" }}>
               <Pie data={getAssignmentStatsData()} options={pieChartOptions} />
             </div>
           </mdui-card>
@@ -521,16 +562,16 @@ export default function Stats() {
       {/* Secondary Charts */}
       <div style={{
         display: "grid",
-        gridTemplateColumns: "repeat(auto-fit, minmax(350px, 1fr))",
-        gap: "20px",
+        gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
+        gap: "16px",
         marginBottom: "30px",
       }}>
         {/* Grade Distribution */}
-        <mdui-card variant="outlined" style={{ padding: "20px" }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
-            <div>
-              <h3 style={{ margin: "0 0 4px 0" }}>Teilnahme nach Klassenstufen</h3>
-              <p style={{ margin: 0, fontSize: "0.875rem", color: "rgba(var(--mdui-color-on-surface), 0.6)" }}>
+        <mdui-card variant="outlined" style={{ padding: "16px" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "16px", flexWrap: "wrap", gap: "8px" }}>
+            <div style={{ flex: 1, minWidth: "150px" }}>
+              <h3 style={{ margin: "0 0 4px 0", fontSize: "1.1rem" }}>Teilnahme nach Klassenstufen</h3>
+              <p style={{ margin: 0, fontSize: "0.8rem", color: "rgba(var(--mdui-color-on-surface), 0.6)" }}>
                 Verteilung der Teilnehmer auf Klassenstufen
               </p>
             </div>
@@ -539,17 +580,17 @@ export default function Stats() {
               onClick={() => downloadChart(gradeDistributionRef, "klassenverteilung")}
             />
           </div>
-          <div ref={gradeDistributionRef} style={{ height: "300px" }}>
+          <div ref={gradeDistributionRef} style={{ height: "280px" }}>
             <Bar data={getGradeDistributionData()} options={chartOptions} />
           </div>
         </mdui-card>
 
         {/* Project Popularity */}
-        <mdui-card variant="outlined" style={{ padding: "20px" }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
-            <div>
-              <h3 style={{ margin: "0 0 4px 0" }}>Beliebteste Projekte</h3>
-              <p style={{ margin: 0, fontSize: "0.875rem", color: "rgba(var(--mdui-color-on-surface), 0.6)" }}>
+        <mdui-card variant="outlined" style={{ padding: "16px" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "16px", flexWrap: "wrap", gap: "8px" }}>
+            <div style={{ flex: 1, minWidth: "150px" }}>
+              <h3 style={{ margin: "0 0 4px 0", fontSize: "1.1rem" }}>Beliebteste Projekte</h3>
+              <p style={{ margin: 0, fontSize: "0.8rem", color: "rgba(var(--mdui-color-on-surface), 0.6)" }}>
                 Top 10 Projekte nach Gesamtzahl der Wahlen
               </p>
             </div>
@@ -558,17 +599,17 @@ export default function Stats() {
               onClick={() => downloadChart(projectPopularityRef, "projektbeliebtheit")}
             />
           </div>
-          <div ref={projectPopularityRef} style={{ height: "300px" }}>
+          <div ref={projectPopularityRef} style={{ height: "280px" }}>
             <Bar data={getProjectPopularityData()} options={chartOptions} />
           </div>
         </mdui-card>
 
         {/* Submissions Timeline */}
-        <mdui-card variant="outlined" style={{ padding: "20px" }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
-            <div>
-              <h3 style={{ margin: "0 0 4px 0" }}>Teilnahme-Verlauf</h3>
-              <p style={{ margin: 0, fontSize: "0.875rem", color: "rgba(var(--mdui-color-on-surface), 0.6)" }}>
+        <mdui-card variant="outlined" style={{ padding: "16px" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "16px", flexWrap: "wrap", gap: "8px" }}>
+            <div style={{ flex: 1, minWidth: "150px" }}>
+              <h3 style={{ margin: "0 0 4px 0", fontSize: "1.1rem" }}>Teilnahme-Verlauf</h3>
+              <p style={{ margin: 0, fontSize: "0.8rem", color: "rgba(var(--mdui-color-on-surface), 0.6)" }}>
                 Zeitlicher Verlauf der eingegangenen Wahlen
               </p>
             </div>
@@ -577,7 +618,7 @@ export default function Stats() {
               onClick={() => downloadChart(submissionsTimelineRef, "teilnahme-verlauf")}
             />
           </div>
-          <div ref={submissionsTimelineRef} style={{ height: "300px" }}>
+          <div ref={submissionsTimelineRef} style={{ height: "280px" }}>
             <Line data={getSubmissionsTimelineData()} options={chartOptions} />
           </div>
         </mdui-card>
@@ -585,10 +626,15 @@ export default function Stats() {
 
       {/* Detailed Data Table */}
       {choices.length > 0 && (
-        <mdui-card variant="outlined" style={{ padding: "20px", marginBottom: "20px" }}>
+        <mdui-card variant="outlined" style={{ padding: "16px", marginBottom: "20px" }}>
           <h3 style={{ marginTop: 0, marginBottom: "16px" }}>Detailübersicht nach Klassenstufen</h3>
-          <div style={{ overflowX: "auto" }}>
-            <table className="mdui-table">
+          <div style={{ 
+            overflowX: "auto", 
+            maxWidth: "100%",
+            WebkitOverflowScrolling: "touch",
+            scrollbarWidth: "thin"
+          }}>
+            <table className="mdui-table" style={{ minWidth: "600px", width: "100%" }}>
               <thead>
                 <tr>
                   <th>Klassenstufe</th>
@@ -596,7 +642,7 @@ export default function Stats() {
                   <th>Zugeteilte Schüler</th>
                   <th>Zuteilungsrate</th>
                   <th>Erstwunsch-Erfolg</th>
-                  {feedback.length > 0 && <th>Feedback-Rücklauf</th>}
+                  {feedback.length > 0 && <th>Weitere Daten</th>}
                 </tr>
               </thead>
               <tbody>
@@ -609,11 +655,7 @@ export default function Stats() {
                     const choice = gradeChoices.find(c => c.id === r.id);
                     return choice && choice.selected.length > 0 && choice.selected[0] === r.result;
                   }).length;
-                  const gradeFeedback = feedback.filter(f => 
-                    gradeChoices.some(c => 
-                      Math.abs(c.timestamp.seconds - f.timestamp.seconds) < 300
-                    )
-                  );
+                  const gradeFeedback = feedback; // Use all feedback since we no longer correlate by timestamp
                   
                   return (
                     <tr key={grade}>
@@ -623,7 +665,7 @@ export default function Stats() {
                       <td>{gradeChoices.length > 0 ? Math.round((gradeResults.length / gradeChoices.length) * 100) : 0}%</td>
                       <td>{gradeResults.length > 0 ? Math.round((gradeFirstChoiceSuccess / gradeResults.length) * 100) : 0}%</td>
                       {feedback.length > 0 && (
-                        <td>{gradeChoices.length > 0 ? Math.round((gradeFeedback.length / gradeChoices.length) * 100) : 0}%</td>
+                        <td>-</td>
                       )}
                     </tr>
                   );
@@ -636,12 +678,12 @@ export default function Stats() {
 
       {/* Feedback Analysis */}
       {feedback.length > 0 && (
-        <mdui-card variant="outlined" style={{ padding: "20px", marginBottom: "20px" }}>
+        <mdui-card variant="outlined" style={{ padding: "16px", marginBottom: "20px" }}>
           <h3 style={{ marginTop: 0, marginBottom: "16px" }}>Feedback-Auswertung</h3>
           <div style={{
             display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))",
-            gap: "16px",
+            gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
+            gap: "12px",
             marginBottom: "20px",
           }}>
             {[
