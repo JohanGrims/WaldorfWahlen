@@ -66,15 +66,24 @@ interface ResultData extends DocumentData {
   result: string; // This is the assigned project ID
 }
 
+interface FeedbackData extends DocumentData {
+  id: string;
+  satisfaction: number;
+  excitement: number;
+  easeOfProcess: number;
+  timestamp: Timestamp;
+}
+
 interface LoaderData {
   vote: VoteData;
   options: OptionData[];
   choices: ChoiceData[];
   results: ResultData[];
+  feedback: FeedbackData[];
 }
 
 export default function Stats() {
-  const { vote, options, choices, results } = useLoaderData() as LoaderData;
+  const { vote, options, choices, results, feedback } = useLoaderData() as LoaderData;
   const [timeGrouping, setTimeGrouping] = useState<"hour" | "day" | "week">(
     "day"
   );
@@ -86,6 +95,7 @@ export default function Stats() {
   const assignmentStatsRef = useRef<HTMLDivElement>(null);
   const firstChoiceSuccessRef = useRef<HTMLDivElement>(null);
   const choiceAssignmentPerOptionRef = useRef<HTMLDivElement>(null);
+  const feedbackRef = useRef<HTMLDivElement>(null);
 
   // Download chart as PNG
   const downloadChart = async (
@@ -559,6 +569,65 @@ export default function Stats() {
     },
   };
 
+  // Feedback statistics
+  const getFeedbackStatsData = () => {
+    if (feedback.length === 0) return null;
+
+    const avgSatisfaction = feedback.reduce((sum, f) => sum + f.satisfaction, 0) / feedback.length;
+    const avgExcitement = feedback.reduce((sum, f) => sum + f.excitement, 0) / feedback.length;
+    const avgEaseOfProcess = feedback.reduce((sum, f) => sum + f.easeOfProcess, 0) / feedback.length;
+
+    return {
+      averages: {
+        satisfaction: Number(avgSatisfaction.toFixed(1)),
+        excitement: Number(avgExcitement.toFixed(1)),
+        easeOfProcess: Number(avgEaseOfProcess.toFixed(1)),
+      },
+      counts: {
+        total: feedback.length,
+        satisfaction: [1, 2, 3, 4, 5].map(rating => 
+          feedback.filter(f => f.satisfaction === rating).length
+        ),
+        excitement: [1, 2, 3, 4, 5].map(rating => 
+          feedback.filter(f => f.excitement === rating).length
+        ),
+        easeOfProcess: [1, 2, 3, 4, 5].map(rating => 
+          feedback.filter(f => f.easeOfProcess === rating).length
+        ),
+      }
+    };
+  };
+
+  const getFeedbackChartData = (type: 'satisfaction' | 'excitement' | 'easeOfProcess') => {
+    const stats = getFeedbackStatsData();
+    if (!stats) return { labels: [], datasets: [] };
+
+    return {
+      labels: ['1⭐', '2⭐', '3⭐', '4⭐', '5⭐'],
+      datasets: [
+        {
+          label: 'Anzahl Bewertungen',
+          data: stats.counts[type],
+          backgroundColor: [
+            'rgba(244, 67, 54, 0.8)',   // Red for 1
+            'rgba(255, 152, 0, 0.8)',   // Orange for 2  
+            'rgba(255, 235, 59, 0.8)',  // Yellow for 3
+            'rgba(139, 195, 74, 0.8)',  // Light Green for 4
+            'rgba(76, 175, 80, 0.8)',   // Green for 5
+          ],
+          borderColor: [
+            'rgba(244, 67, 54, 1)',
+            'rgba(255, 152, 0, 1)',
+            'rgba(255, 235, 59, 1)',
+            'rgba(139, 195, 74, 1)',
+            'rgba(76, 175, 80, 1)',
+          ],
+          borderWidth: 1,
+        },
+      ],
+    };
+  };
+
   return (
     <div className="mdui-prose" style={{ maxWidth: "none" }}>
       <h2>Statistiken</h2>
@@ -879,6 +948,177 @@ export default function Stats() {
           </mdui-card>
         </div>
       </div>
+
+      {/* Feedback Statistics */}
+      {feedback.length > 0 && (
+        <>
+          <h2 style={{ marginTop: "3rem" }}>Schüler-Feedback</h2>
+          <div
+            style={{
+              display: "grid",
+              gap: "2rem",
+              gridTemplateColumns: "repeat(auto-fit, minmax(400px, 1fr))",
+              marginBottom: "2rem",
+            }}
+          >
+            {/* Satisfaction */}
+            <div
+              ref={feedbackRef}
+              style={{
+                padding: "1rem",
+                border: "1px solid #ddd",
+                borderRadius: "8px",
+              }}
+            >
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  marginBottom: "1rem",
+                }}
+              >
+                <h3 style={{ margin: 0 }}>Zufriedenheit mit Optionen</h3>
+                <mdui-button
+                  variant="outlined"
+                  icon="download"
+                  onClick={() =>
+                    downloadChart(feedbackRef, "feedback-zufriedenheit")
+                  }
+                >
+                  Download
+                </mdui-button>
+              </div>
+              <p style={{ textAlign: "center", fontSize: "1.2em", margin: "0.5rem 0" }}>
+                ⭐ Durchschnitt: <strong>{getFeedbackStatsData()?.averages.satisfaction || 0}/5</strong>
+              </p>
+              <Bar
+                data={getFeedbackChartData('satisfaction')}
+                options={{
+                  responsive: true,
+                  plugins: {
+                    legend: {
+                      display: false,
+                    },
+                    title: {
+                      display: false,
+                    },
+                  },
+                  scales: {
+                    y: {
+                      beginAtZero: true,
+                      ticks: {
+                        stepSize: 1,
+                      },
+                    },
+                  },
+                }}
+              />
+            </div>
+
+            {/* Excitement */}
+            <div
+              style={{
+                padding: "1rem",
+                border: "1px solid #ddd",
+                borderRadius: "8px",
+              }}
+            >
+              <h3 style={{ margin: "0 0 1rem 0" }}>Vorfreude auf Projekte</h3>
+              <p style={{ textAlign: "center", fontSize: "1.2em", margin: "0.5rem 0" }}>
+                🎉 Durchschnitt: <strong>{getFeedbackStatsData()?.averages.excitement || 0}/5</strong>
+              </p>
+              <Bar
+                data={getFeedbackChartData('excitement')}
+                options={{
+                  responsive: true,
+                  plugins: {
+                    legend: {
+                      display: false,
+                    },
+                    title: {
+                      display: false,
+                    },
+                  },
+                  scales: {
+                    y: {
+                      beginAtZero: true,
+                      ticks: {
+                        stepSize: 1,
+                      },
+                    },
+                  },
+                }}
+              />
+            </div>
+
+            {/* Ease of Process */}
+            <div
+              style={{
+                padding: "1rem",
+                border: "1px solid #ddd",
+                borderRadius: "8px",
+              }}
+            >
+              <h3 style={{ margin: "0 0 1rem 0" }}>Einfachheit des Wahlprozesses</h3>
+              <p style={{ textAlign: "center", fontSize: "1.2em", margin: "0.5rem 0" }}>
+                👍 Durchschnitt: <strong>{getFeedbackStatsData()?.averages.easeOfProcess || 0}/5</strong>
+              </p>
+              <Bar
+                data={getFeedbackChartData('easeOfProcess')}
+                options={{
+                  responsive: true,
+                  plugins: {
+                    legend: {
+                      display: false,
+                    },
+                    title: {
+                      display: false,
+                    },
+                  },
+                  scales: {
+                    y: {
+                      beginAtZero: true,
+                      ticks: {
+                        stepSize: 1,
+                      },
+                    },
+                  },
+                }}
+              />
+            </div>
+          </div>
+
+          {/* Feedback Summary */}
+          <div
+            style={{
+              display: "grid",
+              gap: "1rem",
+              gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
+              marginBottom: "2rem",
+            }}
+          >
+            <mdui-card
+              variant="outlined"
+              style={{ padding: "1rem", textAlign: "center" }}
+            >
+              <h4 style={{ margin: 0, color: "var(--mdui-color-primary)" }}>
+                {feedback.length}
+              </h4>
+              <p style={{ margin: 0 }}>Feedback-Antworten</p>
+            </mdui-card>
+            <mdui-card
+              variant="outlined"
+              style={{ padding: "1rem", textAlign: "center" }}
+            >
+              <h4 style={{ margin: 0, color: "var(--mdui-color-primary)" }}>
+                {Math.round((feedback.length / choices.length) * 100)}%
+              </h4>
+              <p style={{ margin: 0 }}>Rücklaufquote</p>
+            </mdui-card>
+          </div>
+        </>
+      )}
     </div>
   );
 }
@@ -914,10 +1154,18 @@ Stats.loader = async function loader({ params }: LoaderFunctionArgs) {
     ...doc.data(),
   })) as ResultData[];
 
+  // Load feedback
+  const feedback = await getDocs(collection(db, `/votes/${id}/feedback`));
+  const feedbackData = feedback.docs.map((doc) => ({
+    id: doc.id,
+    ...doc.data(),
+  })) as FeedbackData[];
+
   return {
     vote: voteData,
     options: optionData,
     choices: choiceData,
     results: resultData,
+    feedback: feedbackData,
   };
 };

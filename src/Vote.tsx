@@ -48,6 +48,13 @@ interface LoaderData {
   options: OptionData[];
 }
 
+interface FeedbackData {
+  satisfaction: number; // 1-5
+  excitement: number; // 1-5
+  easeOfProcess: number; // 1-5
+  timestamp: Date;
+}
+
 export default function Vote() {
   const refs = useRef<Array<HTMLElement | null>>([]);
   const urlParams = new URLSearchParams(window.location.search);
@@ -92,6 +99,12 @@ export default function Vote() {
   const [confirmDialog, setConfirmDialog] = React.useState<boolean>(false);
 
   const [sending, setSending] = React.useState<boolean>(false);
+
+  // Feedback dialog state
+  const [showFeedbackDialog, setShowFeedbackDialog] = React.useState<boolean>(false);
+  const [satisfaction, setSatisfaction] = React.useState<number>(0);
+  const [excitement, setExcitement] = React.useState<number>(0);
+  const [easeOfProcess, setEaseOfProcess] = React.useState<number>(0);
 
   const preview = urlParams.get("preview");
 
@@ -168,11 +181,10 @@ export default function Vote() {
           id,
           JSON.stringify({ choiceId: e.id, timestamp: Date.now() })
         );
-        if (urlParams.get("allowResubmission")) {
-          navigate(`/x/${id}?allowResubmission=true`);
-          return;
-        }
-        navigate(`/x/${id}`);
+        // Show feedback dialog instead of immediately navigating
+        setConfirmDialog(false);
+        setSending(false);
+        setShowFeedbackDialog(true);
       })
       .catch((error) => {
         setSending(false);
@@ -214,6 +226,44 @@ export default function Vote() {
           });
         }
       });
+  }
+
+  function submitFeedback() {
+    if (!id) return;
+    
+    const feedbackData: FeedbackData = {
+      satisfaction,
+      excitement,
+      easeOfProcess,
+      timestamp: new Date(),
+    };
+
+    addDoc(collection(db, `/votes/${id}/feedback`), {
+      ...feedbackData,
+      timestamp: serverTimestamp(),
+    })
+      .then(() => {
+        setShowFeedbackDialog(false);
+        navigateToSubmitted();
+      })
+      .catch((error) => {
+        console.error("Error submitting feedback:", error);
+        // Even if feedback submission fails, still navigate to submitted page
+        navigateToSubmitted();
+      });
+  }
+
+  function skipFeedback() {
+    setShowFeedbackDialog(false);
+    navigateToSubmitted();
+  }
+
+  function navigateToSubmitted() {
+    if (urlParams.get("allowResubmission")) {
+      navigate(`/x/${id}?allowResubmission=true`);
+      return;
+    }
+    navigate(`/x/${id}`);
   }
 
   const handleInputChange = (index: number, value: string) => {
@@ -297,6 +347,87 @@ export default function Vote() {
           )}
         </div>
       </mdui-dialog>
+
+      {/* Feedback Dialog */}
+      <mdui-dialog open={showFeedbackDialog} headline="Feedback (freiwillig)" icon="feedback">
+        <div className="mdui-prose">
+          <p>
+            <strong>Vielen Dank für Ihre Teilnahme!</strong>
+          </p>
+          <p>
+            Möchten Sie uns anonymes Feedback zu dieser Wahl geben? Dies ist völlig freiwillig und hilft uns, zukünftige Wahlen zu verbessern.
+          </p>
+          
+          <div style={{ marginTop: "24px", marginBottom: "16px" }}>
+            <h4>Wie zufrieden sind Sie mit den Optionen?</h4>
+            <div style={{ display: "flex", gap: "8px", justifyContent: "center", margin: "12px 0" }}>
+              {[1, 2, 3, 4, 5].map((rating) => (
+                <mdui-button-icon
+                  key={`satisfaction-${rating}`}
+                  icon={satisfaction >= rating ? "sentiment_very_satisfied" : "sentiment_neutral"}
+                  onClick={() => setSatisfaction(rating)}
+                  style={{
+                    color: satisfaction >= rating ? "#4CAF50" : "#999",
+                    fontSize: "2rem"
+                  }}
+                />
+              ))}
+            </div>
+          </div>
+
+          <div style={{ marginBottom: "16px" }}>
+            <h4>Freuen Sie sich auf die Projekte?</h4>
+            <div style={{ display: "flex", gap: "8px", justifyContent: "center", margin: "12px 0" }}>
+              {[1, 2, 3, 4, 5].map((rating) => (
+                <mdui-button-icon
+                  key={`excitement-${rating}`}
+                  icon={excitement >= rating ? "celebration" : "sentiment_neutral"}
+                  onClick={() => setExcitement(rating)}
+                  style={{
+                    color: excitement >= rating ? "#FF9800" : "#999",
+                    fontSize: "2rem"
+                  }}
+                />
+              ))}
+            </div>
+          </div>
+
+          <div style={{ marginBottom: "24px" }}>
+            <h4>Wie einfach war der Wahlprozess?</h4>
+            <div style={{ display: "flex", gap: "8px", justifyContent: "center", margin: "12px 0" }}>
+              {[1, 2, 3, 4, 5].map((rating) => (
+                <mdui-button-icon
+                  key={`ease-${rating}`}
+                  icon={easeOfProcess >= rating ? "thumb_up" : "sentiment_neutral"}
+                  onClick={() => setEaseOfProcess(rating)}
+                  style={{
+                    color: easeOfProcess >= rating ? "#2196F3" : "#999",
+                    fontSize: "2rem"
+                  }}
+                />
+              ))}
+            </div>
+          </div>
+
+          <p style={{ fontSize: "0.9em", color: "#666" }}>
+            <em>Das Feedback ist anonym und freiwillig.</em>
+          </p>
+
+          <div className="button-container" style={{ marginTop: "20px" }}>
+            <mdui-button onClick={skipFeedback} variant="text">
+              Überspringen
+            </mdui-button>
+            <mdui-button 
+              onClick={submitFeedback} 
+              end-icon="send"
+              disabled={satisfaction === 0 && excitement === 0 && easeOfProcess === 0}
+            >
+              Feedback senden
+            </mdui-button>
+          </div>
+        </div>
+      </mdui-dialog>
+
       <mdui-card
         variant={breakpointCondition.up("md") ? "outlined" : "elevated"}
         className="card"
