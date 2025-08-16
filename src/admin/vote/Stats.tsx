@@ -604,6 +604,36 @@ export default function Stats() {
         </mdui-card>
       </div>
 
+      {/* Detailed Project Assignment Analysis (Optional) */}
+      {results.length > 0 && (
+        <mdui-card variant="outlined" style={{ padding: "16px", marginBottom: "20px" }}>
+          <mdui-collapse>
+            <mdui-collapse-item>
+              <mdui-button slot="header" variant="text" icon="analytics" full-width>
+                Erweiterte Projekt-Analyse anzeigen
+              </mdui-button>
+              <div style={{ padding: "16px 0" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "16px" }}>
+                  <div>
+                    <h4 style={{ margin: "0 0 4px 0", fontSize: "1.1rem" }}>Zuteilungen nach Priorität pro Projekt</h4>
+                    <p style={{ margin: 0, fontSize: "0.8rem", color: "rgba(var(--mdui-color-on-surface), 0.6)" }}>
+                      Zeigt für jedes Projekt, wie viele Schüler es als 1., 2., 3. etc. Priorität erhalten haben
+                    </p>
+                  </div>
+                  <mdui-button-icon 
+                    icon="download"
+                    onClick={() => downloadChart(choiceAssignmentRef, "projekt-prioritaeten")}
+                  />
+                </div>
+                <div ref={choiceAssignmentRef} style={{ height: "400px" }}>
+                  <Bar data={getChoiceAssignmentPerOptionData()} options={stackedBarOptions} />
+                </div>
+              </div>
+            </mdui-collapse-item>
+          </mdui-collapse>
+        </mdui-card>
+      )}
+
       {/* Detailed Data Table - Standalone */}
       {choices.length > 0 && (
         <div style={{ marginBottom: "30px" }}>
