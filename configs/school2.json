@@ -1,0 +1,43 @@
+{
+  "school": {
+    "id": "school2",
+    "name": "Freie Waldorfschule Musterort",
+    "shortName": "FWS Musterort",
+    "logo": "/logos/school2-logo.png",
+    "favicon": "/favicons/school2-favicon.ico",
+    "primaryColor": "#4CAF50",
+    "secondaryColor": "#FF9800",
+    "contactEmail": "wahlen@school2.example.com",
+    "website": "https://school2.example.com",
+    "address": {
+      "street": "Waldorfweg 456",
+      "city": "67890 Musterort",
+      "country": "Deutschland"
+    }
+  },
+  "firebase": {
+    "apiKey": "your-api-key-here-school2",
+    "authDomain": "school2.firebaseapp.com",
+    "projectId": "school2",
+    "storageBucket": "school2.appspot.com",
+    "messagingSenderId": "987654321098",
+    "appId": "1:987654321098:web:fedcba987654321",
+    "measurementId": "G-YYYYYYYYYY"
+  },
+  "appCheck": {
+    "siteKey": "your-recaptcha-site-key-here-school2"
+  },
+  "features": {
+    "proposals": true,
+    "feedback": false,
+    "analytics": true,
+    "email": false
+  },
+  "ui": {
+    "theme": "light",
+    "language": "de",
+    "title": "Projektwahlen {{schoolName}}",
+    "welcomeMessage": "Herzlich willkommen zu den Projektwahlen der {{schoolName}}",
+    "footerText": "© 2024 {{schoolName}} - Projektwahlen System"
+  }
+}

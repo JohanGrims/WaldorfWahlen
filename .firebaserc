@@ -1,5 +1,8 @@
 {
   "projects": {
-    "default": "waldorfwahlen"
+    "default": "waldorfwahlen",
+    "waldorfwahlen": "waldorfwahlen",
+    "school1": "school1",
+    "school2": "school2"
   }
 }

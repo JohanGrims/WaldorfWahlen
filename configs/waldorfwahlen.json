@@ -1,0 +1,43 @@
+{
+  "school": {
+    "id": "waldorfwahlen",
+    "name": "Waldorfschule Potsdam",
+    "shortName": "WS Potsdam",
+    "logo": "/logos/waldorfwahlen-logo.png",
+    "favicon": "/favicon.ico",
+    "primaryColor": "#f89e24",
+    "secondaryColor": "#2196F3",
+    "contactEmail": "admin@waldorfwahlen.de",
+    "website": "https://waldorfwahlen.de",
+    "address": {
+      "street": "Rudolf-Steiner-Straße 1",
+      "city": "14480 Potsdam",
+      "country": "Deutschland"
+    }
+  },
+  "firebase": {
+    "apiKey": "AIzaSyDfrC6kukq1s9OifxVJpI72G08KO-hkiEA",
+    "authDomain": "waldorfwahlen.firebaseapp.com",
+    "projectId": "waldorfwahlen",
+    "storageBucket": "waldorfwahlen.appspot.com",
+    "messagingSenderId": "745076526387",
+    "appId": "1:745076526387:web:8fcefdb016238c5ca98246",
+    "measurementId": "G-MZBLXHY77Z"
+  },
+  "appCheck": {
+    "siteKey": "6LfNXNoqAAAAABF77vNghbzVpS2ROyICcK0AJ7Zb"
+  },
+  "features": {
+    "proposals": true,
+    "feedback": true,
+    "analytics": true,
+    "email": true
+  },
+  "ui": {
+    "theme": "dark",
+    "language": "de",
+    "title": "WaldorfWahlen",
+    "welcomeMessage": "Willkommen zu WaldorfWahlen",
+    "footerText": "© 2024 Waldorfschule Potsdam - WaldorfWahlen"
+  }
+}

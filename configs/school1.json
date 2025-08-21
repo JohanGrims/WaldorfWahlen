@@ -1,0 +1,43 @@
+{
+  "school": {
+    "id": "school1",
+    "name": "Waldorfschule Beispielstadt",
+    "shortName": "WS Beispielstadt",
+    "logo": "/logos/school1-logo.png",
+    "favicon": "/favicons/school1-favicon.ico",
+    "primaryColor": "#f89e24",
+    "secondaryColor": "#2196F3",
+    "contactEmail": "admin@school1.example.com",
+    "website": "https://school1.example.com",
+    "address": {
+      "street": "Musterstraße 123",
+      "city": "12345 Beispielstadt",
+      "country": "Deutschland"
+    }
+  },
+  "firebase": {
+    "apiKey": "your-api-key-here",
+    "authDomain": "school1.firebaseapp.com",
+    "projectId": "school1",
+    "storageBucket": "school1.appspot.com",
+    "messagingSenderId": "123456789012",
+    "appId": "1:123456789012:web:abcdef123456789",
+    "measurementId": "G-XXXXXXXXXX"
+  },
+  "appCheck": {
+    "siteKey": "your-recaptcha-site-key-here"
+  },
+  "features": {
+    "proposals": true,
+    "feedback": true,
+    "analytics": true,
+    "email": true
+  },
+  "ui": {
+    "theme": "dark",
+    "language": "de",
+    "title": "Projektwahlen {{schoolName}}",
+    "welcomeMessage": "Willkommen zu den Projektwahlen der {{schoolName}}",
+    "footerText": "© 2024 {{schoolName}} - Powered by WaldorfWahlen"
+  }
+}

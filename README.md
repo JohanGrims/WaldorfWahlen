@@ -2,6 +2,8 @@
 
 WaldorfWahlen ist eine Webanwendung, die es der Waldorfschule Potsdam ermöglicht, Projektwahlen für ihre Schülerinnen und Schüler durchzuführen. Die Anwendung basiert auf dem Vite-Framework in Verbindung mit ReactJS für das Frontend und Firebase für das Backend und die Datenbank.
 
+**🏫 Multi-School Support**: WaldorfWahlen kann jetzt für mehrere Schulen mit separaten Firebase-Projekten eingesetzt werden. Siehe [Multi-School Setup Guide](./MULTI_SCHOOL_SETUP.md) für Details.
+
 ---
 
 ## Funktionalitäten
@@ -33,12 +35,29 @@ WaldorfWahlen ist eine Webanwendung, die es der Waldorfschule Potsdam ermöglich
    ```
 3. Installiere die Abhängigkeiten:
    ```bash
-   npm install
+   pnpm install
    ```
 4. Starte den Entwicklungsserver:
    ```bash
-   npm run dev
+   pnpm run dev
    ```
+
+## Multi-School Setup
+
+WaldorfWahlen unterstützt jetzt mehrere Schulen mit separaten Firebase-Projekten:
+
+```bash
+# Setup einer neuen Schule
+pnpm run setup-school
+
+# Build für eine bestimmte Schule
+VITE_SCHOOL_ID=school1 pnpm run build
+
+# Deployment aller Schulen
+pnpm run deploy
+```
+
+Weitere Details finden Sie im [Multi-School Setup Guide](./MULTI_SCHOOL_SETUP.md).
 
 ---
 

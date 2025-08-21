@@ -7,7 +7,16 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint . --ext js,jsx --report-unused-disable-directives --max-warnings 0",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "setup-school": "./scripts/setup-school.sh",
+    "deploy-rules": "./scripts/deploy-rules.sh",
+    "deploy": "./scripts/deploy.sh",
+    "build:school1": "VITE_SCHOOL_ID=school1 vite build",
+    "build:school2": "VITE_SCHOOL_ID=school2 vite build",
+    "build:waldorfwahlen": "VITE_SCHOOL_ID=waldorfwahlen vite build",
+    "dev:school1": "VITE_SCHOOL_ID=school1 vite",
+    "dev:school2": "VITE_SCHOOL_ID=school2 vite",
+    "dev:waldorfwahlen": "VITE_SCHOOL_ID=waldorfwahlen vite"
   },
   "packageManager": "pnpm@10.0.0",
   "dependencies": {
