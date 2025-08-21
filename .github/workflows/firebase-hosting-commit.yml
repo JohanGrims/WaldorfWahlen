@@ -1,4 +1,4 @@
-name: Deploy to Firebase Hosting on Commit
+name: Deploy to All Schools on Commit
 
 on:
   push:
@@ -11,9 +11,11 @@ on:
       - '.github/workflows/firebase-hosting-commit.yml'
       - 'package.json'
       - 'pnpm-lock.yaml'
+      - 'school-configs.json'
+      - 'scripts/**'
 
 jobs:
-  build_and_deploy:
+  build_and_deploy_all:
     runs-on: ubuntu-latest
 
     steps:
@@ -32,13 +34,55 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Build project
-        run: pnpm run build
+      - name: Install jq
+        run: sudo apt-get update && sudo apt-get install -y jq
 
-      - name: Deploy to Firebase Hosting
-        uses: FirebaseExtended/action-hosting-deploy@v0
-        with:
-          repoToken: ${{ secrets.GITHUB_TOKEN }}
-          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_WALDORFWAHLEN }}
-          channelId: live
-          projectId: waldorfwahlen
+      - name: Install Firebase CLI
+        run: npm install -g firebase-tools
+
+      - name: Deploy Waldorfschule Potsdam (waldorfwahlen)
+        run: |
+          echo "🏫 Deploying Waldorfschule Potsdam..."
+          ./scripts/build-school.sh waldorfwahlen
+          pnpm run build
+          firebase deploy --project waldorfwahlen --only hosting --token "${{ secrets.FIREBASE_TOKEN }}"
+          ./scripts/restore-original.sh
+
+      - name: Deploy School 1 (if configured)
+        run: |
+          if jq -e '.schools.school1' school-configs.json > /dev/null; then
+            echo "🏫 Deploying School 1..."
+            ./scripts/build-school.sh school1
+            pnpm run build
+            PROJECT_ID=$(jq -r '.schools.school1.firebase.projectId' school-configs.json)
+            firebase deploy --project "$PROJECT_ID" --only hosting --token "${{ secrets.FIREBASE_TOKEN }}"
+            ./scripts/restore-original.sh
+          else
+            echo "⚠️ School 1 not configured, skipping..."
+          fi
+
+      - name: Deploy School 2 (if configured)
+        run: |
+          if jq -e '.schools.school2' school-configs.json > /dev/null; then
+            echo "🏫 Deploying School 2..."
+            ./scripts/build-school.sh school2
+            pnpm run build
+            PROJECT_ID=$(jq -r '.schools.school2.firebase.projectId' school-configs.json)
+            firebase deploy --project "$PROJECT_ID" --only hosting --token "${{ secrets.FIREBASE_TOKEN }}"
+            ./scripts/restore-original.sh
+          else
+            echo "⚠️ School 2 not configured, skipping..."
+          fi
+
+      - name: Deploy additional schools
+        run: |
+          # Get all schools except the ones we've already deployed
+          SCHOOLS=$(jq -r '.schools | keys[] | select(. != "waldorfwahlen" and . != "school1" and . != "school2")' school-configs.json)
+          for SCHOOL_ID in $SCHOOLS; do
+            echo "🏫 Deploying $SCHOOL_ID..."
+            ./scripts/build-school.sh "$SCHOOL_ID"
+            pnpm run build
+            PROJECT_ID=$(jq -r ".schools.\"$SCHOOL_ID\".firebase.projectId" school-configs.json)
+            firebase deploy --project "$PROJECT_ID" --only hosting --token "${{ secrets.FIREBASE_TOKEN }}"
+            ./scripts/restore-original.sh
+          done

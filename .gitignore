@@ -30,3 +30,8 @@ emulators
 # Firebase
 .firebase
 firestore.indexes.json
+
+# Multi-school build system
+.backups/
+*.bak
+python/*-service-account.json

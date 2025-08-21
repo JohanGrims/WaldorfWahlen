@@ -8,15 +8,13 @@
     "build": "vite build",
     "lint": "eslint . --ext js,jsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview",
-    "setup-school": "./scripts/setup-school.sh",
-    "deploy-rules": "./scripts/deploy-rules.sh",
-    "deploy": "./scripts/deploy.sh",
-    "build:school1": "VITE_SCHOOL_ID=school1 vite build",
-    "build:school2": "VITE_SCHOOL_ID=school2 vite build",
-    "build:waldorfwahlen": "VITE_SCHOOL_ID=waldorfwahlen vite build",
-    "dev:school1": "VITE_SCHOOL_ID=school1 vite",
-    "dev:school2": "VITE_SCHOOL_ID=school2 vite",
-    "dev:waldorfwahlen": "VITE_SCHOOL_ID=waldorfwahlen vite"
+    "build:school": "./scripts/build-school.sh",
+    "build:waldorfwahlen": "./scripts/build-school.sh waldorfwahlen && pnpm run build",
+    "build:school1": "./scripts/build-school.sh school1 && pnpm run build",
+    "build:school2": "./scripts/build-school.sh school2 && pnpm run build",
+    "deploy:all": "./scripts/deploy-all.sh",
+    "restore": "./scripts/restore-original.sh",
+    "create:firebase": "./scripts/create-firebase-project.sh"
   },
   "packageManager": "pnpm@10.0.0",
   "dependencies": {

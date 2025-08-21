@@ -45,7 +45,7 @@ a {
 }
 
 a:hover {
-  color: #f89e24;
+  color: #2196F3;
 }
 
 h1 {
@@ -59,7 +59,7 @@ h3 {
 input {
   width: 100%;
   outline: none;
-  border: 1px solid #f89e24;
+  border: 1px solid #2196F3;
   border-radius: 4px;
   font-size: 20px;
 }
@@ -92,7 +92,7 @@ button:disabled {
 }
 
 button:not(:disabled):hover {
-  background-color: #f89e24;
+  background-color: #2196F3;
 }
 
 .break {
@@ -144,7 +144,7 @@ button:not(:disabled):hover {
 
 .option.active {
   background-color: #fff1dd;
-  border-color: #f89e24;
+  border-color: #2196F3;
 }
 
 .option.disabled {
@@ -302,7 +302,7 @@ button:not(:disabled):hover {
 }
 
 .assignments-option.selected {
-  background-color: #f89e24;
+  background-color: #2196F3;
 }
 
 .info {
@@ -345,7 +345,7 @@ button:not(:disabled):hover {
 }
 
 .project-link:hover {
-  color: #f89e24;
+  color: #2196F3;
 }
 
 .project-link.selected {

@@ -1,0 +1,73 @@
+{
+  "schools": {
+    "waldorfwahlen": {
+      "name": "Waldorfschule Potsdam",
+      "shortName": "WS Potsdam",
+      "logo": "waldorfwahlen-logo.png",
+      "favicon": "favicon.ico",
+      "primaryColor": "#f89e24",
+      "contactEmail": "admin@waldorfwahlen.de",
+      "firebase": {
+        "apiKey": "AIzaSyDfrC6kukq1s9OifxVJpI72G08KO-hkiEA",
+        "authDomain": "waldorfwahlen.firebaseapp.com",
+        "projectId": "waldorfwahlen",
+        "storageBucket": "waldorfwahlen.appspot.com",
+        "messagingSenderId": "745076526387",
+        "appId": "1:745076526387:web:8fcefdb016238c5ca98246",
+        "measurementId": "G-MZBLXHY77Z"
+      },
+      "appCheck": {
+        "siteKey": "6LfNXNoqAAAAABF77vNghbzVpS2ROyICcK0AJ7Zb"
+      },
+      "python": {
+        "serviceAccount": "waldorfwahlen-service-account.json"
+      }
+    },
+    "school1": {
+      "name": "Waldorfschule Beispielstadt",
+      "shortName": "WS Beispielstadt", 
+      "logo": "school1-logo.png",
+      "favicon": "school1-favicon.ico",
+      "primaryColor": "#2196F3",
+      "contactEmail": "admin@school1.example.com",
+      "firebase": {
+        "apiKey": "SCHOOL1_API_KEY",
+        "authDomain": "school1.firebaseapp.com",
+        "projectId": "school1",
+        "storageBucket": "school1.appspot.com",
+        "messagingSenderId": "123456789",
+        "appId": "1:123456789:web:abcdef123456",
+        "measurementId": "G-SCHOOL1"
+      },
+      "appCheck": {
+        "siteKey": "SCHOOL1_APPCHECK_SITE_KEY"
+      },
+      "python": {
+        "serviceAccount": "school1-service-account.json"
+      }
+    },
+    "school2": {
+      "name": "Waldorfschule Musterort",
+      "shortName": "WS Musterort",
+      "logo": "school2-logo.png", 
+      "favicon": "school2-favicon.ico",
+      "primaryColor": "#4CAF50",
+      "contactEmail": "admin@school2.example.com",
+      "firebase": {
+        "apiKey": "SCHOOL2_API_KEY",
+        "authDomain": "school2.firebaseapp.com",
+        "projectId": "school2",
+        "storageBucket": "school2.appspot.com",
+        "messagingSenderId": "987654321",
+        "appId": "1:987654321:web:fedcba654321",
+        "measurementId": "G-SCHOOL2"
+      },
+      "appCheck": {
+        "siteKey": "SCHOOL2_APPCHECK_SITE_KEY"
+      },
+      "python": {
+        "serviceAccount": "school2-service-account.json"
+      }
+    }
+  }
+}
