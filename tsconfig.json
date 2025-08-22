@@ -12,8 +12,5 @@
     "skipLibCheck": true,
     "resolveJsonModule": true
   },
-  "include": [
-    "src",
-    ".d.ts"
-  ]
+  "include": ["src", ".d.ts", "backupFirestore.ts"]
 }

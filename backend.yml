@@ -1,6 +1,0 @@
-name: beta
-static:
-  source: dist
-  rewrites:
-    - source: "**"
-      destination: "/index.html"
