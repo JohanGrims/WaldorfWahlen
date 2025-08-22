@@ -1,0 +1,88 @@
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function getVoteData(voteId) {
+      return get(/databases/$(database)/documents/votes/$(voteId)).data;
+    }
+    
+    function isVoteActive(voteId) {
+      let voteData = getVoteData(voteId);
+      return voteData.endTime > request.time && 
+             voteData.startTime < request.time && 
+             voteData.active == true;
+    }
+    
+    function areResultsPublished(voteId) {
+      return getVoteData(voteId).result == true;
+    }
+    
+    function canCreateProposals(voteId) {
+      return getVoteData(voteId).proposals;
+    }
+    
+    // Main document rule for /votes/{voteId}
+    match /votes/{voteId} {
+      // Allow read access for all users
+      allow read: if true;
+      // Allow write access only for administrators
+      allow write: if isAuthenticated();
+      
+      // Subcollection rule for /choices/{choiceId}
+      match /choices/{choiceId} {
+        // Allow full access only for administrators
+        allow read, create, delete, update: if isAuthenticated();
+        // Allow creation for all users only during active voting periods
+        allow create: if isVoteActive(voteId);
+      }
+      
+      // Subcollection rule for /results/{resultId}
+      match /results/{resultId} {
+        // Allow read access for all users when results are published, always for administrators
+        allow read: if areResultsPublished(voteId) || isAuthenticated();
+        // Allow write access only for administrators
+        allow write: if isAuthenticated();
+      }
+      
+      // Subcollection rule for /options/{optionId}
+      match /options/{optionId} {
+        // Allow read access for all users
+        allow read: if true;
+        // Allow write access only for administrators
+        allow write: if isAuthenticated();
+      }
+      
+      // Subcollection rule for /proposals/{proposalId}
+      match /proposals/{proposalId} {
+        // Allow full access for administrators
+        allow read, update, delete: if isAuthenticated();
+        // Allow creation when proposals are enabled for the vote
+        allow create: if canCreateProposals(voteId);
+      }
+      
+      // Subcollection rule for /feedback/{feedbackId}
+      match /feedback/{feedbackId} {
+        // Allow read, update, delete for administrators only
+        allow read, update, delete: if isAuthenticated();
+        // Allow creation for all users
+        allow create: if true;
+      }
+    }
+    
+    // Class collection rule
+    match /class/{classId} {
+      // Allow access only for administrators
+      allow read, write, delete, create: if isAuthenticated();
+    }
+    
+    // Documentation collection rule
+    match /docs/{docId} {
+      // Allow read and write access only for administrators
+      allow read, write: if isAuthenticated();
+    }
+  }
+}
