@@ -1,7 +1,7 @@
 import React from "react";
 import { useLoaderData, useRevalidator } from "react-router-dom";
 
-import { appCheck, auth } from "../firebase";
+import { auth } from "../firebase";
 import { alert, confirm, prompt, snackbar } from "mdui";
 import { getToken } from "firebase/app-check";
 
@@ -38,18 +38,6 @@ export default function Admins() {
       },
       onConfirm: async (email: string) => {
         let token: string;
-        try {
-          token = await getToken(appCheck).then((result) => result.token);
-        } catch (error) {
-          alert({
-            icon: "error",
-            headline: "Fehler",
-            description:
-              "Es ist ein Fehler aufgetreten. Bitte versuchen Sie es erneut.",
-            confirmText: "OK",
-          });
-          return;
-        }
         await fetch(
           `https://api.chatwithsteiner.de/waldorfwahlen/users?token=${await auth.currentUser?.getIdToken()}&uid=${
             auth.currentUser?.uid
@@ -58,7 +46,6 @@ export default function Admins() {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
-              "X-Firebase-AppCheck": token,
             },
             body: JSON.stringify({ email, password }),
           }
@@ -87,19 +74,6 @@ export default function Admins() {
       confirmText: "Ja",
       cancelText: "Nein",
       onConfirm: async () => {
-        let appCheckToken: string;
-        try {
-          appCheckToken = await getToken(appCheck).then((res) => res.token);
-        } catch (error) {
-          alert({
-            icon: "error",
-            headline: "Fehler",
-            description:
-              "Es ist ein Fehler aufgetreten. Bitte versuchen Sie es erneut.",
-            confirmText: "OK",
-          });
-          return;
-        }
         const result = await fetch(
           `https://api.chatwithsteiner.de/waldorfwahlen/users?token=${await auth.currentUser?.getIdToken()}&uid=${
             auth.currentUser?.uid
@@ -108,7 +82,6 @@ export default function Admins() {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
-              "X-Firebase-AppCheck": appCheckToken,
             },
             body: JSON.stringify({ disabled }),
           }
@@ -139,28 +112,12 @@ export default function Admins() {
       confirmText: "Ja",
       cancelText: "Nein",
       onConfirm: async () => {
-        let appCheckToken: string;
-        try {
-          appCheckToken = await getToken(appCheck).then((res) => res.token);
-        } catch (error) {
-          alert({
-            icon: "error",
-            headline: "Fehler",
-            description:
-              "Es ist ein Fehler aufgetreten. Bitte versuchen Sie es erneut.",
-            confirmText: "OK",
-          });
-          return;
-        }
         const result = await fetch(
           `https://api.chatwithsteiner.de/waldorfwahlen/users?token=${await auth.currentUser?.getIdToken()}&uid=${
             auth.currentUser?.uid
           }&user_id=${uid}`,
           {
             method: "DELETE",
-            headers: {
-              "X-Firebase-AppCheck": appCheckToken,
-            },
           }
         ).then(() => {
           snackbar({
@@ -257,20 +214,6 @@ export default function Admins() {
 }
 
 Admins.loader = async () => {
-  let appCheckToken: string;
-  try {
-    appCheckToken = await getToken(appCheck).then((res) => res.token);
-  } catch (error) {
-    alert({
-      icon: "error",
-      headline: "Fehler",
-      description:
-        "Es ist ein Fehler aufgetreten. Bitte versuchen Sie es erneut.",
-      confirmText: "OK",
-    });
-
-    return { admins: [] };
-  }
   // get firebase token
   const token = await new Promise<string | null>((resolve) => {
     const unsubscribe = auth.onAuthStateChanged(async (user) => {
@@ -292,9 +235,7 @@ Admins.loader = async () => {
   const response = await fetch(
     `https://api.chatwithsteiner.de/waldorfwahlen/users?token=${token}&uid=${auth.currentUser?.uid}`,
     {
-      headers: {
-        "X-Firebase-AppCheck": appCheckToken,
-      },
+      headers: {},
     }
   );
   if (!response.ok) {

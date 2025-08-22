@@ -6,7 +6,7 @@ import {
 } from "firebase/firestore";
 import React from "react";
 import { useLoaderData, useParams } from "react-router-dom";
-import { db, auth, appCheck } from "../../firebase";
+import { db, auth } from "../../firebase";
 import { Helmet } from "react-helmet";
 import { prompt, snackbar } from "mdui";
 import { getToken } from "firebase/app-check";
@@ -648,9 +648,6 @@ export default function Email() {
               method: "POST",
               headers: {
                 "Content-Type": "application/json",
-                "X-Firebase-AppCheck": await getToken(appCheck).then(
-                  (res) => res.token
-                ),
               },
               body: JSON.stringify({
                 token,
@@ -806,9 +803,6 @@ export default function Email() {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "X-Firebase-AppCheck": await getToken(appCheck).then(
-              (res) => res.token
-            ),
           },
           body: JSON.stringify({
             token,

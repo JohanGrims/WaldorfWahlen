@@ -14,7 +14,7 @@ import {
   useLoaderData,
   useNavigate,
 } from "react-router-dom";
-import { appCheck, auth, db } from "../../firebase";
+import { auth, db } from "../../firebase";
 import { getToken } from "firebase/app-check";
 
 interface VoteData extends DocumentData {
@@ -191,9 +191,6 @@ export default function Assign() {
           body: JSON.stringify(requestObject),
           headers: {
             "Content-Type": "application/json",
-            "X-Firebase-AppCheck": await getToken(appCheck).then(
-              (res) => res.token
-            ),
           },
         }
       );
