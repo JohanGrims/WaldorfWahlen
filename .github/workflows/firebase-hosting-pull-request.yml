@@ -36,6 +36,19 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Cache firebase-tools
+        id: cache-firebase
+        uses: actions/cache@v4
+        with:
+          path: ~/.npm/_npx/
+          key: ${{ runner.os }}-firebase-tools-${{ hashFiles('package.json') }}
+          restore-keys: |
+            ${{ runner.os }}-firebase-tools-
+
+      - name: Install firebase-tools
+        if: steps.cache-firebase.outputs.cache-hit != 'true'
+        run: npm install -g firebase-tools
+
       - name: Build project
         env:
           VITE_APP_CHECK_DEBUG_TOKEN_FROM_CI: ${{ secrets.VITE_APP_CHECK_DEBUG_TOKEN_FROM_CI }}
