@@ -12,7 +12,7 @@
     "backup": "pnpx tsx backupFirestore.ts",
     "migrate": "pnpx tsx restoreFirestore.ts"
   },
-  "packageManager": "pnpm@10.0.0",
+  "packageManager": "pnpm@10.15.1",
   "dependencies": {
     "@mdui/icons": "^1.0.3",
     "@types/react-helmet": "^6.1.11",
