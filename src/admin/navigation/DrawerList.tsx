@@ -1,5 +1,12 @@
-import { collection, getDocs, Timestamp } from "firebase/firestore";
-import { snackbar } from "mdui";
+import {
+  addDoc,
+  collection,
+  doc,
+  getDocs,
+  setDoc,
+  Timestamp,
+} from "firebase/firestore";
+import { prompt, snackbar } from "mdui";
 import React from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { auth, db } from "../../firebase";
@@ -8,6 +15,7 @@ import VoteDrawer from "./VoteDrawer";
 import routes from "./routes.json";
 import { useSchool } from "../../contexts";
 import { SchoolData } from "../../types";
+import { set } from "date-fns";
 
 interface VoteData {
   id: string;
@@ -116,18 +124,63 @@ export default function DrawerList({
     });
   }, [location]);
 
-  if (!pages.includes(active)) {
-    return <VoteDrawer onClose={onClose} />;
-  }
-
   const navigateTo = (path: string) => {
     navigate(path);
     onClose();
   };
 
+  // Advanced school variables for admins
   const [schoolsDropdown, setSchoolsDropdown] = React.useState<
     (SchoolData & { id: string })[] | undefined
   >(undefined);
+  const [addingSchool, setAddingSchool] = React.useState<boolean>(false);
+  const [newSchool, setNewSchool] = React.useState<
+    Partial<SchoolData & { id: string }>
+  >({});
+
+  const handleAddSchool = () => {
+    if (
+      !newSchool.id ||
+      !newSchool.name ||
+      !newSchool.shortName ||
+      !newSchool.icon ||
+      !newSchool.link ||
+      !newSchool.primaryColor
+    ) {
+      snackbar({ message: "Bitte füllen Sie alle Felder aus." });
+      return;
+    }
+
+    setDoc(doc(db, `schools/${newSchool.id}`), {
+      name: newSchool.name,
+      shortName: newSchool.shortName,
+      icon: newSchool.icon,
+      link: newSchool.link,
+      primaryColor: newSchool.primaryColor,
+      createdAt: Timestamp.now(),
+    })
+      .then(() => {
+        snackbar({
+          message: "Schule erfolgreich hinzugefügt.",
+          action: "Schule anzeigen",
+          onClick: () => {
+            window.location.href = window.location.href.replace(
+              "SCHOOLID",
+              newSchool.id!
+            );
+          },
+        });
+      })
+      .catch((e) => {
+        console.error(e);
+        snackbar({ message: "Fehler beim Hinzufügen der Schule." });
+      });
+    // Redirect to new school
+  };
+
+  if (!pages.includes(active)) {
+    return <VoteDrawer onClose={onClose} />;
+  }
 
   return (
     <mdui-navigation-drawer open>
@@ -162,6 +215,10 @@ export default function DrawerList({
             ref={(ref) => {
               if (ref) {
                 ref.addEventListener("change", (e) => {
+                  if ((e.target as HTMLSelectElement).value === "add-school") {
+                    setAddingSchool(true);
+                    return;
+                  }
                   console.log(e);
                   window.location.href = window.location.href.replace(
                     "SCHOOLID",
@@ -189,6 +246,9 @@ export default function DrawerList({
                 {school.name}
               </mdui-menu-item>
             ))}
+            <mdui-menu-item value="add-school" icon="add">
+              Neue Schule
+            </mdui-menu-item>
           </mdui-select>
         ) : (
           <mdui-list-item disabled>
@@ -196,6 +256,99 @@ export default function DrawerList({
           </mdui-list-item>
         )}
         {loading && <mdui-linear-progress></mdui-linear-progress>}
+
+        {addingSchool && (
+          <mdui-dialog fullscreen open>
+            <mdui-button-icon
+              icon="close"
+              onClick={() => setAddingSchool(false)}
+            ></mdui-button-icon>
+            <div className="mdui-prose" style={{ padding: "1rem" }}>
+              <h1>Neue Schule hinzufügen</h1>
+              <p>
+                Fügen Sie eine neue Schule hinzu, indem Sie den Namen und das
+                Icon der Schule angeben. Sie werden danach automatisch zur neuen
+                Schule weitergeleitet. Dort könne Sie dann LehrerInnen
+                hinzufügen.
+              </p>
+              <mdui-text-field
+                label="ID der Schule"
+                placeholder="mst"
+                value={newSchool.id || ""}
+                onInput={(e) =>
+                  setNewSchool({
+                    ...newSchool,
+                    id: (e.currentTarget as HTMLInputElement).value,
+                  })
+                }
+              ></mdui-text-field>
+              <p />
+              <mdui-text-field
+                label="Name der Schule"
+                placeholder="Schule Musterstadt"
+                value={newSchool.name || ""}
+                onInput={(e) =>
+                  setNewSchool({
+                    ...newSchool,
+                    name: (e.currentTarget as HTMLInputElement).value,
+                  })
+                }
+              ></mdui-text-field>
+              <p />
+              <mdui-text-field
+                label="Kurzer Name der Schule"
+                placeholder="Musterstadt"
+                value={newSchool.shortName || ""}
+                onInput={(e) =>
+                  setNewSchool({
+                    ...newSchool,
+                    shortName: (e.currentTarget as HTMLInputElement).value,
+                  })
+                }
+              ></mdui-text-field>
+              <p />
+              <mdui-text-field
+                label="Icon der Schule"
+                placeholder="https://example.com/school-icon.png"
+                value={newSchool.icon || ""}
+                onInput={(e) =>
+                  setNewSchool({
+                    ...newSchool,
+                    icon: (e.currentTarget as HTMLInputElement).value,
+                  })
+                }
+              ></mdui-text-field>
+              <p />
+              <mdui-text-field
+                label="URL der Schule"
+                placeholder="https://example.com/schule-musterstadt"
+                value={newSchool.link || ""}
+                onInput={(e) =>
+                  setNewSchool({
+                    ...newSchool,
+                    link: (e.currentTarget as HTMLInputElement).value,
+                  })
+                }
+              ></mdui-text-field>
+              <p />
+              <mdui-text-field
+                label="Primärfarbe der Schule"
+                placeholder="#FF0000"
+                value={newSchool.primaryColor || ""}
+                onInput={(e) =>
+                  setNewSchool({
+                    ...newSchool,
+                    primaryColor: (e.currentTarget as HTMLInputElement).value,
+                  })
+                }
+              ></mdui-text-field>
+            </div>
+
+            <mdui-button slot="action" onClick={handleAddSchool} icon="school">
+              Schule hinzufügen
+            </mdui-button>
+          </mdui-dialog>
+        )}
 
         <mdui-tooltip
           variant="rich"

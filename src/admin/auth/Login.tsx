@@ -125,7 +125,7 @@ export default function Login() {
         />
       )}
       <div className="mdui-prose">
-        <h1>Administratoren-Bereich</h1>
+        <h1>LehrerInnen-Bereich</h1>
         <form onSubmit={handleLogin}>
           <mdui-text-field
             type="email"
@@ -133,6 +133,7 @@ export default function Login() {
             label="Email"
             name="email"
             required
+            autocomplete="username"
           ></mdui-text-field>
           <p />
           <mdui-text-field
@@ -141,6 +142,7 @@ export default function Login() {
             toggle-password
             name="password"
             required
+            autocomplete="current-password"
           />
           <p />
           <br />

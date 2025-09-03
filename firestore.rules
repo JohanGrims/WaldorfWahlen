@@ -121,6 +121,7 @@ service cloud.firestore {
       allow list: if request.auth.token.role == "admin";
       // Allow write access only for administrators
       allow write: if isSchoolAuthenticated(schoolId);
+      allow create: if request.auth.token.role == "admin";
 
       // Main document rule for /votes/{voteId}
       match /votes/{voteId} {

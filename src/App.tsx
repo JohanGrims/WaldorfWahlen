@@ -49,18 +49,25 @@ function App() {
       <div style={{ position: "fixed", top: 0, right: 0, padding: "1rem" }}>
         <mdui-button-icon
           data-umami-event="admin-link"
-          icon="admin_panel_settings"
+          icon="manage_accounts"
           href="/admin"
         />
       </div>
 
       <p />
       <div style={{ display: "flex", justifyContent: "center" }}>
-        <img src={schoolData?.icon} alt="Logo" className="waldorf-logo" />
+        <img
+          src={schoolData?.icon}
+          alt="Logo"
+          className="waldorf-logo"
+          style={{ height: "20vh", marginTop: "4rem" }}
+        />
       </div>
       <p />
       <h1 style={{ marginBottom: "0px" }}>WaldorfWahlen</h1>
-      <h2 style={{ marginTop: "0px" }}>{schoolData?.name}</h2>
+      <h2 style={{ marginTop: "0px", textAlign: "center" }}>
+        {schoolData?.name}
+      </h2>
       <div
         style={{
           textAlign: "center",
