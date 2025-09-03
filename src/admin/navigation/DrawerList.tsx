@@ -219,6 +219,9 @@ export default function DrawerList({
                     setAddingSchool(true);
                     return;
                   }
+                  if ((e.target as HTMLSelectElement).value === "SCHOOLID") {
+                    return;
+                  }
                   console.log(e);
                   window.location.href = window.location.href.replace(
                     "SCHOOLID",
