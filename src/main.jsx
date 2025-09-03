@@ -460,6 +460,8 @@ const routes = [
 
 const router = createBrowserRouter(routes);
 
+console.log("SCHOOLID");
+
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <div className="wrapper">

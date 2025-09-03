@@ -8,7 +8,9 @@
     "build": "vite build",
     "lint": "eslint . --ext js,jsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview",
-    "start": "node server.mjs"
+    "start": "node server.mjs",
+    "backup": "pnpx tsx backupFirestore.ts",
+    "migrate": "pnpx tsx restoreFirestore.ts"
   },
   "packageManager": "pnpm@10.0.0",
   "dependencies": {
@@ -53,6 +55,7 @@
     "firebase-tools": "^14.14.0",
     "globals": "^15.15.0",
     "rollup-plugin-visualizer": "^5.14.0",
+    "tsx": "^4.19.2",
     "vite": "^6.3.5",
     "vite-plugin-moment-timezone": "0.0.4",
     "vite-plugin-webpackchunkname": "^1.0.3"
