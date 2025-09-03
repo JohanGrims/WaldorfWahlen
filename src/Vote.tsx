@@ -100,7 +100,8 @@ export default function Vote() {
   const [sending, setSending] = React.useState<boolean>(false);
 
   // Feedback dialog state
-  const [showFeedbackDialog, setShowFeedbackDialog] = React.useState<boolean>(false);
+  const [showFeedbackDialog, setShowFeedbackDialog] =
+    React.useState<boolean>(false);
   const [satisfaction, setSatisfaction] = React.useState<number>(0);
   const [excitement, setExcitement] = React.useState<number>(0);
   const [easeOfProcess, setEaseOfProcess] = React.useState<number>(0);
@@ -166,7 +167,7 @@ export default function Vote() {
       ? name
       : `${firstName} ${lastName.charAt(0)}.`;
 
-    addDoc(collection(db, `/votes/${id}/choices`), {
+    addDoc(collection(db, `schools/SCHOOLID/votes/${id}/choices`), {
       name: finalName,
       grade: parseInt(grade),
       listIndex: parseInt(listIndex),
@@ -229,14 +230,17 @@ export default function Vote() {
 
   function submitFeedback() {
     if (!id) return;
-    
+
     const feedbackData: FeedbackData = {
       satisfaction,
       excitement,
       easeOfProcess,
     };
 
-    addDoc(collection(db, `/votes/${id}/feedback`), feedbackData)
+    addDoc(
+      collection(db, `schools/SCHOOLID/votes/${id}/feedback`),
+      feedbackData
+    )
       .then(() => {
         setShowFeedbackDialog(false);
         navigateToSubmitted();
@@ -344,20 +348,38 @@ export default function Vote() {
       </mdui-dialog>
 
       {/* Feedback Dialog */}
-      <mdui-dialog open={showFeedbackDialog} headline="Feedback (freiwillig)" icon="feedback">
+      <mdui-dialog
+        open={showFeedbackDialog}
+        headline="Feedback (freiwillig)"
+        icon="feedback"
+      >
         <div className="mdui-prose">
           <p>
             <strong>Vielen Dank für Ihre Teilnahme!</strong>
           </p>
           <p>
-            Möchten Sie uns anonymes Feedback zu dieser Wahl geben? Dies ist völlig freiwillig und hilft uns, zukünftige Wahlen zu verbessern.
+            Möchten Sie uns anonymes Feedback zu dieser Wahl geben? Dies ist
+            völlig freiwillig und hilft uns, zukünftige Wahlen zu verbessern.
           </p>
-          
+
           <div style={{ marginTop: "24px", marginBottom: "16px" }}>
             <h4>Wie zufrieden sind Sie mit den Optionen?</h4>
-            <div style={{ display: "flex", gap: "8px", justifyContent: "center", margin: "12px 0" }}>
+            <div
+              style={{
+                display: "flex",
+                gap: "8px",
+                justifyContent: "center",
+                margin: "12px 0",
+              }}
+            >
               {[1, 2, 3, 4, 5].map((rating) => {
-                const icons = ["sentiment_very_dissatisfied", "sentiment_dissatisfied", "sentiment_neutral", "sentiment_satisfied", "sentiment_very_satisfied"];
+                const icons = [
+                  "sentiment_very_dissatisfied",
+                  "sentiment_dissatisfied",
+                  "sentiment_neutral",
+                  "sentiment_satisfied",
+                  "sentiment_very_satisfied",
+                ];
                 const isSelected = satisfaction >= rating;
                 return (
                   <mdui-button-icon
@@ -366,7 +388,7 @@ export default function Vote() {
                     onClick={() => setSatisfaction(rating)}
                     style={{
                       color: isSelected ? "#4CAF50" : "#999",
-                      fontSize: "2rem"
+                      fontSize: "2rem",
                     }}
                   />
                 );
@@ -376,9 +398,22 @@ export default function Vote() {
 
           <div style={{ marginBottom: "16px" }}>
             <h4>Freuen Sie sich auf die Projekte?</h4>
-            <div style={{ display: "flex", gap: "8px", justifyContent: "center", margin: "12px 0" }}>
+            <div
+              style={{
+                display: "flex",
+                gap: "8px",
+                justifyContent: "center",
+                margin: "12px 0",
+              }}
+            >
               {[1, 2, 3, 4, 5].map((rating) => {
-                const icons = ["sentiment_very_dissatisfied", "sentiment_dissatisfied", "sentiment_neutral", "sentiment_satisfied", "sentiment_very_satisfied"];
+                const icons = [
+                  "sentiment_very_dissatisfied",
+                  "sentiment_dissatisfied",
+                  "sentiment_neutral",
+                  "sentiment_satisfied",
+                  "sentiment_very_satisfied",
+                ];
                 const isSelected = excitement >= rating;
                 return (
                   <mdui-button-icon
@@ -387,7 +422,7 @@ export default function Vote() {
                     onClick={() => setExcitement(rating)}
                     style={{
                       color: isSelected ? "#FF9800" : "#999",
-                      fontSize: "2rem"
+                      fontSize: "2rem",
                     }}
                   />
                 );
@@ -397,9 +432,22 @@ export default function Vote() {
 
           <div style={{ marginBottom: "24px" }}>
             <h4>Wie einfach war der Wahlprozess?</h4>
-            <div style={{ display: "flex", gap: "8px", justifyContent: "center", margin: "12px 0" }}>
+            <div
+              style={{
+                display: "flex",
+                gap: "8px",
+                justifyContent: "center",
+                margin: "12px 0",
+              }}
+            >
               {[1, 2, 3, 4, 5].map((rating) => {
-                const icons = ["sentiment_very_dissatisfied", "sentiment_dissatisfied", "sentiment_neutral", "sentiment_satisfied", "sentiment_very_satisfied"];
+                const icons = [
+                  "sentiment_very_dissatisfied",
+                  "sentiment_dissatisfied",
+                  "sentiment_neutral",
+                  "sentiment_satisfied",
+                  "sentiment_very_satisfied",
+                ];
                 const isSelected = easeOfProcess >= rating;
                 return (
                   <mdui-button-icon
@@ -408,7 +456,7 @@ export default function Vote() {
                     onClick={() => setEaseOfProcess(rating)}
                     style={{
                       color: isSelected ? "#2196F3" : "#999",
-                      fontSize: "2rem"
+                      fontSize: "2rem",
                     }}
                   />
                 );
@@ -424,10 +472,12 @@ export default function Vote() {
             <mdui-button onClick={skipFeedback} variant="text">
               Überspringen
             </mdui-button>
-            <mdui-button 
-              onClick={submitFeedback} 
+            <mdui-button
+              onClick={submitFeedback}
               end-icon="send"
-              disabled={satisfaction === 0 && excitement === 0 && easeOfProcess === 0}
+              disabled={
+                satisfaction === 0 && excitement === 0 && easeOfProcess === 0
+              }
             >
               Feedback senden
             </mdui-button>
@@ -727,14 +777,16 @@ export default function Vote() {
 }
 
 Vote.loader = async function loader({ params, request }: LoaderFunctionArgs) {
-  const vote = await getDoc(doc(db, `/votes/${params.id}`));
+  const vote = await getDoc(doc(db, `schools/SCHOOLID/votes/${params.id}`));
   if (!vote.exists()) {
     throw new Response("Wahl nicht gefunden.", {
       status: 404,
       statusText: "Nicht gefunden",
     });
   }
-  const options = await getDocs(collection(db, `/votes/${params.id}/options`));
+  const options = await getDocs(
+    collection(db, `schools/SCHOOLID/votes/${params.id}/options`)
+  );
   const voteData = vote.data() as VoteData;
   const optionsData = options.docs.map((e) => ({
     id: e.id,

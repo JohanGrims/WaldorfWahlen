@@ -90,7 +90,10 @@ export default function Students() {
   }
 
   async function addClass() {
-    const classDocRef = await addDoc(collection(db, "class"), newClass);
+    const classDocRef = await addDoc(
+      collection(db, "schools/SCHOOLID/class"),
+      newClass
+    );
 
     revalidator.revalidate();
 
@@ -106,7 +109,7 @@ export default function Students() {
       confirmText: "Ja, löschen",
       cancelText: "Abbrechen",
       onConfirm: async () => {
-        const ref = doc(db, "class", classId);
+        const ref = doc(db, "schools/SCHOOLID/class", classId);
         await deleteDoc(ref);
         revalidator.revalidate();
 
@@ -120,7 +123,7 @@ export default function Students() {
     updatedClass: Partial<Class>,
     goBack = false
   ) {
-    const classDocRef = doc(db, "class", classId);
+    const classDocRef = doc(db, "schools/SCHOOLID/class", classId);
     await updateDoc(classDocRef, updatedClass);
     if (goBack) {
       navigate(`/admin/students/${classId}`);
@@ -232,7 +235,7 @@ export default function Students() {
           await Promise.all(
             classes.map((c) => {
               if (c.id) {
-                return updateDoc(doc(db, "class", c.id), {
+                return updateDoc(doc(db, "schools/SCHOOLID/class", c.id), {
                   grade: c.grade + 1,
                 });
               }
@@ -692,7 +695,7 @@ export default function Students() {
 }
 
 Students.loader = async function loader() {
-  const classes = await getDocs(collection(db, "class"));
+  const classes = await getDocs(collection(db, "schools/SCHOOLID/class"));
   return {
     classes: classes.docs.map((e) => {
       return {

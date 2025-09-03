@@ -1,9 +1,18 @@
-import { collection, getDocs, Timestamp, DocumentData } from "firebase/firestore";
+import {
+  collection,
+  getDocs,
+  Timestamp,
+  DocumentData,
+  getDoc,
+  doc,
+} from "firebase/firestore";
 import moment from "moment-timezone";
 import { useLoaderData } from "react-router-dom";
 import { db } from "./firebase";
 import VoteCard from "./VoteCard";
 import { Helmet } from "react-helmet";
+
+import { useSchool } from "./contexts";
 
 interface VoteData extends DocumentData {
   id: string;
@@ -20,7 +29,10 @@ interface LoaderData {
 }
 
 function App() {
-  const { activeVotes, expiredVotes, scheduledVotes } = useLoaderData() as LoaderData;
+  const { activeVotes, expiredVotes, scheduledVotes } =
+    useLoaderData() as LoaderData;
+
+  const { schoolData } = useSchool();
 
   return (
     <div className="mdui-prose">
@@ -29,24 +41,26 @@ function App() {
       </Helmet>
       <div style={{ position: "fixed", top: 0, left: 0, padding: "1rem" }}>
         <mdui-button-icon
+          data-umami-event="home-link"
+          icon="home"
+          href="/start.html"
+        />
+      </div>
+      <div style={{ position: "fixed", top: 0, right: 0, padding: "1rem" }}>
+        <mdui-button-icon
           data-umami-event="admin-link"
           icon="admin_panel_settings"
           href="/admin"
         />
       </div>
-      <div style={{ position: "fixed", top: 0, right: 0, padding: "1rem" }}>
-        <mdui-button-icon
-          data-umami-event="github-link"
-          icon="code"
-          href="https://github.com/johangrims/waldorfwahlen"
-        />
-      </div>
+
       <p />
       <div style={{ display: "flex", justifyContent: "center" }}>
-        <img src="/WSP.png" alt="Logo" className="waldorf-logo" />
+        <img src={schoolData?.icon} alt="Logo" className="waldorf-logo" />
       </div>
       <p />
-      <h1 style={{ marginBottom: "10px" }}>WaldorfWahlen</h1>
+      <h1 style={{ marginBottom: "0px" }}>WaldorfWahlen</h1>
+      <h2 style={{ marginTop: "0px" }}>{schoolData?.name}</h2>
       <div
         style={{
           textAlign: "center",
@@ -169,7 +183,7 @@ function App() {
 export default App;
 
 App.loader = async function loader() {
-  const votes = await getDocs(collection(db, "/votes"));
+  const votes = await getDocs(collection(db, "schools/SCHOOLID/votes"));
   const activeVotes: VoteData[] = [];
   const expiredVotes: VoteData[] = [];
   const scheduledVotes: VoteData[] = [];

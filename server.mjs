@@ -6,131 +6,72 @@ const app = express();
 // PORT env var is set by Cloud Run
 const port = process.env.PORT || 3000;
 
-// Function to recursively get all files in a directory
-function getAllFiles(dirPath, arrayOfFiles = []) {
-  const files = fs.readdirSync(dirPath);
-
-  files.forEach((file) => {
-    const fullPath = path.join(dirPath, file);
-    if (fs.statSync(fullPath).isDirectory()) {
-      arrayOfFiles = getAllFiles(fullPath, arrayOfFiles);
-    } else {
-      arrayOfFiles.push(fullPath);
-    }
-  });
-
-  return arrayOfFiles;
+// Function to replace placeholders in content without modifying original files
+function replacePlaceholdersInContent(content, schoolId) {
+  return content.replace(/SCHOOLID/g, schoolId);
 }
 
-// Function to replace placeholders in files
-function replacePlaceholdersInFiles(schoolId, requestDetails) {
-  const distPath = path.join(process.cwd(), "dist");
-
-  if (!fs.existsSync(distPath)) {
-    console.log("Dist directory does not exist");
-    return;
-  }
-
-  try {
-    const allFiles = getAllFiles(distPath);
-    let processedFiles = 0;
-    let totalReplacements = 0;
-
-    allFiles.forEach((filePath) => {
-      try {
-        let content = fs.readFileSync(filePath, "utf8");
-        let fileReplacements = 0;
-
-        // Replace SCHOOLID
-        const schoolIdMatches = (content.match(/SCHOOLID/g) || []).length;
-        if (schoolIdMatches > 0) {
-          content = content.replace(/SCHOOLID/g, schoolId);
-          fileReplacements += schoolIdMatches;
-        }
-
-        // Replace REQUEST_DETAILS
-        const requestDetailsMatches = (content.match(/REQUEST_DETAILS/g) || [])
-          .length;
-        if (requestDetailsMatches > 0) {
-          content = content.replace(/REQUEST_DETAILS/g, requestDetails);
-          fileReplacements += requestDetailsMatches;
-        }
-
-        if (fileReplacements > 0) {
-          fs.writeFileSync(filePath, content, "utf8");
-          processedFiles++;
-          totalReplacements += fileReplacements;
-          console.log(
-            `Replaced ${fileReplacements} occurrences in ${path.relative(
-              process.cwd(),
-              filePath
-            )} (SCHOOLID: ${schoolIdMatches}, REQUEST_DETAILS: ${requestDetailsMatches})`
-          );
-        }
-      } catch (err) {
-        // Skip binary files or files that can't be read as text
-        if (err.code !== "EISDIR") {
-          console.log(
-            `Skipping file ${path.relative(process.cwd(), filePath)}: ${
-              err.message
-            }`
-          );
-        }
-      }
-    });
-
-    console.log(
-      `Total: ${totalReplacements} replacements in ${processedFiles} files`
-    );
-  } catch (err) {
-    console.error("Error processing files:", err);
-  }
+// Function to extract school ID from hostname
+function getSchoolIdFromHost(req) {
+  const forwardedHost = req.headers["x-forwarded-host"];
+  const host = req.headers["host"];
+  
+  const hostname = forwardedHost || host || "unknown";
+  
+  // Extract the first part of the hostname (before the first dot)
+  const schoolId = hostname.split('.')[0];
+  return schoolId || "unknown";
 }
 
-// Middleware to handle headers and replace placeholders
+// Custom static middleware that replaces placeholders on-the-fly
 app.use((req, res, next) => {
-  const xForwardedFor = req.headers["x-forwarded-for"];
-  const realIp = req.headers["x-real-ip"];
-  const remoteAddress =
-    req.connection?.remoteAddress || req.socket?.remoteAddress;
+  // Skip if this doesn't look like a text file that might contain SCHOOLID
+  const ext = path.extname(req.path).toLowerCase();
+  const textExtensions = ['.html', '.js', '.css', '.json', '.txt', '.xml', '.svg'];
+  
+  if (!textExtensions.includes(ext) && req.path !== "/") {
+    return next(); // Let express.static handle binary files
+  }
 
-  console.log("=== Request Details ===");
-  console.log("Timestamp:", new Date().toISOString());
-  console.log("Method:", req.method);
-  console.log("URL:", req.url);
-  console.log("X-Forwarded-For:", xForwardedFor);
-  console.log("X-Real-IP:", realIp);
-  console.log("Remote Address:", remoteAddress);
-  console.log("User-Agent:", req.headers["user-agent"]);
+  const schoolId = getSchoolIdFromHost(req);
 
-  // Use X-Forwarded-For header value, fallback to X-Real-IP, then remote address
-  const schoolId = xForwardedFor || realIp || remoteAddress || "unknown";
-  console.log("Using School ID:", schoolId);
+  // Try to serve file from dist directory
+  const filePath = path.join(process.cwd(), "dist", req.path);
 
-  // Create detailed request information (properly escaped for JavaScript)
-  const requestDetails = JSON.stringify({
-    timestamp: new Date().toISOString(),
-    method: req.method,
-    url: req.url,
-    headers: req.headers,
-    remoteAddress: remoteAddress,
-    schoolId: schoolId,
-    query: req.query,
-    params: req.params,
-  })
-    .replace(/\\/g, "\\\\")
-    .replace(/"/g, '\\"')
-    .replace(/'/g, "\\'");
+  // Check if file exists and is not a directory
+  if (fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
+    try {
+      let content = fs.readFileSync(filePath, "utf8");
 
-  console.log("Request Details JSON:", requestDetails);
+      // Replace SCHOOLID placeholders if any exist
+      if (content.includes("SCHOOLID")) {
+        content = replacePlaceholdersInContent(content, schoolId);
+      }
 
-  // Replace placeholders in all dist files
-  replacePlaceholdersInFiles(schoolId, requestDetails);
-  console.log("========================");
+      // Set appropriate content type
+      if (ext === ".html") {
+        res.setHeader("Content-Type", "text/html");
+      } else if (ext === ".js") {
+        res.setHeader("Content-Type", "application/javascript");
+      } else if (ext === ".css") {
+        res.setHeader("Content-Type", "text/css");
+      } else if (ext === ".json") {
+        res.setHeader("Content-Type", "application/json");
+      } else if (ext === ".svg") {
+        res.setHeader("Content-Type", "image/svg+xml");
+      }
 
+      res.send(content);
+      return;
+    } catch (err) {
+      // If we can't read as text, fall through to static middleware
+    }
+  }
+  
   next();
 });
 
+// Fallback to express.static for binary files and files without SCHOOLID
 app.use(express.static("dist"));
 
 // Catch-all: send index.html for any non-file route (SPA support)
@@ -140,14 +81,20 @@ app.use((req, res, next) => {
     return next();
   }
 
+  const schoolId = getSchoolIdFromHost(req);
+
   const indexPath = path.join(process.cwd(), "dist", "index.html");
   fs.readFile(indexPath, "utf8", (err, data) => {
     if (err) {
       res.status(500).send("Error loading index.html");
       return;
     }
+
+    // Replace SCHOOLID placeholders in index.html
+    const content = replacePlaceholdersInContent(data, schoolId);
+
     res.setHeader("Content-Type", "text/html");
-    res.send(data);
+    res.send(content);
   });
 });
 

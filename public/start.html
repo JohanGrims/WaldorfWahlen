@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="de">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>WaldorfWahlen | Projektwahlen</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/beercss@3.11.33/dist/cdn/beer.min.css"
+      rel="stylesheet"
+    />
+    <script
+      type="module"
+      src="https://cdn.jsdelivr.net/npm/beercss@3.11.33/dist/cdn/beer.min.js"
+    ></script>
+    <style>
+      :root {
+        --primary: #94d2bd;
+        --on-primary: #1c332e;
+        --primary-container: #1c332e;
+        --on-primary-container: #94d2bd;
+        --secondary: #e9c46a;
+        --on-secondary: #3d2f16;
+        --secondary-container: #3d2f16;
+        --on-secondary-container: #e9c46a;
+        --surface: #121212;
+        --on-surface: #f5f5f5;
+        --surface-container-low: #1e1e1e;
+        --on-surface-variant: #bdbdbd;
+        --background: #121212;
+      }
+      body.dark {
+        --primary: #94d2bd;
+        --on-primary: #1c332e;
+        --primary-container: #1c332e;
+        --on-primary-container: #94d2bd;
+        --secondary: #e9c46a;
+        --on-secondary: #3d2f16;
+        --secondary-container: #3d2f16;
+        --on-secondary-container: #e9c46a;
+        --surface: #121212;
+        --on-surface: #f5f5f5;
+        --surface-container-low: #1e1e1e;
+        --on-surface-variant: #bdbdbd;
+        --background: #121212;
+      }
+      .header-bg {
+        background-color: transparent;
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+      }
+      .rounded-borders {
+        border-radius: var(--large-round);
+      }
+      .card-hover {
+        transition: box-shadow 0.2s, transform 0.2s;
+      }
+      .card-hover:hover {
+        box-shadow: var(--elevate3);
+        transform: scale(1.03);
+      }
+      .cta-animated {
+        transition: background 0.2s, transform 0.2s;
+      }
+      .cta-animated:hover {
+        background: var(--primary);
+        color: var(--on-primary);
+        transform: scale(1.07);
+      }
+      .fade-in {
+        animation: fadeIn 0.7s ease-out;
+      }
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+        }
+        to {
+          opacity: 1;
+        }
+      }
+    </style>
+  </head>
+  <body class="dark">
+    <header class="fixed top left right header-bg large-padding">
+      <nav class="middle-align no-wrap">
+        <img
+          src="/WSP.png"
+          alt="Logo"
+          class="circle small left-margin"
+          style="height: 2.5rem; vertical-align: middle"
+        />
+        <h4 class="max bold">WaldorfWahlen</h4>
+        <a href="#info" class="button round cta-animated">Mehr erfahren</a>
+        <a href="mailto:johan.grims@email.com" class="button round cta-animated"
+          >Kontakt</a
+        >
+        <a
+          href="https://github.com/JohanGrims/waldorfwahlen"
+          target="_blank"
+          class="button round cta-animated"
+        >
+          <i>code</i>
+        </a>
+      </nav>
+    </header>
+
+    <main class="responsive">
+      <section class="container center-align large-space fade-in">
+        <div class="grid s12 m8 l6 auto-margin">
+          <article
+            class="primary-container rounded-borders large-elevate large-padding card-hover"
+          >
+            <h1 class="headline large-text bold">
+              Willkommen zu WaldorfWahlen!
+            </h1>
+            <h5 class="light">
+              Die moderne, sichere und transparente Lösung für Projektwahlen an
+              der Waldorfschule Potsdam.
+            </h5>
+            <nav class="center-align large-space">
+              <a href="#info" class="button large round cta-animated"
+                >Mehr erfahren</a
+              >
+              <a
+                href="mailto:johan.grims@email.com"
+                class="button large round cta-animated"
+                >Kontakt aufnehmen</a
+              >
+            </nav>
+          </article>
+        </div>
+      </section>
+
+      <section class="container center-align" id="info">
+        <div class="space large"></div>
+        <h2 class="headline bold">Warum WaldorfWahlen?</h2>
+        <div class="grid s12 m6 l3 large-space center-align">
+          <article
+            class="surface-container-low rounded-borders medium-elevate medium-padding card-hover"
+          >
+            <i class="extra tertiary-text">how_to_vote</i>
+            <h3 class="bold">5</h3>
+            <h6>Erfolgreiche Wahlen</h6>
+            <p class="small-text">Schon 5 Mal mit Begeisterung genutzt!</p>
+          </article>
+          <article
+            class="surface-container-low rounded-borders medium-elevate medium-padding card-hover"
+          >
+            <i class="extra secondary-text">person</i>
+            <h3 class="bold">150+</h3>
+            <h6>Teilnehmende Schüler</h6>
+            <p class="small-text">
+              Viele Stimmen, viele Meinungen – alle zählen!
+            </p>
+          </article>
+          <article
+            class="surface-container-low rounded-borders medium-elevate medium-padding card-hover"
+          >
+            <i class="extra primary-text">check_box</i>
+            <h3 class="bold">500+</h3>
+            <h6>Eingereichte Stimmen</h6>
+            <p class="small-text">
+              Jede Stimme wird sicher und transparent gezählt.
+            </p>
+          </article>
+          <article
+            class="surface-container-low rounded-borders medium-elevate medium-padding card-hover"
+          >
+            <i class="extra error-text">work</i>
+            <h3 class="bold">35</h3>
+            <h6>Projekte zur Auswahl</h6>
+            <p class="small-text">Vielfalt für alle Interessen!</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="container large-space">
+        <div class="grid s12 m6 l6 large-space">
+          <article
+            class="surface-container-low rounded-borders medium-elevate medium-padding card-hover left-align"
+          >
+            <h5 class="bold">Für Schüler</h5>
+            <ul class="list space">
+              <li>
+                <i class="primary-text">group</i>
+                <div>
+                  <h6 class="no-margin">Projektauswahl leicht gemacht</h6>
+                  <p class="small-text">
+                    Wähle aus einer kuratierten Liste und gib deine Präferenzen
+                    einfach ab.
+                  </p>
+                </div>
+              </li>
+              <li>
+                <i class="secondary-text">check_circle</i>
+                <div>
+                  <h6 class="no-margin">Sicher & anonym</h6>
+                  <p class="small-text">
+                    Deine Stimme bleibt privat und geschützt.
+                  </p>
+                </div>
+              </li>
+              <li>
+                <i class="tertiary-text">star</i>
+                <div>
+                  <h6 class="no-margin">Sofortige Ergebnisse</h6>
+                  <p class="small-text">
+                    Erfahre direkt, welchem Projekt du zugeordnet wurdest.
+                  </p>
+                </div>
+              </li>
+            </ul>
+          </article>
+          <article
+            class="surface-container-low rounded-borders medium-elevate medium-padding card-hover left-align"
+          >
+            <h5 class="bold">Für Lehrkräfte</h5>
+            <ul class="list space">
+              <li>
+                <i class="secondary-text">dashboard</i>
+                <div>
+                  <h6 class="no-margin">Intuitives Dashboard</h6>
+                  <p class="small-text">
+                    Projekte erstellen, verwalten und Wahlen live überwachen.
+                  </p>
+                </div>
+              </li>
+              <li>
+                <i class="primary-text">pie_chart</i>
+                <div>
+                  <h6 class="no-margin">Transparente Auswertung</h6>
+                  <p class="small-text">
+                    Automatische Zuteilung und klare, nachvollziehbare
+                    Ergebnisse.
+                  </p>
+                </div>
+              </li>
+              <li>
+                <i class="tertiary-text">support_agent</i>
+                <div>
+                  <h6 class="no-margin">Support & Kontakt</h6>
+                  <p class="small-text">
+                    Schnelle Hilfe bei Fragen – einfach Kontakt aufnehmen!
+                  </p>
+                </div>
+              </li>
+            </ul>
+          </article>
+        </div>
+      </section>
+
+      <section class="container center-align large-space">
+        <div class="grid s12 m6 l6 large-space">
+          <article
+            class="surface-container-low rounded-borders medium-elevate medium-padding card-hover center-align"
+          >
+            <img
+              class="responsive rounded-borders"
+              src="https://images.unsplash.com/photo-1628151010372-902edc50a588?q=80&w=1974&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
+              alt="Personen bei der Abstimmung"
+              style="max-height: 18rem; object-fit: cover"
+            />
+            <h6 class="medium-text">Gemeinsam wählen. Gemeinsam gestalten.</h6>
+          </article>
+          <article
+            class="surface-container-low rounded-borders medium-elevate medium-padding card-hover center-align"
+          >
+            <h5 class="bold">Noch Fragen?</h5>
+            <p class="small-text">
+              Wir helfen gerne weiter! Kontaktiere uns direkt oder schau auf
+              GitHub vorbei.
+            </p>
+            <nav class="center-align large-space">
+              <a
+                href="mailto:johan.grims@email.com"
+                class="button large round cta-animated"
+                >Kontakt</a
+              >
+              <a
+                href="https://github.com/JohanGrims/waldorfwahlen"
+                target="_blank"
+                class="button large round cta-animated"
+              >
+                <i>code</i>
+                <span>GitHub</span>
+              </a>
+            </nav>
+          </article>
+        </div>
+      </section>
+    </main>
+
+    <footer class="fixed bottom responsive fill">
+      <nav class="middle-align">
+        <p class="max small-text">
+          © 2025 WaldorfWahlen. Alle Rechte vorbehalten.
+        </p>
+        <a
+          href="https://github.com/JohanGrims/waldorfwahlen"
+          target="_blank"
+          class="button transparent circle large"
+        >
+          <i>code</i>
+        </a>
+        <a
+          href="mailto:johan.grims@email.com"
+          class="button transparent circle large"
+        >
+          <i>mail</i>
+        </a>
+      </nav>
+    </footer>
+  </body>
+</html>

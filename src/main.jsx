@@ -8,9 +8,10 @@ import { alert, setColorScheme, setTheme } from "mdui";
 import "mdui/mdui.css";
 import { getToken } from "firebase/app-check";
 import ScrollToTop from "./admin/utils";
+import { SchoolProvider } from "./contexts";
 
-setColorScheme("#f89e24");
-setTheme(localStorage.getItem("theme") || "dark");
+setTheme("dark");
+setColorScheme("#000000");
 
 const routes = [
   {
@@ -279,6 +280,19 @@ const routes = [
                 },
               },
               {
+                path: "school",
+                lazy: async () => {
+                  const module = await import(
+                    /* webpackChunkName: "School" */
+                    "./admin/School"
+                  );
+                  return {
+                    loader: module.default.loader,
+                    Component: module.default,
+                  };
+                },
+              },
+              {
                 path: ":id/*",
                 children: [
                   {
@@ -460,13 +474,10 @@ const routes = [
 
 const router = createBrowserRouter(routes);
 
-console.log("SCHOOLID");
-
-console.log("REQUEST_DETAILS");
-
-
 ReactDOM.createRoot(document.getElementById("root")).render(
   <div className="wrapper">
-    <RouterProvider router={router} />
+    <SchoolProvider>
+      <RouterProvider router={router} />
+    </SchoolProvider>
   </div>
 );

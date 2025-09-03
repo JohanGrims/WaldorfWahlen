@@ -68,7 +68,7 @@ export default function Schedule() {
 
   function save() {
     if (!id) return;
-    setDoc(doc(db, `/votes/${id}`), {
+    setDoc(doc(db, `schools/SCHOOLID/votes/${id}`), {
       ...vote,
       active: active,
       startTime: Timestamp.fromDate(
@@ -130,7 +130,7 @@ export default function Schedule() {
 
 export async function loader({ params }: LoaderFunctionArgs) {
   const { id } = params as { id: string };
-  const vote = await getDoc(doc(db, `/votes/${id}`));
+  const vote = await getDoc(doc(db, `schools/SCHOOLID/votes/${id}`));
   const data = vote.data() as VoteData;
   return {
     vote: data,

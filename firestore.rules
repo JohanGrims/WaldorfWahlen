@@ -92,7 +92,7 @@ service cloud.firestore {
     // !!! NEW RULES
     // Helper functions
     function isSchoolAuthenticated(schoolId) {
-      return request.auth != null;
+      return request.auth != null && (request.auth.token.project == schoolId || request.auth.token.role == "admin");
     }
 
     function getSchoolVoteData(schoolId, voteId){
@@ -182,7 +182,7 @@ service cloud.firestore {
     // Documentation collection rule
     match /docs/{docId} {
         // Allow read and write access only for administrators
-        allow read, write: if isSchoolAuthenticated(schoolId);
+        allow read, write: if isAuthenticated();
     }
 
   }

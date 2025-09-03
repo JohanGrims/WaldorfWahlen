@@ -982,7 +982,7 @@ Match.loader = async function loader({ params }: LoaderFunctionArgs) {
   const choices = await getDocs(collection(db, `/votes/${id}/choices`));
   const choiceData = choices.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
 
-  const classes = await getDocs(collection(db, `/class`));
+  const classes = await getDocs(collection(db, `/schools/SCHOOLID/class`));
   const classData = classes.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
 
   return {

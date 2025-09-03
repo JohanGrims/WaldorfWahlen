@@ -35,7 +35,7 @@ export default function VoteDrawer({ onClose = () => {} }: VoteDrawerProps) {
   React.useEffect(() => {
     setData(null);
     if (!id) return;
-    getDoc(doc(db, `/votes/${id}`))
+    getDoc(doc(db, `schools/SCHOOLID/votes/${id}`))
       .then(async (request) => {
         if (!request.exists()) {
           snackbar({ message: "Wahl existiert nicht." });

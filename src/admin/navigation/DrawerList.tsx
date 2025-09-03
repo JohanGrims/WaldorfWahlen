@@ -6,6 +6,7 @@ import { db } from "../../firebase";
 import { DrawerItem } from "./components";
 import VoteDrawer from "./VoteDrawer";
 import routes from "./routes.json";
+import { useSchool } from "../../contexts";
 
 interface VoteData {
   id: string;
@@ -36,11 +37,13 @@ export default function DrawerList({
 
   const navigate = useNavigate();
 
+  const { schoolData } = useSchool();
+
   React.useEffect(() => {
     setActiveVotes([]);
     setExpiredVotes([]);
     setScheduledVotes([]);
-    getDocs(collection(db, "/votes"))
+    getDocs(collection(db, "schools/SCHOOLID/votes"))
       .then((data) => {
         data.docs.map((e) => {
           let data = e.data() as VoteData;
@@ -136,7 +139,7 @@ export default function DrawerList({
           </div>
         ) : (
           <mdui-list-item disabled>
-            <mdui-list-item-content>Administrator</mdui-list-item-content>
+            <mdui-list-item-content>{schoolData?.name}</mdui-list-item-content>
           </mdui-list-item>
         )}
         {loading && <mdui-linear-progress></mdui-linear-progress>}
@@ -339,14 +342,14 @@ export default function DrawerList({
         </mdui-tooltip>
         <mdui-tooltip
           variant="rich"
-          headline="Admins"
-          content="Verwalten Sie die Administratoren der Anwendung."
+          headline="Schule"
+          content="Verwalten Sie die Schuleinstellungen."
         >
           <DrawerItem
-            active={active === "admins"}
-            title={"Administratoren"}
-            icon={"manage_accounts"}
-            onClick={() => navigateTo("/admin/admins")}
+            active={active === "school"}
+            title={"Schule"}
+            icon={"school"}
+            onClick={() => navigateTo("/admin/school")}
           />
         </mdui-tooltip>
 

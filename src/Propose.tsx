@@ -27,7 +27,7 @@ export default function Propose() {
 
   async function submit() {
     setLoading(true);
-    await addDoc(collection(db, `/votes/${id}/proposals`), {
+    await addDoc(collection(db, `schools/SCHOOLID/votes/${id}/proposals`), {
       name: name,
       description: description,
       teacher: teacher,

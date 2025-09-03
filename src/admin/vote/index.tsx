@@ -215,31 +215,39 @@ export default function AdminVote() {
 
 AdminVote.loader = async function loader({ params }: LoaderFunctionArgs) {
   const { id } = params as { id: string };
-  const vote = await getDoc(doc(db, `/votes/${id}`));
+  const vote = await getDoc(doc(db, `schools/SCHOOLID/votes/${id}`));
   if (!vote.exists()) {
     throw new Response("Seite nicht gefunden", { status: 404 });
   }
   const voteData = { id: vote.id, ...vote.data() } as VoteData;
 
-  const choices = await getDocs(collection(db, `/votes/${id}/choices`));
+  const choices = await getDocs(
+    collection(db, `schools/SCHOOLID/votes/${id}/choices`)
+  );
   const choiceData = choices.docs.map((doc) => ({
     id: doc.id,
     ...doc.data(),
   })) as ChoiceData[];
 
-  const options = await getDocs(collection(db, `/votes/${id}/options`));
+  const options = await getDocs(
+    collection(db, `schools/SCHOOLID/votes/${id}/options`)
+  );
   const optionData = options.docs.map((doc) => ({
     id: doc.id,
     ...doc.data(),
   })) as OptionData[];
 
-  const results = await getDocs(collection(db, `/votes/${id}/results`));
+  const results = await getDocs(
+    collection(db, `schools/SCHOOLID/votes/${id}/results`)
+  );
   const resultData = results.docs.map((doc) => ({
     id: doc.id,
     ...doc.data(),
   })) as ResultData[];
 
-  const proposals = await getDocs(collection(db, `/votes/${id}/proposals`));
+  const proposals = await getDocs(
+    collection(db, `schools/SCHOOLID/votes/${id}/proposals`)
+  );
   const proposalData = proposals.docs.map((doc) => ({
     id: doc.id,
     ...doc.data(),

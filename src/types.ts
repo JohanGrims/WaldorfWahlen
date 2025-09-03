@@ -34,3 +34,11 @@ export type Class = {
   students: Student[];
   id?: string;
 };
+
+export type SchoolData = {
+  name: string;
+  icon: string;
+  shortName: string;
+  link: string;
+  primaryColor: string;
+};

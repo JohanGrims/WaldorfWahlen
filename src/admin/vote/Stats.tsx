@@ -755,35 +755,43 @@ Stats.loader = async function loader({ params }: LoaderFunctionArgs) {
   const { id } = params as { id: string };
 
   // Load vote data
-  const vote = await getDoc(doc(db, `/votes/${id}`));
+  const vote = await getDoc(doc(db, `schools/SCHOOLID/votes/${id}`));
   if (!vote.exists()) {
     throw new Response("Vote not found", { status: 404 });
   }
   const voteData = { id: vote.id, ...vote.data() } as VoteData;
 
   // Load options
-  const options = await getDocs(collection(db, `/votes/${id}/options`));
+  const options = await getDocs(
+    collection(db, `schools/SCHOOLID/votes/${id}/options`)
+  );
   const optionData = options.docs.map((doc) => ({
     id: doc.id,
     ...doc.data(),
   })) as OptionData[];
 
   // Load choices
-  const choices = await getDocs(collection(db, `/votes/${id}/choices`));
+  const choices = await getDocs(
+    collection(db, `schools/SCHOOLID/votes/${id}/choices`)
+  );
   const choiceData = choices.docs.map((doc) => ({
     id: doc.id,
     ...doc.data(),
   })) as ChoiceData[];
 
   // Load results
-  const results = await getDocs(collection(db, `/votes/${id}/results`));
+  const results = await getDocs(
+    collection(db, `schools/SCHOOLID/votes/${id}/results`)
+  );
   const resultData = results.docs.map((doc) => ({
     id: doc.id,
     ...doc.data(),
   })) as ResultData[];
 
   // Load feedback
-  const feedback = await getDocs(collection(db, `/votes/${id}/feedback`));
+  const feedback = await getDocs(
+    collection(db, `schools/SCHOOLID/votes/${id}/feedback`)
+  );
   const feedbackData = feedback.docs.map((doc) => ({
     id: doc.id,
     ...doc.data(),

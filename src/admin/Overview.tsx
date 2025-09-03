@@ -156,7 +156,7 @@ export default function Overview() {
 }
 
 Overview.loader = async function loader() {
-  const votes = await getDocs(collection(db, "votes"));
+  const votes = await getDocs(collection(db, "schools/SCHOOLID/votes"));
   return {
     votes: votes.docs.map((e) => {
       return { id: e.id, ...e.data() } as VoteData;

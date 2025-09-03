@@ -774,7 +774,7 @@ export default function NewVote() {
     const berlinEndTime = moment.tz(endTime, "Europe/Berlin").toDate();
 
     try {
-      await setDoc(doc(db, "/votes", id), {
+      await setDoc(doc(db, "schools/SCHOOLID/votes", id), {
         title: title,
         description: description,
         selectCount: selectCount,
@@ -810,12 +810,15 @@ export default function NewVote() {
       }
       if (!proposals) {
         const optionPromises = options.map(async (e) => {
-          return addDoc(collection(db, `/votes/${id}/options`), {
-            title: e.title,
-            max: e.max,
-            teacher: e.teacher,
-            description: e.description,
-          });
+          return addDoc(
+            collection(db, `schools/SCHOOLID/votes/${id}/options`),
+            {
+              title: e.title,
+              max: e.max,
+              teacher: e.teacher,
+              description: e.description,
+            }
+          );
         });
 
         await Promise.all(optionPromises);
