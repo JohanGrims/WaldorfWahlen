@@ -22,8 +22,8 @@ function getAllFiles(dirPath, arrayOfFiles = []) {
   return arrayOfFiles;
 }
 
-// Function to replace SCHOOLID in files
-function replaceSchoolIdInFiles(schoolId) {
+// Function to replace placeholders in files
+function replacePlaceholdersInFiles(schoolId, requestDetails) {
   const distPath = path.join(process.cwd(), "dist");
 
   if (!fs.existsSync(distPath)) {
@@ -34,23 +34,37 @@ function replaceSchoolIdInFiles(schoolId) {
   try {
     const allFiles = getAllFiles(distPath);
     let processedFiles = 0;
-    let replacements = 0;
+    let totalReplacements = 0;
 
     allFiles.forEach((filePath) => {
       try {
-        const content = fs.readFileSync(filePath, "utf8");
-        const originalMatches = (content.match(/SCHOOLID/g) || []).length;
+        let content = fs.readFileSync(filePath, "utf8");
+        let fileReplacements = 0;
 
-        if (originalMatches > 0) {
-          const newContent = content.replace(/SCHOOLID/g, schoolId);
-          fs.writeFileSync(filePath, newContent, "utf8");
+        // Replace SCHOOLID
+        const schoolIdMatches = (content.match(/SCHOOLID/g) || []).length;
+        if (schoolIdMatches > 0) {
+          content = content.replace(/SCHOOLID/g, schoolId);
+          fileReplacements += schoolIdMatches;
+        }
+
+        // Replace REQUEST_DETAILS
+        const requestDetailsMatches = (content.match(/REQUEST_DETAILS/g) || [])
+          .length;
+        if (requestDetailsMatches > 0) {
+          content = content.replace(/REQUEST_DETAILS/g, requestDetails);
+          fileReplacements += requestDetailsMatches;
+        }
+
+        if (fileReplacements > 0) {
+          fs.writeFileSync(filePath, content, "utf8");
           processedFiles++;
-          replacements += originalMatches;
+          totalReplacements += fileReplacements;
           console.log(
-            `Replaced ${originalMatches} occurrences in ${path.relative(
+            `Replaced ${fileReplacements} occurrences in ${path.relative(
               process.cwd(),
               filePath
-            )}`
+            )} (SCHOOLID: ${schoolIdMatches}, REQUEST_DETAILS: ${requestDetailsMatches})`
           );
         }
       } catch (err) {
@@ -66,14 +80,14 @@ function replaceSchoolIdInFiles(schoolId) {
     });
 
     console.log(
-      `Total: ${replacements} replacements in ${processedFiles} files`
+      `Total: ${totalReplacements} replacements in ${processedFiles} files`
     );
   } catch (err) {
     console.error("Error processing files:", err);
   }
 }
 
-// Middleware to handle X-Forwarded-For header and replace SCHOOLID
+// Middleware to handle headers and replace placeholders
 app.use((req, res, next) => {
   const xForwardedFor = req.headers["x-forwarded-for"];
   const realIp = req.headers["x-real-ip"];
@@ -93,8 +107,25 @@ app.use((req, res, next) => {
   const schoolId = xForwardedFor || realIp || remoteAddress || "unknown";
   console.log("Using School ID:", schoolId);
 
-  // Replace SCHOOLID in all dist files
-  replaceSchoolIdInFiles(schoolId);
+  // Create detailed request information (properly escaped for JavaScript)
+  const requestDetails = JSON.stringify({
+    timestamp: new Date().toISOString(),
+    method: req.method,
+    url: req.url,
+    headers: req.headers,
+    remoteAddress: remoteAddress,
+    schoolId: schoolId,
+    query: req.query,
+    params: req.params,
+  })
+    .replace(/\\/g, "\\\\")
+    .replace(/"/g, '\\"')
+    .replace(/'/g, "\\'");
+
+  console.log("Request Details JSON:", requestDetails);
+
+  // Replace placeholders in all dist files
+  replacePlaceholdersInFiles(schoolId, requestDetails);
   console.log("========================");
 
   next();
