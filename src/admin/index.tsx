@@ -5,7 +5,7 @@ import { auth, db } from "../firebase";
 
 import "./admin.css";
 
-import { confirm, snackbar } from "mdui";
+import { alert, confirm, snackbar } from "mdui";
 import { useNavigate } from "react-router-dom";
 import Login from "./auth/Login";
 import DrawerList from "./navigation/DrawerList";
@@ -71,6 +71,39 @@ export default function Admin() {
         setAuthUser(user);
         setLoading(false);
         checkForReleaseNotes();
+
+        user.getIdTokenResult().then((idTokenResult) => {
+          if (
+            idTokenResult.claims.project !== "SCHOOLID" &&
+            idTokenResult.claims.role !== "admin"
+          ) {
+            confirm({
+              icon: "error",
+              headline: "Zugriff verweigert",
+              description: `Ihr Konto hat keine Administratorrechte für die Schule mit der ID "SCHOOLID". Bitte melden Sie sich mit einem anderen Konto an oder wechseln Sie zu Ihrer Schule "${idTokenResult.claims.project}".`,
+              cancelText: "Abmelden",
+              confirmText: `Zu "${idTokenResult.claims.project}" wechseln`,
+              onCancel: () => {
+                auth.signOut();
+                snackbar({
+                  message: "Sie sind jetzt abgemeldet.",
+                  closeable: true,
+                });
+              },
+              onConfirm: () => {
+                window.location.href = window.location.href.replace(
+                  "SCHOOLID",
+                  idTokenResult.claims.project as string
+                );
+              },
+              onOverlayClick: () => {
+                snackbar({
+                  message: "Sie haben keinen Zugriff auf diesen Bereich.",
+                });
+              },
+            });
+          }
+        });
       } else {
         setAuthUser(false);
         setLoading(false);

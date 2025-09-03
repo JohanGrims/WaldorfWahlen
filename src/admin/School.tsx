@@ -359,7 +359,7 @@ School.loader = async () => {
   }
 
   const response = await fetch(
-    `https://api.chatwithsteiner.de/waldorfwahlen/users?token=${token}&uid=${auth.currentUser?.uid}`,
+    `https://api.chatwithsteiner.de/waldorfwahlen/users?token=${token}&uid=${auth.currentUser?.uid}&project=SCHOOLID`,
     {
       headers: {},
     }

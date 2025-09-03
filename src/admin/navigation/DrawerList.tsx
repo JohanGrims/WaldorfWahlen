@@ -2,11 +2,12 @@ import { collection, getDocs, Timestamp } from "firebase/firestore";
 import { snackbar } from "mdui";
 import React from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { db } from "../../firebase";
+import { auth, db } from "../../firebase";
 import { DrawerItem } from "./components";
 import VoteDrawer from "./VoteDrawer";
 import routes from "./routes.json";
 import { useSchool } from "../../contexts";
+import { SchoolData } from "../../types";
 
 interface VoteData {
   id: string;
@@ -98,6 +99,21 @@ export default function DrawerList({
 
   React.useEffect(() => {
     setActive(location.pathname.split("/")[2]);
+
+    auth.currentUser?.getIdTokenResult().then((idTokenResult) => {
+      const claims = idTokenResult.claims;
+      if (claims.role === "admin") {
+        // List firestore /schools
+        getDocs(collection(db, "schools")).then((data) => {
+          const schools = data.docs.map((doc) => ({
+            id: doc.id,
+            ...doc.data(),
+          })) as (SchoolData & { id: string })[];
+
+          setSchoolsDropdown(schools);
+        });
+      }
+    });
   }, [location]);
 
   if (!pages.includes(active)) {
@@ -108,6 +124,10 @@ export default function DrawerList({
     navigate(path);
     onClose();
   };
+
+  const [schoolsDropdown, setSchoolsDropdown] = React.useState<
+    (SchoolData & { id: string })[] | undefined
+  >(undefined);
 
   return (
     <mdui-navigation-drawer open>
@@ -137,6 +157,39 @@ export default function DrawerList({
               </mdui-list-item>
             </mdui-card>
           </div>
+        ) : schoolsDropdown ? (
+          <mdui-select
+            ref={(ref) => {
+              if (ref) {
+                ref.addEventListener("change", (e) => {
+                  console.log(e);
+                  window.location.href = window.location.href.replace(
+                    "SCHOOLID",
+                    (e.target as HTMLSelectElement).value
+                  );
+                });
+              }
+            }}
+            variant="outlined"
+            value={"SCHOOLID"}
+            end-icon="school"
+          >
+            {schoolsDropdown.map((school) => (
+              <mdui-menu-item key={school.id} value={school.id}>
+                <img
+                  style={{
+                    height: "24px",
+                    width: "24px",
+                    objectFit: "cover",
+                    borderRadius: "50%",
+                  }}
+                  src={school.icon}
+                  slot="icon"
+                />
+                {school.name}
+              </mdui-menu-item>
+            ))}
+          </mdui-select>
         ) : (
           <mdui-list-item disabled>
             <mdui-list-item-content>{schoolData?.name}</mdui-list-item-content>
