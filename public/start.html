@@ -12,7 +12,10 @@
       type="module"
       src="https://cdn.jsdelivr.net/npm/beercss@3.11.33/dist/cdn/beer.min.js"
     ></script>
+
+    <link rel="icon" type="image/png" href="/favicon.png" />
     <style>
+      /* Custom Color Palette */
       :root {
         --primary: #94d2bd;
         --on-primary: #1c332e;
@@ -27,287 +30,300 @@
         --surface-container-low: #1e1e1e;
         --on-surface-variant: #bdbdbd;
         --background: #121212;
+        --outline: #4f4f4f;
       }
       body.dark {
-        --primary: #94d2bd;
-        --on-primary: #1c332e;
-        --primary-container: #1c332e;
-        --on-primary-container: #94d2bd;
-        --secondary: #e9c46a;
-        --on-secondary: #3d2f16;
-        --secondary-container: #3d2f16;
-        --on-secondary-container: #e9c46a;
-        --surface: #121212;
-        --on-surface: #f5f5f5;
-        --surface-container-low: #1e1e1e;
-        --on-surface-variant: #bdbdbd;
-        --background: #121212;
+        background-color: var(--background);
+        color: var(--on-surface);
       }
-      .header-bg {
-        background-color: transparent;
-        backdrop-filter: blur(10px);
-        -webkit-backdrop-filter: blur(10px);
+      header {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: 1000;
+        background-color: var(--surface-container-low);
       }
-      .rounded-borders {
-        border-radius: var(--large-round);
+      header nav a {
+        padding: 0.5rem 1rem;
       }
-      .card-hover {
-        transition: box-shadow 0.2s, transform 0.2s;
+      /* Main Content & Hero Section */
+      main {
+        padding-top: 5rem;
       }
-      .card-hover:hover {
-        box-shadow: var(--elevate3);
-        transform: scale(1.03);
+      .hero-section {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-align: left;
+        padding: 0 2rem;
       }
-      .cta-animated {
-        transition: background 0.2s, transform 0.2s;
+      .hero-content {
+        max-width: 900px;
+        width: 100%;
       }
-      .cta-animated:hover {
-        background: var(--primary);
-        color: var(--on-primary);
-        transform: scale(1.07);
+      .hero-title {
+        font-size: clamp(3rem, 10vw, 6rem);
+        font-weight: 800;
+        line-height: 1;
+        margin: 0;
+        color: var(--on-surface);
       }
-      .fade-in {
-        animation: fadeIn 0.7s ease-out;
+      .hero-subtitle {
+        font-size: clamp(1rem, 2.5vw, 1.5rem);
+        max-width: 50ch;
+        margin: 1.5rem 0 2rem;
+        color: var(--on-surface-variant);
       }
-      @keyframes fadeIn {
-        from {
-          opacity: 0;
+      .hero-buttons {
+        display: flex;
+        gap: 1rem;
+        justify-content: flex-start;
+      }
+      /* Card Layout for Stats */
+      .card-stats {
+        transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+        border: 1px solid var(--outline);
+      }
+      .card-stats:hover {
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+      }
+      .card-stats .stat-icon {
+        font-size: 3rem;
+      }
+      .card-stats .stat-number {
+        font-size: 3rem;
+        font-weight: 800;
+        line-height: 1;
+        margin: 0.25rem 0;
+      }
+      /* Feature cards (For Students / For Teachers) */
+      .feature-card {
+        padding: 2rem;
+        border: 1px solid var(--outline);
+        margin-bottom: 2rem;
+      }
+      .feature-card ul.list {
+        padding-left: 0;
+      }
+      .feature-card li {
+        display: flex;
+        align-items: flex-start;
+        margin-bottom: 1rem;
+      }
+      .feature-card li i {
+        font-size: 2rem;
+        margin-right: 1rem;
+        flex-shrink: 0;
+      }
+      .feature-card h6 {
+        margin: 0;
+        line-height: 1.2;
+      }
+      .feature-card p {
+        margin: 0.2rem 0 0;
+        color: var(--on-surface-variant);
+      }
+      /* General Section Spacing */
+      section {
+        padding: 4rem 2rem;
+      }
+      /* Footer */
+      footer {
+        background-color: var(--surface-container-low);
+        padding: 1.5rem 2rem;
+        border-top: 1px solid var(--outline);
+      }
+      .footer-nav {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      /* Custom Styles for Responsiveness and Card Fixes */
+      .grid > .card {
+        width: 100%;
+      }
+      .grid.card-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 2rem;
+        align-items: stretch; /* Cards will be of equal height */
+      }
+      .card-full-width {
+        width: 100%;
+        margin-bottom: 2rem;
+      }
+      .card.question-card {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        text-align: center;
+      }
+      .question-card nav {
+        margin-top: 1.5rem;
+      }
+      /* Small screen adjustments */
+      @media (max-width: 600px) {
+        .hero-section {
+          text-align: center;
         }
-        to {
-          opacity: 1;
+        .hero-buttons {
+          justify-content: center;
+        }
+        .footer-nav {
+          flex-direction: column;
+          text-align: center;
+        }
+        .footer-nav p, .footer-nav nav {
+          margin-bottom: 0.5rem;
+        }
+        .grid.card-grid {
+          grid-template-columns: 1fr;
         }
       }
     </style>
   </head>
   <body class="dark">
-    <header class="fixed top left right header-bg large-padding">
-      <nav class="middle-align no-wrap">
-        <img
-          src="/WSP.png"
-          alt="Logo"
-          class="circle small left-margin"
-          style="height: 2.5rem; vertical-align: middle"
-        />
-        <h4 class="max bold">WaldorfWahlen</h4>
-        <a href="#info" class="button round cta-animated">Mehr erfahren</a>
-        <a href="mailto:johan.grims@email.com" class="button round cta-animated"
-          >Kontakt</a
-        >
-        <a
-          href="https://github.com/JohanGrims/waldorfwahlen"
-          target="_blank"
-          class="button round cta-animated"
-        >
-          <i>code</i>
-        </a>
+    <header class="responsive small-padding">
+      <nav class="middle-align">
+        <div class="row no-margin" style="cursor: pointer;" onclick="window.scrollTo({ top: 0, behavior: 'smooth' });">
+          <img
+            src="/favicon.png"
+            alt="Logo"
+            class="circle small"
+            style="height: 2.5rem"
+          />
+          <h4 class="max bold">WaldorfWahlen</h4>
+        </div>
+        <br />
+        <div class="row no-margin">
+          <a onclick="document.getElementById('info').scrollIntoView({ behavior: 'smooth', });" class="button transparent round">Infos</a>
+          <a href="mailto:johan.grims@email.com" class="button transparent round">Kontakt</a>
+          <a href="https://github.com/JohanGrims/waldorfwahlen" target="_blank" class="button transparent round"><i>code</i></a>
+        </div>
       </nav>
     </header>
 
     <main class="responsive">
-      <section class="container center-align large-space fade-in">
-        <div class="grid s12 m8 l6 auto-margin">
-          <article
-            class="primary-container rounded-borders large-elevate large-padding card-hover"
-          >
-            <h1 class="headline large-text bold">
-              Willkommen zu WaldorfWahlen!
-            </h1>
-            <h5 class="light">
-              Die moderne, sichere und transparente Lösung für Projektwahlen an
-              der Waldorfschule Potsdam.
-            </h5>
-            <nav class="center-align large-space">
-              <a href="#info" class="button large round cta-animated"
-                >Mehr erfahren</a
-              >
-              <a
-                href="mailto:johan.grims@email.com"
-                class="button large round cta-animated"
-                >Kontakt aufnehmen</a
-              >
-            </nav>
-          </article>
+      <section class="hero-section">
+        <div class="hero-content">
+          <h1 class="hero-title">Wahlen sicher & einfach gestalten.</h1>
+          <p class="light hero-subtitle">
+            Die moderne, sichere und transparente Lösung für Projektwahlen.
+          </p>
+          <div class="hero-buttons">
+            <a onclick="document.getElementById('info').scrollIntoView({ behavior: 'smooth', });" class="button large round primary">Mehr erfahren</a>
+            <a href="mailto:johan.grims@email.com" class="button large round secondary">Kontakt aufnehmen</a>
+          </div>
         </div>
       </section>
 
-      <section class="container center-align" id="info">
-        <div class="space large"></div>
-        <h2 class="headline bold">Warum WaldorfWahlen?</h2>
-        <div class="grid s12 m6 l3 large-space center-align">
-          <article
-            class="surface-container-low rounded-borders medium-elevate medium-padding card-hover"
-          >
-            <i class="extra tertiary-text">how_to_vote</i>
-            <h3 class="bold">5</h3>
-            <h6>Erfolgreiche Wahlen</h6>
+      <section class="container" style="scroll-margin-top: 4rem;" id="info">
+        <h2 class="bold center-align">Warum WaldorfWahlen?</h2>
+        <div class="grid card-grid">
+          <div></div>
+          <article class="card rounded-borders medium-elevate center-align card-stats">
+            <i class="extra primary-text stat-icon">how_to_vote</i>
+            <h3 class="stat-number bold">5</h3>
+            <h6 class="no-margin">Erfolgreiche Wahlen</h6>
             <p class="small-text">Schon 5 Mal mit Begeisterung genutzt!</p>
           </article>
-          <article
-            class="surface-container-low rounded-borders medium-elevate medium-padding card-hover"
-          >
-            <i class="extra secondary-text">person</i>
-            <h3 class="bold">150+</h3>
-            <h6>Teilnehmende Schüler</h6>
-            <p class="small-text">
-              Viele Stimmen, viele Meinungen – alle zählen!
-            </p>
+          <article class="card rounded-borders medium-elevate center-align card-stats">
+            <i class="extra secondary-text stat-icon">person</i>
+            <h3 class="stat-number bold">150+</h3>
+            <h6 class="no-margin">Teilnehmende Schüler</h6>
+            <p class="small-text">Viele Stimmen, viele Meinungen – alle zählen!</p>
           </article>
-          <article
-            class="surface-container-low rounded-borders medium-elevate medium-padding card-hover"
-          >
-            <i class="extra primary-text">check_box</i>
-            <h3 class="bold">500+</h3>
-            <h6>Eingereichte Stimmen</h6>
-            <p class="small-text">
-              Jede Stimme wird sicher und transparent gezählt.
-            </p>
+          <article class="card rounded-borders medium-elevate center-align card-stats">
+            <i class="extra primary-text stat-icon">check_box</i>
+            <h3 class="stat-number bold">500+</h3>
+            <h6 class="no-margin">Eingereichte Stimmen</h6>
+            <p class="small-text">Jede Stimme wird sicher und transparent gezählt.</p>
           </article>
-          <article
-            class="surface-container-low rounded-borders medium-elevate medium-padding card-hover"
-          >
-            <i class="extra error-text">work</i>
-            <h3 class="bold">35</h3>
-            <h6>Projekte zur Auswahl</h6>
+          <article class="card rounded-borders medium-elevate center-align card-stats">
+            <i class="extra secondary-text stat-icon">list</i>
+            <h3 class="stat-number bold">35</h3>
+            <h6 class="no-margin">Ausgeführte Projekte</h6>
             <p class="small-text">Vielfalt für alle Interessen!</p>
           </article>
         </div>
       </section>
 
-      <section class="container large-space">
-        <div class="grid s12 m6 l6 large-space">
-          <article
-            class="surface-container-low rounded-borders medium-elevate medium-padding card-hover left-align"
-          >
+      <section class="container">
+        <div class="grid card-grid">
+          <article class="card rounded-borders medium-elevate feature-card card-full-width">
             <h5 class="bold">Für Schüler</h5>
+            <br>
             <ul class="list space">
               <li>
                 <i class="primary-text">group</i>
-                <div>
-                  <h6 class="no-margin">Projektauswahl leicht gemacht</h6>
-                  <p class="small-text">
-                    Wähle aus einer kuratierten Liste und gib deine Präferenzen
-                    einfach ab.
-                  </p>
+                <div class="max">
+                  <h6 class="no-margin">Einfache Projektauswahl</h6>
+                  <p class="small-text">Wähle einfach vom Handy, Tablet oder PC.</p>
                 </div>
               </li>
               <li>
-                <i class="secondary-text">check_circle</i>
-                <div>
+                <i class="secondary-text">lock</i>
+                <div class="max">
                   <h6 class="no-margin">Sicher & anonym</h6>
-                  <p class="small-text">
-                    Deine Stimme bleibt privat und geschützt.
-                  </p>
+                  <p class="small-text">Deine Stimme bleibt privat und geschützt.</p>
                 </div>
               </li>
               <li>
                 <i class="tertiary-text">star</i>
-                <div>
-                  <h6 class="no-margin">Sofortige Ergebnisse</h6>
-                  <p class="small-text">
-                    Erfahre direkt, welchem Projekt du zugeordnet wurdest.
-                  </p>
+                <div class="max">
+                  <h6 class="no-margin">Gerechte Ergebnisse</h6>
+                  <p class="small-text">Jede Stimme zählt und wird fair ausgewertet.</p>
                 </div>
               </li>
             </ul>
           </article>
-          <article
-            class="surface-container-low rounded-borders medium-elevate medium-padding card-hover left-align"
-          >
+          <article class="card rounded-borders medium-elevate feature-card card-full-width">
             <h5 class="bold">Für Lehrkräfte</h5>
+            <br />
             <ul class="list space">
               <li>
                 <i class="secondary-text">dashboard</i>
-                <div>
+                <div class="max">
                   <h6 class="no-margin">Intuitives Dashboard</h6>
-                  <p class="small-text">
-                    Projekte erstellen, verwalten und Wahlen live überwachen.
-                  </p>
+                  <p class="small-text">Projekte erstellen, verwalten und Wahlen live überwachen.</p>
                 </div>
               </li>
               <li>
                 <i class="primary-text">pie_chart</i>
-                <div>
+                <div class="max">
                   <h6 class="no-margin">Transparente Auswertung</h6>
-                  <p class="small-text">
-                    Automatische Zuteilung und klare, nachvollziehbare
-                    Ergebnisse.
-                  </p>
+                  <p class="small-text">Automatische Zuteilung und klare, nachvollziehbare Ergebnisse.</p>
                 </div>
               </li>
               <li>
                 <i class="tertiary-text">support_agent</i>
-                <div>
+                <div class="max">
                   <h6 class="no-margin">Support & Kontakt</h6>
-                  <p class="small-text">
-                    Schnelle Hilfe bei Fragen – einfach Kontakt aufnehmen!
-                  </p>
+                  <p class="small-text">Schnelle Hilfe bei Fragen – einfach Kontakt aufnehmen!</p>
                 </div>
               </li>
             </ul>
-          </article>
-        </div>
-      </section>
-
-      <section class="container center-align large-space">
-        <div class="grid s12 m6 l6 large-space">
-          <article
-            class="surface-container-low rounded-borders medium-elevate medium-padding card-hover center-align"
-          >
-            <img
-              class="responsive rounded-borders"
-              src="https://images.unsplash.com/photo-1628151010372-902edc50a588?q=80&w=1974&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
-              alt="Personen bei der Abstimmung"
-              style="max-height: 18rem; object-fit: cover"
-            />
-            <h6 class="medium-text">Gemeinsam wählen. Gemeinsam gestalten.</h6>
-          </article>
-          <article
-            class="surface-container-low rounded-borders medium-elevate medium-padding card-hover center-align"
-          >
-            <h5 class="bold">Noch Fragen?</h5>
-            <p class="small-text">
-              Wir helfen gerne weiter! Kontaktiere uns direkt oder schau auf
-              GitHub vorbei.
-            </p>
-            <nav class="center-align large-space">
-              <a
-                href="mailto:johan.grims@email.com"
-                class="button large round cta-animated"
-                >Kontakt</a
-              >
-              <a
-                href="https://github.com/JohanGrims/waldorfwahlen"
-                target="_blank"
-                class="button large round cta-animated"
-              >
-                <i>code</i>
-                <span>GitHub</span>
-              </a>
-            </nav>
           </article>
         </div>
       </section>
     </main>
 
-    <footer class="fixed bottom responsive fill">
-      <nav class="middle-align">
-        <p class="max small-text">
+    <footer>
+      <div class="container footer-nav">
+        <p class="small-text no-margin">
           © 2025 WaldorfWahlen. Alle Rechte vorbehalten.
         </p>
-        <a
-          href="https://github.com/JohanGrims/waldorfwahlen"
-          target="_blank"
-          class="button transparent circle large"
-        >
-          <i>code</i>
-        </a>
-        <a
-          href="mailto:johan.grims@email.com"
-          class="button transparent circle large"
-        >
-          <i>mail</i>
-        </a>
-      </nav>
+        <nav class="row no-margin">
+          <a href="https://github.com/JohanGrims/waldorfwahlen" target="_blank" class="button transparent circle large">
+            <i>code</i>
+          </a>
+          <a href="mailto:johan.grims@email.com" class="button transparent circle large">
+            <i>mail</i>
+          </a>
+        </nav>
+      </div>
     </footer>
   </body>
-</html>
+</html> 

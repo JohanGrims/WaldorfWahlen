@@ -52,7 +52,7 @@ export const SchoolProvider: React.FC<SchoolProviderProps> = ({ children }) => {
         } else {
           console.error("School document not found");
           // Redirect to /start.html when document is not found
-          // window.location.href = "/start.html";
+          window.location.href = "/start.html";
           return;
         }
       } catch (err) {
