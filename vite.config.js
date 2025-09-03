@@ -17,8 +17,8 @@ function schoolIdReplacementPlugin() {
         const forwardedHost = req.headers["x-forwarded-host"];
         const host = req.headers["host"];
         
-        const hostname = forwardedHost || host || "localhost";
-        const schoolId = hostname.split('.')[0] || "localhost";
+        const hostname = forwardedHost || host || "SCHOOLID";
+        const schoolId = hostname.split(".")[0] || "SCHOOLID";
         
         // If school ID changed, invalidate all modules to force re-transform
         if (schoolId !== lastSchoolId) {
@@ -50,7 +50,7 @@ function schoolIdReplacementPlugin() {
       
       // Only transform files that contain SCHOOLID
       if (code.includes('SCHOOLID')) {
-        const schoolId = global.currentSchoolId || 'localhost';
+        const schoolId = global.currentSchoolId || "SCHOOLID";
         
         // Simple replacement: replace every SCHOOLID with the actual schoolId value
         let transformedCode = code.replace(/SCHOOLID/g, schoolId);

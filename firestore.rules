@@ -118,7 +118,7 @@ service cloud.firestore {
       // Allow read access for all users
       allow get: if true;
       // Allow list access for all users
-      allow list: if false;
+      allow list: if request.auth.token.role == "admin";
       // Allow write access only for administrators
       allow write: if isSchoolAuthenticated(schoolId);
 
