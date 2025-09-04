@@ -3,14 +3,17 @@ import pulp
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
-from firebase_admin import auth, credentials
+from firebase_admin import auth, credentials, firestore
 from firebase_functions import https_fn, options
 from firebase_functions.params import StringParam, IntParam
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
+import logging
+import requests
 
 # Initialize Firebase Admin SDK
 if not firebase_admin._apps:
     firebase_admin.initialize_app()
+
 
 # Define environment variables
 SMTP_DOMAIN = StringParam("SMTP_DOMAIN")
@@ -535,6 +538,155 @@ def send_email_func(req: https_fn.CallableRequest) -> dict:
     except https_fn.HttpsError:
         raise
     except Exception as e:
+        raise https_fn.HttpsError(
+            code=https_fn.FunctionsErrorCode.INTERNAL,
+            message=str(e)
+        )
+    
+@https_fn.on_call(
+    region="europe-west1",
+    max_instances=1,
+    cors=options.CorsOptions(
+        cors_origins=[r"^https?://([a-zA-Z0-9-]+\.)*localhost(:[0-9]+)?$", r"^https?://([a-zA-Z0-9-]+\.)*beta\.praktikum\.click(:[0-9]+)?$"],
+        cors_methods=["POST"]
+    )
+)
+def submit_vote(req: https_fn.CallableRequest) -> dict:
+    """Submit a vote with rate limiting"""
+    origin = req.raw_request.headers.get("origin", "unknown")
+    # Extract domain from origin, removing protocol if present
+    if origin != "unknown":
+        # Remove http:// or https:// prefix
+        clean_origin = origin.replace("https://", "").replace("http://", "")
+        schoolid = clean_origin.split(".")[0]
+    else:
+        schoolid = None
+
+    if not schoolid:
+        raise https_fn.HttpsError(
+            code=https_fn.FunctionsErrorCode.FAILED_PRECONDITION,
+            message="Cannot determine school ID from host"
+        )
+    
+    try:
+        # Initialize Firestore client
+        db = firestore.client()
+
+        # Get school reference and document
+        school_ref = db.collection("schools").document(schoolid)
+        logging.info(f"Fetching document for school ID: {schoolid}")
+
+        school_doc = school_ref.get()
+
+        if not school_doc.exists:
+            logging.error(f"School document not found for ID: {schoolid}")
+            raise https_fn.HttpsError(
+                code=https_fn.FunctionsErrorCode.NOT_FOUND,
+                message="School not found: " + schoolid
+            )
+        
+            
+
+        school_data = school_doc.to_dict()
+        data = req.data
+
+
+        if school_data.get("oauth", {}).get("enabled") == True:
+            logging.info(f"School data retrieved successfully: {school_data}")
+
+            logging.error(f"Request data: {data}")
+            access_token = data.get("token")
+
+            logging.error(f"Access token received: {access_token}")
+
+            if not access_token:
+                raise https_fn.HttpsError(
+                    code=https_fn.FunctionsErrorCode.INVALID_ARGUMENT,
+                    message="Missing access token"
+                )
+            
+            # Check access token validity through oauth (school_data.oauth) using the userinfo endpoint
+            userinfo_url = school_data.get("oauth", {}).get("userInfoEndpoint")
+            client_id = school_data.get("oauth", {}).get("clientId")
+
+            if not userinfo_url or not client_id:
+                raise https_fn.HttpsError(
+                    code=https_fn.FunctionsErrorCode.FAILED_PRECONDITION,
+                    message="OAuth configuration is incomplete"
+                )
+
+            response = requests.get(userinfo_url, headers={
+                "Authorization": f"Bearer {access_token}"
+            })
+
+            logging.error(f"User info response: {response.text}")
+
+            if response.status_code != 200:
+                logging.error(f"Failed to fetch user info: {response}")
+                raise https_fn.HttpsError(
+                    code=https_fn.FunctionsErrorCode.UNAUTHENTICATED,
+                    message="Invalid access token"
+                )
+
+            userinfo_data = response.json()
+
+            user_id = userinfo_data.get("sub")
+            if not user_id:
+                logging.error("User ID (sub) not found in token response")
+                raise https_fn.HttpsError(
+                    code=https_fn.FunctionsErrorCode.UNAUTHENTICATED,
+                    message="User ID not found in token"
+                )
+            
+        vote_ref = school_ref.collection("votes").document(data.get("voteId"))
+
+        vote_doc = vote_ref.get()
+        if not vote_doc.exists:
+            logging.error(f"Vote document not found for ID: {data.get('voteId')}")
+            raise https_fn.HttpsError(
+                code=https_fn.FunctionsErrorCode.NOT_FOUND,
+                message="Vote not found: " + data.get("voteId")
+            )
+
+        vote_data = vote_doc.to_dict()
+        if not vote_data.get("active"):
+            logging.error(f"Vote is not active: {data.get('voteId')}")
+            raise https_fn.HttpsError(
+                code=https_fn.FunctionsErrorCode.FAILED_PRECONDITION,
+                message="Vote is not active"
+            )
+
+        # endTime is {"seconds": 1696118400, "nanoseconds": 0}
+        if vote_data.get("endTime") and datetime.now(timezone.utc) > vote_data["endTime"]:
+            logging.error(f"Vote has ended: {data.get('voteId')}")
+            raise https_fn.HttpsError(
+                code=https_fn.FunctionsErrorCode.FAILED_PRECONDITION,
+                message="Vote has ended"
+            )
+        
+        # startTime is {"seconds": 1696118400, "nanoseconds": 0}
+        if vote_data.get("startTime") and datetime.now(timezone.utc) < vote_data["startTime"]:
+            logging.error(f"Vote has not started yet: {data.get('voteId')}")
+            raise https_fn.HttpsError(
+                code=https_fn.FunctionsErrorCode.FAILED_PRECONDITION,
+                message="Vote has not started yet"
+            )
+        
+
+        # create a new choice document in the choices subcollection
+        choice_ref = vote_ref.collection("choices").document()
+        choice_data = data.get("choice", {})
+        choice_data["timestamp"] = firestore.SERVER_TIMESTAMP
+        choice_ref.set(choice_data)
+
+        # Return document ID of the new choice
+        return {"choiceId": choice_ref.id}
+
+    except https_fn.HttpsError as e:
+        logging.error(f"HttpsError occurred: {e}")
+        raise
+    except Exception as e:
+        logging.error(f"Unexpected error occurred: {e}")
         raise https_fn.HttpsError(
             code=https_fn.FunctionsErrorCode.INTERNAL,
             message=str(e)

@@ -15,15 +15,16 @@ import {
   useNavigate,
   useParams,
 } from "react-router-dom";
-import { db } from "./firebase";
+import { db, functions } from "./firebase";
 
 import moment from "moment-timezone";
 
-import { breakpoint, confirm, snackbar } from "mdui";
+import { alert, breakpoint, confirm, prompt, snackbar } from "mdui";
 import { redirect } from "react-router-dom";
 import { capitalizeWords } from "./admin/utils";
 import CheckItem from "./CheckItem";
 import { Helmet } from "react-helmet";
+import { httpsCallable } from "firebase/functions";
 
 interface VoteData extends DocumentData {
   title: string;
@@ -46,6 +47,14 @@ interface OptionData extends DocumentData {
 interface LoaderData {
   vote: VoteData;
   options: OptionData[];
+  accessToken: { access_token: string; expires_in: number };
+  userInfo: {
+    sub?: string;
+    name?: string;
+    given_name?: string;
+    family_name?: string;
+    email?: string;
+  } | null;
 }
 
 interface FeedbackData {
@@ -58,7 +67,8 @@ export default function Vote() {
   const refs = useRef<Array<HTMLElement | null>>([]);
   const urlParams = new URLSearchParams(window.location.search);
   let { id } = useParams<{ id: string }>();
-  const { vote, options } = useLoaderData() as LoaderData;
+  const { vote, options, accessToken, userInfo } =
+    useLoaderData() as LoaderData;
 
   const navigate = useNavigate();
   const breakpointCondition = breakpoint();
@@ -107,6 +117,32 @@ export default function Vote() {
   const [easeOfProcess, setEaseOfProcess] = React.useState<number>(0);
 
   const preview = urlParams.get("preview");
+
+  React.useEffect(() => {
+    if (userInfo) {
+      if (userInfo.given_name && userInfo.family_name) {
+        setFirstName(capitalizeWords(userInfo.given_name));
+        setLastName(capitalizeWords(userInfo.family_name));
+      } else if (userInfo.name) {
+        setName(capitalizeWords(userInfo.name));
+      }
+    }
+
+    if (accessToken) {
+      setTimeout(() => {
+        // Token expires in accessToken.expires_in seconds
+        alert({
+          icon: "info",
+          headline: "Sitzung abgelaufen",
+          description: "Bitte melden Sie sich erneut an, um fortzufahren.",
+          confirmText: "Neu anmelden",
+          onConfirm: () => {
+            window.location.reload();
+          },
+        });
+      }, accessToken.expires_in * 1000);
+    }
+  }, [userInfo, accessToken]);
 
   const submitDisabled = (): boolean => {
     // If name is provided via URL, use it instead of firstName/lastName
@@ -158,7 +194,7 @@ export default function Vote() {
     setConfirmDialog(true);
   }
 
-  function submit() {
+  async function submit() {
     setSending(true);
     if (!id) return;
 
@@ -167,65 +203,68 @@ export default function Vote() {
       ? name
       : `${firstName} ${lastName.charAt(0)}.`;
 
-    addDoc(collection(db, `schools/SCHOOLID/votes/${id}/choices`), {
-      name: finalName,
-      grade: parseInt(grade),
-      listIndex: parseInt(listIndex),
-      selected,
-      extraFields: extraFieldsValues,
-      version: 2,
-      timestamp: serverTimestamp(),
-    })
-      .then((e) => {
-        localStorage.setItem(
-          id,
-          JSON.stringify({ choiceId: e.id, timestamp: Date.now() })
-        );
-        // Show feedback dialog instead of immediately navigating
-        setConfirmDialog(false);
-        setSending(false);
-        setShowFeedbackDialog(true);
-      })
-      .catch((error) => {
-        setSending(false);
-        if (error.code === "permission-denied") {
-          snackbar({
-            message: "Es ist ein Berechtigungsfehler aufgetreten.",
-            action: "Details",
-            onActionClick: () => {
-              console.error(error);
-              alert(
-                "Es scheint, als sei die Wahl nicht mehr verfügbar. Bitte versuchen Sie es später erneut.\n" +
-                  error
-              );
-            },
-          });
-        } else if (error.message === "Network Error") {
-          snackbar({
-            message: "Es ist ein Netzwerkfehler aufgetreten.",
-            action: "Details",
-            onActionClick: () => {
-              console.error(error);
-              alert(
-                "Es scheint, als gäbe es ein Problem mit Ihrer Internetverbindung. Bitte überprüfen Sie diese und versuchen Sie es erneut.\n" +
-                  error
-              );
-            },
-          });
-        } else {
-          snackbar({
-            message: "Es ist ein Fehler aufgetreten.",
-            action: "Details",
-            onActionClick: () => {
-              console.error(error);
-              alert(
-                "Es ist ein Fehler aufgetreten. Bitte versuchen Sie es später erneut.\n" +
-                  error
-              );
-            },
-          });
-        }
+    try {
+      const response = await httpsCallable(
+        functions,
+        "submit_vote"
+      )({
+        token: accessToken ? accessToken.access_token : null,
+        voteId: id,
+        choice: {
+          name: finalName,
+          grade: parseInt(grade),
+          listIndex: parseInt(listIndex),
+          selected,
+          extraFields: extraFieldsValues,
+          version: 2,
+        },
       });
+
+      const choiceId = (response.data as any).choiceId;
+      localStorage.setItem(
+        id,
+        JSON.stringify({ choiceId, timestamp: Date.now() })
+      );
+      setConfirmDialog(false);
+      setSending(false);
+      setShowFeedbackDialog(true);
+
+      if ((response.data as any).error) {
+        setSending(false);
+        snackbar({
+          message: (response.data as any).error,
+          action: "Details",
+          onActionClick: () => {
+            alert({
+              headline: "Fehler",
+              description: (response.data as any).error,
+              confirmText: "Neu laden",
+              onConfirm: () => {
+                window.location.reload();
+              },
+            });
+          },
+        });
+      }
+    } catch (error) {
+      setSending(false);
+      snackbar({
+        message: "Es ist ein Fehler aufgetreten.",
+        action: "Details",
+        onActionClick: () => {
+          alert({
+            headline: "Fehler",
+            description: (error as Error)?.message || "Unbekannter Fehler",
+            confirmText: "Neu laden",
+            onConfirm: () => {
+              window.location.reload();
+            },
+          });
+        },
+      });
+    }
+
+    return;
   }
 
   function submitFeedback() {
@@ -345,16 +384,6 @@ export default function Vote() {
             ))}
           </mdui-list>
           <p />
-          {/* <small>
-            Diese Website ist durch reCAPTCHA geschützt und es gelten die{" "}
-            <a href="https://policies.google.com/privacy">
-              Datenschutzbestimmungen
-            </a>{" "}
-            und{" "}
-            <a href="https://policies.google.com/terms">Nutzungsbedingungen</a>{" "}
-            von Google.
-          </small>
-          <p /> */}
           {!sending ? (
             <div className="button-container">
               <mdui-button
@@ -626,7 +655,9 @@ export default function Vote() {
               {selectCount > 1 && (
                 <h2
                   style={{ textAlign: "center", scrollMarginTop: 50 }}
-                  ref={(el) => (refs.current[index] = el)}
+                  ref={(el) => {
+                    refs.current[index] = el;
+                  }}
                 >
                   {index + 1}. Wahl
                 </h2>
@@ -725,7 +756,9 @@ export default function Vote() {
 
         <div
           className="button-container"
-          ref={(el) => (refs.current[selectCount] = el)}
+          ref={(el) => {
+            refs.current[selectCount] = el;
+          }}
         >
           <mdui-button
             variant="text"
@@ -815,6 +848,12 @@ export default function Vote() {
 }
 
 Vote.loader = async function loader({ params, request }: LoaderFunctionArgs) {
+  let accessToken = null;
+  let userInfo = null;
+
+  const school = await getDoc(doc(db, `schools/SCHOOLID`));
+  const schoolData = school.data();
+
   const vote = await getDoc(doc(db, `schools/SCHOOLID/votes/${params.id}`));
   if (!vote.exists()) {
     throw new Response("Wahl nicht gefunden.", {
@@ -832,10 +871,9 @@ Vote.loader = async function loader({ params, request }: LoaderFunctionArgs) {
   })) as OptionData[];
 
   const type = request.url.split("/")[3];
+  const preview = new URL(request.url).searchParams.get("preview");
 
   if (type === "v") {
-    const preview = new URL(request.url).searchParams.get("preview");
-
     if (
       params.id &&
       localStorage.getItem(params.id) &&
@@ -865,7 +903,65 @@ Vote.loader = async function loader({ params, request }: LoaderFunctionArgs) {
       });
       return redirect(`/s/${params.id}`);
     }
+
+    // Check if .oauth config is present
+    if (schoolData?.oauth?.enabled && !preview) {
+      const code = new URL(request.url).searchParams.get("code");
+      if (code) {
+        // Exchange code for access token
+        const tokenResponse = await fetch(schoolData.oauth.tokenEndpoint, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+          },
+          body: new URLSearchParams({
+            code: code,
+            client_id: schoolData.oauth.clientId,
+            redirect_uri: `${window.location.origin}${window.location.pathname}`,
+            grant_type: "authorization_code",
+          }),
+        });
+
+        const tokenData = await tokenResponse.json();
+        console.log("Token Data:", tokenData);
+        accessToken = tokenData;
+
+        if (accessToken) {
+          // Fetch user info
+          const userResponse = await fetch(schoolData.oauth.userInfoEndpoint, {
+            headers: {
+              Authorization: `Bearer ${accessToken.access_token}`,
+            },
+          });
+
+          // Remove parameters from URL
+          if (window.history.replaceState) {
+            const cleanUrl = `${window.location.protocol}//${window.location.host}${window.location.pathname}`;
+            window.history.replaceState({ path: cleanUrl }, "", cleanUrl);
+          }
+
+          userInfo = await userResponse.json();
+        }
+      } else {
+        // If no code is present, redirect to OAuth authorization URL
+        const authUrl = new URL(schoolData.oauth.authorizeEndpoint);
+        authUrl.searchParams.set("response_type", "code");
+        authUrl.searchParams.set("client_id", schoolData.oauth.clientId);
+        authUrl.searchParams.set(
+          "redirect_uri",
+          `${window.location.origin}/v/${params.id}`
+        );
+        authUrl.searchParams.set("scope", "openid profile email");
+        authUrl.searchParams.set("state", params.id || "");
+
+        console.log("Redirecting to OAuth URL:", authUrl.toString());
+
+        window.location.href = authUrl.toString();
+      }
+    } else {
+      console.log("OAuth not configured, skipping authentication.");
+    }
   }
 
-  return { vote: voteData, options: optionsData };
+  return { vote: voteData, options: optionsData, accessToken, userInfo };
 };

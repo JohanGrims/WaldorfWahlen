@@ -134,8 +134,6 @@ service cloud.firestore {
         match /choices/{choiceId} {
           // Allow full access only for administrators
           allow read, create, delete, update: if isSchoolAuthenticated(schoolId);
-          // Allow creation for all users only during active voting periods
-          allow create: if isSchoolVoteActive(schoolId, voteId);
         }
         
         // Subcollection rule for /results/{resultId}

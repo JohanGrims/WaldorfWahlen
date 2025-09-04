@@ -154,9 +154,13 @@ export default function Answers() {
     data: Partial<AnswerData>;
   }) {
     try {
-      await setDoc(doc(db, `/votes/${vote.id}/choices/${id}`), data, {
-        merge: true,
-      });
+      await setDoc(
+        doc(db, `schools/SCHOOLID/votes/${vote.id}/choices/${id}`),
+        data,
+        {
+          merge: true,
+        }
+      );
       snackbar({
         message: "Antwort erfolgreich aktualisiert.",
         autoCloseDelay: 5000,
@@ -729,7 +733,7 @@ export default function Answers() {
                               deleteDoc(
                                 doc(
                                   db,
-                                  `/votes/${vote.id}/choices/${answer.id}`
+                                  `schools/SCHOOLID/votes/${vote.id}/choices/${answer.id}`
                                 )
                               ).then(() => {
                                 snackbar({
@@ -840,9 +844,11 @@ export default function Answers() {
 
 Answers.loader = async function loader({ params }: LoaderFunctionArgs) {
   const { id } = params as { id: string };
-  const vote = await getDoc(doc(db, `/votes/${id}`));
+  const vote = await getDoc(doc(db, `schools/SCHOOLID/votes/${id}`));
   const voteData = { id, ...vote.data() } as VoteData;
-  const options = await getDocs(collection(db, `/votes/${id}/options`));
+  const options = await getDocs(
+    collection(db, `schools/SCHOOLID/votes/${id}/options`)
+  );
   const optionData = options.docs.map((doc) => ({
     id: doc.id,
     ...doc.data(),
