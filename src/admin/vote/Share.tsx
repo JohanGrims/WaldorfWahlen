@@ -47,7 +47,7 @@ export default function Share() {
   const url = React.useMemo(() => {
     if (!id) return window.location.origin;
     return allowResubmission
-      ? `${window.location.origin}/v/${id}?a=true`
+      ? `${window.location.origin}/v/${id}?a`
       : `${window.location.origin}/v/${id}`;
   }, [allowResubmission, id]);
 
