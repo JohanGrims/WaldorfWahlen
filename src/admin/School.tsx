@@ -70,36 +70,31 @@ export default function School() {
     const email = admins.find((admin) => admin.uid === uid)?.email;
 
     confirm({
-      icon: "warning",
-      headline: "Bestätigen",
-      description: disabled
-        ? `Möchten Sie den Admin ${email} wirklich aktivieren?`
-        : `Möchten Sie den Admin ${email} wirklich deaktivieren?`,
-      confirmText: "Ja",
-      cancelText: "Nein",
-      onConfirm: async () => {
-        const result = await fetch(
-          `https://api.chatwithsteiner.de/waldorfwahlen/users?token=${await auth.currentUser?.getIdToken()}&uid=${
-            auth.currentUser?.uid
-          }&user_id=${uid}`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ disabled }),
-          }
-        ).then(() => {
-          snackbar({
-            message: `Admin ${email} ${
-              !disabled ? "aktiviert" : "deaktiviert"
-            }!`,
-          });
-
-          revalidator.revalidate();
-        });
-      },
+  icon: "warning",
+  headline: "Bestätigen",
+  description: disabled
+    ? `Möchten Sie den Admin ${email} wirklich aktivieren?`
+    : `Möchten Sie den Admin ${email} wirklich deaktivieren?`,
+  confirmText: "Ja",
+  cancelText: "Nein",
+  onConfirm: async () => {
+    await fetch(
+      `https://api.chatwithsteiner.de/waldorfwahlen/users?token=${await auth.currentUser?.getIdToken()}&uid=${
+        auth.currentUser?.uid
+      }&user_id=${uid}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ disabled }),
+      }
+    ).then(() => {
+      snackbar({
+        message: `Admin ${email} ${disabled ? "deaktiviert" : "aktiviert"}!`,
+      });
+      revalidator.revalidate();
     });
+  },
+});
   }
 
   async function deleteAdmin(uid: string) {
