@@ -21,6 +21,9 @@ export type Vote = {
   title: string;
   extraFields: any[];
   active: boolean;
+  description?: string;
+  startTime?: { seconds: number; nanoseconds: number };
+  endTime?: { seconds: number; nanoseconds: number };
 };
 
 export type Student = {

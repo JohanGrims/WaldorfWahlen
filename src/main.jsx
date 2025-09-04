@@ -354,12 +354,17 @@ const routes = [
                   {
                     path: "share",
                     lazy: async () => {
-                      const module = await import(
+                      const loaderModule = await import(
+                        /* webpackChunkName: "VoteAdmin" */
+                        "./admin/vote/index"
+                      );
+                      const componentModule = await import(
                         /* webpackChunkName: "Share" */
                         "./admin/vote/Share"
                       );
                       return {
-                        Component: module.default,
+                        loader: loaderModule.default.loader,
+                        Component: componentModule.default,
                       };
                     },
                   },

@@ -79,7 +79,7 @@ export default function Answers() {
     console.log("Loading answers for vote:", vote.id);
 
     const unsubscribe = onSnapshot(
-      collection(db, `/votes/${vote.id}/choices`),
+      collection(db, `schools/SCHOOLID/votes/${vote.id}/choices`),
       (snapshot) => {
         const answerData = snapshot.docs.map((doc) => ({
           id: doc.id,

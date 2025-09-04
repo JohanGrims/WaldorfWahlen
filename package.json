@@ -16,6 +16,7 @@
   "dependencies": {
     "@mdui/icons": "^1.0.3",
     "@types/react-helmet": "^6.1.11",
+    "canvg": "^4.0.3",
     "chart.js": "^4.5.0",
     "chartjs-adapter-date-fns": "^3.0.0",
     "date-fns": "^4.1.0",

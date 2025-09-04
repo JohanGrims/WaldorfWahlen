@@ -153,10 +153,10 @@ const EMAIL_TEMPLATES = {
         <p><strong>Wahlzeitraum:</strong> {{start_time}} bis {{end_time}}</p>
         <p>Bitte besuchen Sie die folgende Website, um Ihre Stimme abzugeben:</p>
         <p style="text-align: center;">
-            <a href="https://waldorfwahlen.web.app/v/{{vote_id}}?name={{student_name_encoded}}&grade={{student_grade}}&listIndex={{student_list_index}}" class="button">Zur Wahl</a>
+            <a href="${window.location.origin}/v/{{vote_id}}?name={{student_name_encoded}}&grade={{student_grade}}&listIndex={{student_list_index}}" class="button">Zur Wahl</a>
         </p>
         <p><strong>Direktlink (mit vorausgefüllten Daten):</strong></p>
-        <p class="link-box">https://waldorfwahlen.web.app/v/{{vote_id}}?name={{student_name_encoded}}&grade={{student_grade}}&listIndex={{student_list_index}}</p>
+        <p class="link-box">${window.location.origin}/v/{{vote_id}}?name={{student_name_encoded}}&grade={{student_grade}}&listIndex={{student_list_index}}</p>
         <p class="footer">Mit freundlichen Grüßen!</p>
     </div>
 </body>
@@ -241,11 +241,11 @@ const EMAIL_TEMPLATES = {
         <p><strong>Wahlende:</strong> {{end_time}}</p>
         <p>Bitte vergessen Sie nicht, Ihre Stimme abzugeben:</p>
         <p style="text-align: center;">
-            <a href="https://waldorfwahlen.web.app/v/{{vote_id}}?name={{student_name_encoded}}&grade={{student_grade}}&listIndex={{student_list_index}}" class="button">Jetzt abstimmen</a>
+            <a href="${window.location.origin}/v/{{vote_id}}?name={{student_name_encoded}}&grade={{student_grade}}&listIndex={{student_list_index}}" class="button">Jetzt abstimmen</a>
         </p>
         <p>Falls Sie diese E-Mail unerwartet erhalten haben, ignorieren Sie diese Nachricht einfach.</p>
         <p><strong>Direktlink (mit vorausgefüllten Daten):</strong></p>
-        <p class="link-box">https://waldorfwahlen.web.app/v/{{vote_id}}?name={{student_name_encoded}}&grade={{student_grade}}&listIndex={{student_list_index}}</p>
+        <p class="link-box">${window.location.origin}/v/{{vote_id}}?name={{student_name_encoded}}&grade={{student_grade}}&listIndex={{student_list_index}}</p>
         <p class="footer">Mit freundlichen Grüßen!</p>
     </div>
 </body>
@@ -341,12 +341,12 @@ const EMAIL_TEMPLATES = {
         
         <p>Die vollständigen Ergebnisse können Sie hier einsehen:</p>
         <p style="text-align: center;">
-            <a href="https://waldorfwahlen.web.app/r/{{vote_id}}?id={{choice_id}}" class="button">Ergebnisse ansehen</a>
+            <a href="${window.location.origin}/r/{{vote_id}}?id={{choice_id}}" class="button">Ergebnisse ansehen</a>
         </p>
         
         <p><strong>Direktlink (mit Identifikation):</strong></p>
-        <p class="link-box">https://waldorfwahlen.web.app/r/{{vote_id}}?id={{choice_id}}</p>
-        
+        <p class="link-box">${window.location.origin}/r/{{vote_id}}?id={{choice_id}}</p>
+
         <p class="footer">Mit freundlichen Grüßen!</p>
     </div>
 </body>

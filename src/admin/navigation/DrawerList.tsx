@@ -1,12 +1,11 @@
 import {
-  addDoc,
   collection,
   doc,
   getDocs,
   setDoc,
   Timestamp,
 } from "firebase/firestore";
-import { prompt, snackbar } from "mdui";
+import { snackbar } from "mdui";
 import React from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { auth, db } from "../../firebase";
@@ -15,7 +14,6 @@ import VoteDrawer from "./VoteDrawer";
 import routes from "./routes.json";
 import { useSchool } from "../../contexts";
 import { SchoolData } from "../../types";
-import { set } from "date-fns";
 
 interface VoteData {
   id: string;
@@ -106,7 +104,7 @@ export default function DrawerList({
   const location = useLocation();
 
   React.useEffect(() => {
-    setActive(location.pathname.split("/")[2]);
+    setActive(location.pathname.split("/")[2] || undefined);
 
     auth.currentUser?.getIdTokenResult().then((idTokenResult) => {
       const claims = idTokenResult.claims;

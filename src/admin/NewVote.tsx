@@ -793,13 +793,11 @@ export default function NewVote() {
           headline: "Hinzufügen der Vorschläge",
           description:
             "Projektanbietende können unter dem Link Vorschläge eintragen: " +
-            `https://waldorfwahlen.web.app/p/${id}`,
+            `${window.location.origin}/p/${id}`,
           confirmText: "Link kopieren",
           cancelText: "Zur Wahl",
           onConfirm: (e: any) => {
-            navigator.clipboard.writeText(
-              `https://waldorfwahlen.web.app/p/${id}`
-            );
+            navigator.clipboard.writeText(`${window.location.origin}/p/${id}`);
             snackbar({
               message: "Link in die Zwischenablage kopiert.",
               autoCloseDelay: 5000,
@@ -1166,8 +1164,7 @@ export default function NewVote() {
               prompt({
                 icon: "settings",
                 headline: "ID der Wahl",
-                description:
-                  "Ändern Sie die ID der Wahl. Diese erscheint in der URL (waldorfwahlen.web.app/[ID]). Achten Sie darauf, dass die ID eindeutig ist und keine Sonderzeichen enthält.",
+                description: `Ändern Sie die ID der Wahl. Diese erscheint in der URL (${window.location.origin}/[ID]). Achten Sie darauf, dass die ID eindeutig ist und keine Sonderzeichen enthält.`,
                 confirmText: "Schließen",
                 cancelText: "",
                 textFieldOptions: {

@@ -30,7 +30,7 @@ export default function Delete() {
         <p>
           Wollen Sie diese Wahl wirklich löschen? Sie können Sie danach nicht
           mehr aufrufen. Die Daten können wiederhergestellt werden, kontaktieren
-          Sie mich dafür.
+          Sie uns dafür.
         </p>
         <p>
           Geben Sie zur Bestätigung <code>{id}</code> ein:{" "}

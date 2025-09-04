@@ -280,34 +280,72 @@ export default function Vote() {
       <mdui-dialog open={confirmDialog} headline="Bestätigen" icon="check">
         <div className="mdui-prose">
           <p>
-            Bitte überprüfen Sie Ihre Eingaben. Sie können diese nach dem
-            Absenden nicht mehr ändern.
-          </p>
-          Name: {decodedUrlName ? name : `${firstName} ${lastName}`}
-          <br />
-          Klasse: {grade}
-          <br />
-          Klassenlistennr.: {listIndex}
-          <br />
-          {extraFields?.map((e, i) => (
-            <div key={i}>
-              {e}: {extraFieldsValues[i]}
+            <strong>
+              Bitte überprüfen Sie Ihre Eingaben.
               <br />
-            </div>
-          ))}
-          <br />
-          Auswahl:
-          <br />
-          {selected
-            .map(
-              (e, i) =>
-                `${i + 1}. ${
-                  options.find((o) => o.id === e)?.title || "Keine Wahl"
-                }`
-            )
-            .join(", ")}
+              Sie können diese nach dem Absenden nicht mehr ändern.
+            </strong>
+          </p>
+          <mdui-list
+            style={{
+              margin: "16px 0",
+              lineHeight: 1.7,
+              background: "transparent",
+            }}
+          >
+            <mdui-list-item rounded>
+              <mdui-icon name="person" slot="icon" style={{ marginRight: 8 }} />
+              <span style={{ fontWeight: 500 }}>Name:</span>
+              <span style={{ marginLeft: 8 }}>
+                {decodedUrlName ? name : `${firstName} ${lastName.charAt(0)}.`}
+              </span>
+            </mdui-list-item>
+            <mdui-list-item rounded>
+              <mdui-icon name="school" slot="icon" style={{ marginRight: 8 }} />
+              <span style={{ fontWeight: 500 }}>Klasse:</span>
+              <span style={{ marginLeft: 8 }}>{grade}</span>
+            </mdui-list-item>
+            <mdui-list-item rounded>
+              <mdui-icon
+                name="format_list_numbered"
+                slot="icon"
+                style={{ marginRight: 8 }}
+              />
+              <span style={{ fontWeight: 500 }}>Klassenlistennr.:</span>
+              <span style={{ marginLeft: 8 }}>{listIndex}</span>
+            </mdui-list-item>
+            {extraFields?.map((e, i) => (
+              <mdui-list-item key={i} rounded>
+                <mdui-icon name="edit" slot="icon" style={{ marginRight: 8 }} />
+                <span style={{ fontWeight: 500 }}>{e}:</span>
+                <span style={{ marginLeft: 8 }}>{extraFieldsValues[i]}</span>
+              </mdui-list-item>
+            ))}
+            <mdui-divider style={{ margin: "12px 0" }} />
+            <mdui-list-item rounded>
+              <mdui-icon
+                name="checklist"
+                slot="icon"
+                style={{ marginRight: 8 }}
+              />
+              <span style={{ fontWeight: 500 }}>Auswahl:</span>
+            </mdui-list-item>
+            {selected.map((e, i) => (
+              <mdui-list-item key={i} rounded style={{ marginLeft: 24 }}>
+                <mdui-icon
+                  name="arrow_forward"
+                  style={{ marginRight: 8 }}
+                  slot="icon"
+                />
+                <span style={{ fontWeight: 400 }}>
+                  {i + 1}.{" "}
+                  {options.find((o) => o.id === e)?.title || "Keine Wahl"}
+                </span>
+              </mdui-list-item>
+            ))}
+          </mdui-list>
           <p />
-          <small>
+          {/* <small>
             Diese Website ist durch reCAPTCHA geschützt und es gelten die{" "}
             <a href="https://policies.google.com/privacy">
               Datenschutzbestimmungen
@@ -316,7 +354,7 @@ export default function Vote() {
             <a href="https://policies.google.com/terms">Nutzungsbedingungen</a>{" "}
             von Google.
           </small>
-          <p />
+          <p /> */}
           {!sending ? (
             <div className="button-container">
               <mdui-button
@@ -495,8 +533,8 @@ export default function Vote() {
             Endet am{" "}
             {moment
               .tz(endTime.seconds * 1000, "Europe/Berlin")
-              .locale("de")
-              .format("dddd, D. MMMM YYYY, HH:mm")}
+              .format("DD.MM.YYYY, HH:mm")}{" "}
+            Uhr
           </div>
         </div>
         {vote.description && (
@@ -587,7 +625,7 @@ export default function Vote() {
             <div className="mdui-prosa">
               {selectCount > 1 && (
                 <h2
-                  style={{ textAlign: "center" }}
+                  style={{ textAlign: "center", scrollMarginTop: 50 }}
                   ref={(el) => (refs.current[index] = el)}
                 >
                   {index + 1}. Wahl

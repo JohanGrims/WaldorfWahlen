@@ -834,7 +834,7 @@ export default function Edit() {
               eingereicht wurden. Klicken Sie auf einen Vorschlag, um ihn zu
               bearbeiten und zu den Optionen hinzuzufügen. Sie können auch
               Vorschläge löschen, indem Sie auf das Löschsymbol klicken. Teilen
-              Sie den Link https://waldorfwahlen.web.app/p/{vote.id} mit den
+              Sie den Link {window.location.origin}/p/{vote.id} mit den
               Projektanbietenden für Vorschläge.
             </div>
 

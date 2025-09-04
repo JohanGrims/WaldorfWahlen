@@ -5,6 +5,7 @@ import {
   useNavigate,
 } from "react-router-dom";
 import { db } from "../../firebase";
+import moment from "moment-timezone";
 
 interface VoteData extends DocumentData {
   id: string;
@@ -67,19 +68,11 @@ export default function AdminVote() {
         <mdui-chip onClick={() => navigate("./schedule")}>
           {!vote.active
             ? "Nicht aktiv"
-            : `${new Date(vote.startTime.seconds * 1000).toLocaleString([], {
-                hour: "2-digit",
-                minute: "2-digit",
-                day: "2-digit",
-                month: "2-digit",
-                year: "numeric",
-              })} - ${new Date(vote.endTime.seconds * 1000).toLocaleString([], {
-                hour: "2-digit",
-                minute: "2-digit",
-                day: "2-digit",
-                month: "2-digit",
-                year: "numeric",
-              })}`}
+            : `${moment
+                .tz(vote.startTime.toDate(), "Europe/Berlin")
+                .format("DD.MM.YYYY HH:mm")} bis ${moment
+                .tz(vote.endTime.toDate(), "Europe/Berlin")
+                .format("DD.MM.YYYY HH:mm")}`}
         </mdui-chip>
       </div>
       <p />

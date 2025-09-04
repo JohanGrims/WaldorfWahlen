@@ -808,6 +808,70 @@ export default function Results() {
 
   return (
     <div className="mdui-prose">
+      <h2>Ergebnisse</h2>
+      <mdui-card
+        variant="outlined"
+        style={{ width: "100%", padding: "20px" }}
+        clickable
+        disabled={vote.result || !results.length}
+        onClick={() => {
+          if (!vote.result && results.length) {
+            publishResults();
+          }
+        }}
+      >
+        <div
+          className="mdui-prose"
+          style={{ width: "100%", userSelect: "none" }}
+        >
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+            }}
+          >
+            <div style={{ gap: "10px", textWrap: "nowrap", display: "flex" }}>
+              <h2>Ergebnisse veröffentlichen</h2>
+              <mdui-icon name="upload"></mdui-icon>
+            </div>
+            {vote.result && <div>Bereits veröffentlicht</div>}
+          </div>
+          Bei der Veröffentlichung werden keine persönlichen Daten
+          veröffentlicht. Deshalb ist das Ansehen nur auf dem selben Gerät
+          möglich, auf dem die Antwort abgegeben wurde.
+        </div>
+      </mdui-card>
+      <mdui-card
+        variant="outlined"
+        clickable
+        onClick={printResults}
+        style={{ width: "100%", padding: "20px" }}
+      >
+        <div
+          className="mdui-prose"
+          style={{ width: "100%", userSelect: "none" }}
+        >
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+            }}
+          >
+            <div style={{ gap: "10px", textWrap: "nowrap", display: "flex" }}>
+              <h2 style={{ marginBottom: 0 }}>
+                {mode === "all"
+                  ? "Alle Ergebnisse"
+                  : mode === "project"
+                  ? "Nach Projekt"
+                  : "Nach Klasse"}{" "}
+                drucken
+              </h2>
+              <mdui-icon name="print"></mdui-icon>
+            </div>
+          </div>
+        </div>
+      </mdui-card>
+      <br />
       <mdui-dialog fullscreen open={commenting}>
         <mdui-button-icon
           icon="close"
@@ -986,71 +1050,6 @@ export default function Results() {
         </div>
       </mdui-dialog>
 
-      <h2>Ergebnisse</h2>
-      <mdui-card
-        variant="outlined"
-        style={{ width: "100%", padding: "20px" }}
-        clickable
-        disabled={vote.result || !results.length}
-        onClick={() => {
-          if (!vote.result && results.length) {
-            publishResults();
-          }
-        }}
-      >
-        <div
-          className="mdui-prose"
-          style={{ width: "100%", userSelect: "none" }}
-        >
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-            }}
-          >
-            <div style={{ gap: "10px", textWrap: "nowrap", display: "flex" }}>
-              <h2>Ergebnisse veröffentlichen</h2>
-              <mdui-icon name="upload"></mdui-icon>
-            </div>
-            {vote.result && <div>Bereits veröffentlicht</div>}
-          </div>
-          Bei der Veröffentlichung werden keine persönlichen Daten
-          veröffentlicht. Deshalb ist das Ansehen nur auf dem selben Gerät
-          möglich, auf dem die Antwort abgegeben wurde.
-        </div>
-      </mdui-card>
-      <mdui-card
-        variant="outlined"
-        clickable
-        onClick={printResults}
-        style={{ width: "100%", padding: "20px" }}
-      >
-        <div
-          className="mdui-prose"
-          style={{ width: "100%", userSelect: "none" }}
-        >
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-            }}
-          >
-            <div style={{ gap: "10px", textWrap: "nowrap", display: "flex" }}>
-              <h2 style={{ marginBottom: 0 }}>
-                {mode === "all"
-                  ? "Alle Ergebnisse"
-                  : mode === "project"
-                  ? "Nach Projekt"
-                  : "Nach Klasse"}{" "}
-                drucken
-              </h2>
-              <mdui-icon name="print"></mdui-icon>
-            </div>
-          </div>
-        </div>
-      </mdui-card>
-      <br />
-      <p />
       <mdui-divider />
       <p />
 
