@@ -471,7 +471,7 @@ export default function Exports() {
 }
 
 Exports.loader = async () => {
-  const votes = await getDocs(collection(db, "votes"));
+  const votes = await getDocs(collection(db, "schools/SCHOOLID/votes"));
   const votesArray = votes.docs.map((doc) => {
     return { id: doc.id, ...doc.data() };
   });
