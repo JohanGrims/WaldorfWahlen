@@ -597,7 +597,6 @@ def submit_vote(req: https_fn.CallableRequest) -> dict:
             logging.error(f"Request data: {data}")
             access_token = data.get("token")
 
-            logging.error(f"Access token received: {access_token}")
 
             if not access_token:
                 raise https_fn.HttpsError(
@@ -619,7 +618,6 @@ def submit_vote(req: https_fn.CallableRequest) -> dict:
                 "Authorization": f"Bearer {access_token}"
             })
 
-            logging.error(f"User info response: {response.text}")
 
             if response.status_code != 200:
                 logging.error(f"Failed to fetch user info: {response}")
