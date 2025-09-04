@@ -44,4 +44,11 @@ export type SchoolData = {
   shortName: string;
   link: string;
   primaryColor: string;
+  oauth?: {
+    authorizeEndpoint?: string;
+    tokenEndpoint?: string;
+    userInfoEndpoint?: string;
+    clientId?: string;
+    enabled?: boolean;
+  };
 };

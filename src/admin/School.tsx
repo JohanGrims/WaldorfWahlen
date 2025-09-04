@@ -25,6 +25,8 @@ export default function School() {
   const revalidator = useRevalidator();
   const [isEditing, setIsEditing] = useState(false);
   const [editedSchoolData, setEditedSchoolData] = useState(schoolData);
+  const [oauthConfig, setOauthConfig] = useState(schoolData?.oauth || {});
+  const [isOauthDialogOpen, setIsOauthDialogOpen] = useState(false);
 
   async function createAdmin() {
     // Create random password (40 characters)
@@ -182,191 +184,304 @@ export default function School() {
     }
   }
 
+  async function saveOauthConfig() {
+    try {
+      const updatedSchoolData = { ...editedSchoolData, oauth: oauthConfig };
+      await updateDoc(doc(db, "schools/SCHOOLID"), updatedSchoolData);
+      snackbar({ message: "OAuth-Konfiguration erfolgreich aktualisiert!" });
+      revalidator.revalidate();
+      setIsEditing(false);
+    } catch (error) {
+      alert({
+        icon: "error",
+        headline: "Fehler",
+        description:
+          "Die OAuth-Konfiguration konnte nicht aktualisiert werden.",
+        confirmText: "OK",
+      });
+    }
+  }
+
+  function toggleOauthEnabled() {
+    const updatedOauthConfig = {
+      ...oauthConfig,
+      enabled: !oauthConfig.enabled,
+    };
+    setOauthConfig(updatedOauthConfig);
+  }
+
   return (
-    <div className="mdui-prose">
-      <h1>Schuleinstellungen</h1>
-      <mdui-card
-        variant="filled"
-        style={{
-          width: "100%",
-          padding: "20px",
-          display: "flex",
-          flexDirection: "row",
-        }}
-      >
-        {isEditing ? (
-          <div style={{ flexGrow: 1 }}>
+    <>
+      <div className="mdui-prose">
+        <h1>Schuleinstellungen</h1>
+        <mdui-card
+          variant="filled"
+          style={{
+            width: "100%",
+            padding: "20px",
+            display: "flex",
+            flexDirection: "row",
+          }}
+        >
+          {isEditing ? (
+            <div style={{ flexGrow: 1 }}>
+              <mdui-text-field
+                label="Schulname"
+                value={editedSchoolData.name}
+                onInput={(e: any) =>
+                  setEditedSchoolData({
+                    ...editedSchoolData,
+                    name: e.target.value,
+                  })
+                }
+              ></mdui-text-field>
+              <mdui-text-field
+                label="Kurzname"
+                value={editedSchoolData.shortName}
+                onInput={(e: any) =>
+                  setEditedSchoolData({
+                    ...editedSchoolData,
+                    shortName: e.target.value,
+                  })
+                }
+              ></mdui-text-field>
+              <mdui-text-field
+                label="Link"
+                value={editedSchoolData.link}
+                onInput={(e: any) =>
+                  setEditedSchoolData({
+                    ...editedSchoolData,
+                    link: e.target.value,
+                  })
+                }
+              ></mdui-text-field>
+              <mdui-text-field
+                label="Icon-URL"
+                value={editedSchoolData.icon}
+                onInput={(e: any) =>
+                  setEditedSchoolData({
+                    ...editedSchoolData,
+                    icon: e.target.value,
+                  })
+                }
+              ></mdui-text-field>
+              <mdui-text-field
+                label="Primärfarbe"
+                value={editedSchoolData.primaryColor}
+                onInput={(e: any) =>
+                  setEditedSchoolData({
+                    ...editedSchoolData,
+                    primaryColor: e.target.value,
+                  })
+                }
+              ></mdui-text-field>
+              <p />
+              <mdui-button
+                onClick={saveSchoolData}
+                style={{ marginRight: "10px" }}
+              >
+                Speichern
+              </mdui-button>
+              <mdui-button
+                onClick={() => setIsEditing(false)}
+                variant="tonal"
+                style={{ marginRight: "10px" }}
+              >
+                Abbrechen
+              </mdui-button>
+              <mdui-button
+                onClick={() => setIsOauthDialogOpen(true)}
+                variant="outlined"
+              >
+                OAuth Einstellungen
+              </mdui-button>
+            </div>
+          ) : (
+            <>
+              <div style={{ flexGrow: 1 }}>
+                <h2 style={{ marginBottom: "10px" }}>
+                  {schoolData.name}{" "}
+                  <span style={{ color: "gray", fontStyle: "italic" }}>
+                    ({schoolData.shortName})
+                  </span>
+                </h2>
+                <span>{schoolData.link}</span>
+              </div>
+              <img
+                src={schoolData.icon}
+                alt="Logo"
+                style={{ height: "50px", width: "50px", marginTop: "0px" }}
+              />
+              <div
+                style={{
+                  height: "50px",
+                  width: "50px",
+                  borderRadius: "50%",
+                  marginLeft: "10px",
+                  marginRight: "50px",
+                  backgroundColor: schoolData.primaryColor,
+                }}
+              ></div>
+            </>
+          )}
+
+          {!isEditing && (
+            <mdui-button-icon
+              icon="edit"
+              onClick={() => setIsEditing(true)}
+            ></mdui-button-icon>
+          )}
+        </mdui-card>
+
+        <h2>LehrerInnen</h2>
+        <p>
+          LehrerInnen können die Wahl konfigurieren und die Ergebnisse einsehen.
+          Erstellen Sie eine/n neue/n LehrerIn, indem Sie auf das Plus-Symbol
+          klicken. Deaktivierte LehrerInnen können sich nicht einloggen.
+        </p>
+        <p />
+        <mdui-list>
+          {admins
+            .sort((a, b) => a.email.localeCompare(b.email))
+            .map((admin) => (
+              <mdui-list-item rounded key={admin.uid}>
+                <mdui-avatar slot="icon">
+                  {admin.email
+                    .split(/[@.]/)
+                    .slice(0, 2)
+                    .map((part) => part.charAt(0).toUpperCase())
+                    .join("")}
+                </mdui-avatar>
+
+                <div>
+                  {admin.email}{" "}
+                  {admin.disabled && <mdui-badge>Deaktiviert</mdui-badge>}
+                </div>
+
+                <mdui-dropdown slot="end-icon">
+                  <mdui-button-icon
+                    slot="trigger"
+                    icon="more_vert"
+                  ></mdui-button-icon>
+                  <mdui-menu>
+                    <mdui-list-item
+                      onClick={() => {
+                        navigator.clipboard.writeText(admin.uid);
+                        snackbar({
+                          message: "User-ID kopiert!",
+                        });
+                      }}
+                      icon="content_copy"
+                    >
+                      User-ID kopieren
+                    </mdui-list-item>
+                    <mdui-list-item
+                      onClick={() => {
+                        updateAdmin(admin.uid, !admin.disabled);
+                      }}
+                      icon={!admin.disabled ? "lock" : "lock_open"}
+                      disabled={admin.uid === auth.currentUser?.uid}
+                    >
+                      {admin.disabled ? "Aktivieren" : "Deaktivieren"}
+                    </mdui-list-item>
+                    <mdui-list-item
+                      icon="delete"
+                      onClick={() => {
+                        deleteAdmin(admin.uid);
+                      }}
+                      disabled={admin.uid === auth.currentUser?.uid}
+                    >
+                      Löschen
+                    </mdui-list-item>
+                  </mdui-menu>
+                </mdui-dropdown>
+              </mdui-list-item>
+            ))}
+
+          <mdui-list-item rounded onClick={createAdmin}>
+            <mdui-avatar slot="icon">
+              <mdui-icon>person_add</mdui-icon>
+            </mdui-avatar>
+            LehrerIn hinzufügen
+          </mdui-list-item>
+        </mdui-list>
+
+        <mdui-dialog open={isOauthDialogOpen} fullscreen>
+          <div className="mdui-dialog-content">
+            <h2>OAuth-Konfiguration</h2>
+            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              <mdui-switch
+                onChange={toggleOauthEnabled}
+                checked={oauthConfig.enabled || false}
+              ></mdui-switch>
+              <span>
+                OAuth {oauthConfig.enabled ? "aktiviert" : "deaktiviert"}
+              </span>
+            </div>
+            <p />
             <mdui-text-field
-              label="Schulname"
-              value={editedSchoolData.name}
+              label="OAuth Autorisierungs-URL"
+              value={oauthConfig.authorizeEndpoint || ""}
               onInput={(e: any) =>
-                setEditedSchoolData({
-                  ...editedSchoolData,
-                  name: e.target.value,
+                setOauthConfig({
+                  ...oauthConfig,
+                  authorizeEndpoint: e.target.value,
                 })
               }
             ></mdui-text-field>
+            <p />
             <mdui-text-field
-              label="Kurzname"
-              value={editedSchoolData.shortName}
+              label="OAuth Token-URL"
+              value={oauthConfig.tokenEndpoint || ""}
               onInput={(e: any) =>
-                setEditedSchoolData({
-                  ...editedSchoolData,
-                  shortName: e.target.value,
+                setOauthConfig({
+                  ...oauthConfig,
+                  tokenEndpoint: e.target.value,
                 })
               }
             ></mdui-text-field>
+            <p />
             <mdui-text-field
-              label="Link"
-              value={editedSchoolData.link}
+              label="OAuth Client-ID"
+              value={oauthConfig.clientId || ""}
               onInput={(e: any) =>
-                setEditedSchoolData({
-                  ...editedSchoolData,
-                  link: e.target.value,
+                setOauthConfig({
+                  ...oauthConfig,
+                  clientId: e.target.value,
                 })
               }
             ></mdui-text-field>
+            <p />
             <mdui-text-field
-              label="Icon-URL"
-              value={editedSchoolData.icon}
+              label="OAuth Userinfo-URL"
+              value={oauthConfig.userInfoEndpoint || ""}
               onInput={(e: any) =>
-                setEditedSchoolData({
-                  ...editedSchoolData,
-                  icon: e.target.value,
-                })
-              }
-            ></mdui-text-field>
-            <mdui-text-field
-              label="Primärfarbe"
-              value={editedSchoolData.primaryColor}
-              onInput={(e: any) =>
-                setEditedSchoolData({
-                  ...editedSchoolData,
-                  primaryColor: e.target.value,
+                setOauthConfig({
+                  ...oauthConfig,
+                  userInfoEndpoint: e.target.value,
                 })
               }
             ></mdui-text-field>
             <p />
             <mdui-button
-              onClick={saveSchoolData}
+              onClick={() => {
+                saveOauthConfig();
+                setIsOauthDialogOpen(false);
+              }}
               style={{ marginRight: "10px" }}
             >
               Speichern
             </mdui-button>
-            <mdui-button onClick={() => setIsEditing(false)} variant="outlined">
-              Abbrechen
+            <mdui-button
+              onClick={() => setIsOauthDialogOpen(false)}
+              variant="outlined"
+            >
+              Schließen
             </mdui-button>
           </div>
-        ) : (
-          <>
-            <div style={{ flexGrow: 1 }}>
-              <h2 style={{ marginBottom: "10px" }}>
-                {schoolData.name}{" "}
-                <span style={{ color: "gray", fontStyle: "italic" }}>
-                  ({schoolData.shortName})
-                </span>
-              </h2>
-              <span>{schoolData.link}</span>
-            </div>
-            <img
-              src={schoolData.icon}
-              alt="Logo"
-              style={{ height: "50px", width: "50px", marginTop: "0px" }}
-            />
-            <div
-              style={{
-                height: "50px",
-                width: "50px",
-                borderRadius: "50%",
-                marginLeft: "10px",
-                marginRight: "50px",
-                backgroundColor: schoolData.primaryColor,
-              }}
-            ></div>
-          </>
-        )}
-
-        {!isEditing && (
-          <mdui-button-icon
-            icon="edit"
-            onClick={() => setIsEditing(true)}
-          ></mdui-button-icon>
-        )}
-      </mdui-card>
-
-      <h2>LehrerInnen</h2>
-      <p>
-        LehrerInnen können die Wahl konfigurieren und die Ergebnisse einsehen.
-        Erstellen Sie eine/n neue/n LehrerIn, indem Sie auf das Plus-Symbol
-        klicken. Deaktivierte LehrerInnen können sich nicht einloggen.
-      </p>
-      <p />
-      <mdui-list>
-        {admins
-          .sort((a, b) => a.email.localeCompare(b.email))
-          .map((admin) => (
-            <mdui-list-item rounded key={admin.uid}>
-              <mdui-avatar slot="icon">
-                {admin.email
-                  .split(/[@.]/)
-                  .slice(0, 2)
-                  .map((part) => part.charAt(0).toUpperCase())
-                  .join("")}
-              </mdui-avatar>
-
-              <div>
-                {admin.email}{" "}
-                {admin.disabled && <mdui-badge>Deaktiviert</mdui-badge>}
-              </div>
-
-              <mdui-dropdown slot="end-icon">
-                <mdui-button-icon
-                  slot="trigger"
-                  icon="more_vert"
-                ></mdui-button-icon>
-                <mdui-menu>
-                  <mdui-list-item
-                    onClick={() => {
-                      navigator.clipboard.writeText(admin.uid);
-                      snackbar({
-                        message: "User-ID kopiert!",
-                      });
-                    }}
-                    icon="content_copy"
-                  >
-                    User-ID kopieren
-                  </mdui-list-item>
-                  <mdui-list-item
-                    onClick={() => {
-                      updateAdmin(admin.uid, !admin.disabled);
-                    }}
-                    icon={!admin.disabled ? "lock" : "lock_open"}
-                    disabled={admin.uid === auth.currentUser?.uid}
-                  >
-                    {admin.disabled ? "Aktivieren" : "Deaktivieren"}
-                  </mdui-list-item>
-                  <mdui-list-item
-                    icon="delete"
-                    onClick={() => {
-                      deleteAdmin(admin.uid);
-                    }}
-                    disabled={admin.uid === auth.currentUser?.uid}
-                  >
-                    Löschen
-                  </mdui-list-item>
-                </mdui-menu>
-              </mdui-dropdown>
-            </mdui-list-item>
-          ))}
-
-        <mdui-list-item rounded onClick={createAdmin}>
-          <mdui-avatar slot="icon">
-            <mdui-icon>person_add</mdui-icon>
-          </mdui-avatar>
-          LehrerIn hinzufügen
-        </mdui-list-item>
-      </mdui-list>
-    </div>
+        </mdui-dialog>
+      </div>
+    </>
   );
 }
 
