@@ -33,8 +33,10 @@ export default function ReleaseNotes() {
       >
         <div />
         <h1>Neuigkeiten 🎉</h1>
-        {adminView && (
+        {adminView ? (
           <mdui-button-icon onClick={() => navigate("edit")} icon="edit" />
+        ) : (
+          <div />
         )}
       </div>
       <Markdown>{releaseNotes.content}</Markdown>

@@ -32,8 +32,10 @@ export default function Help() {
       >
         <div />
         <h1>Hilfe & Kontakt</h1>
-        {adminView && (
+        {adminView ? (
           <mdui-button-icon onClick={() => navigate("edit")} icon="edit" />
+        ) : (
+          <div />
         )}
       </div>
       <Markdown>{helpContent.content}</Markdown>

@@ -84,10 +84,10 @@ service cloud.firestore {
     }
     
     // Documentation collection rule
-    match /docs/{docId} {
+    // match /docs/{docId} {
       // Allow read and write access only for administrators
-      allow read, write: if isAuthenticated();
-    }
+      // allow read, write: if isAuthenticated();
+    // }
 
     // !!! NEW RULES
     // Helper functions
