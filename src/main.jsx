@@ -17,6 +17,7 @@ const routes = [
   {
     path: "/",
     element: <ScrollToTop />,
+    errorElement: <ErrorPage />,
     children: [
       {
         path: "/",
