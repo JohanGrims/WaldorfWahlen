@@ -2,7 +2,7 @@ import { doc, getDoc, Timestamp } from "firebase/firestore";
 import React from "react";
 import Markdown from "react-markdown";
 import { Link, useLoaderData, useNavigate } from "react-router-dom";
-import { db } from "../../firebase";
+import { auth, db } from "../../firebase";
 
 export default function Help() {
   const { helpContent } = useLoaderData() as {
@@ -10,6 +10,16 @@ export default function Help() {
   };
 
   const navigate = useNavigate();
+
+  const [adminView, setAdminView] = React.useState(false);
+
+  React.useEffect(() => {
+    auth.currentUser?.getIdTokenResult().then((idTokenResult) => {
+      if (idTokenResult.claims.role === "admin") {
+        setAdminView(true);
+      }
+    });
+  }, []);
 
   return (
     <div className="mdui-prose">
@@ -22,7 +32,9 @@ export default function Help() {
       >
         <div />
         <h1>Hilfe & Kontakt</h1>
-        <mdui-button-icon onClick={() => navigate("edit")} icon="edit" />
+        {adminView && (
+          <mdui-button-icon onClick={() => navigate("edit")} icon="edit" />
+        )}
       </div>
       <Markdown className="help">{helpContent.content}</Markdown>
       <p />

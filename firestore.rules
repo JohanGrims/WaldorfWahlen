@@ -183,7 +183,8 @@ service cloud.firestore {
     // Documentation collection rule
     match /docs/{docId} {
         // Allow read and write access only for administrators
-        allow read, write: if isAuthenticated();
+        allow read: if isAuthenticated();
+        allow write: if request.auth.token.role == "admin";
     }
 
   }

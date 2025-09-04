@@ -1,5 +1,5 @@
 import { doc, getDoc, Timestamp } from "firebase/firestore";
-import { db } from "../../firebase";
+import { auth, db } from "../../firebase";
 
 import React from "react";
 import Markdown from "react-markdown";
@@ -12,6 +12,16 @@ export default function ReleaseNotes() {
 
   const navigate = useNavigate();
 
+  const [adminView, setAdminView] = React.useState(false);
+
+  React.useEffect(() => {
+    auth.currentUser?.getIdTokenResult().then((idTokenResult) => {
+      if (idTokenResult.claims.role === "admin") {
+        setAdminView(true);
+      }
+    });
+  }, []);
+
   return (
     <div className="mdui-prose">
       <div
@@ -23,7 +33,9 @@ export default function ReleaseNotes() {
       >
         <div />
         <h1>Neuigkeiten 🎉</h1>
-        <mdui-button-icon onClick={() => navigate("edit")} icon="edit" />
+        {adminView && (
+          <mdui-button-icon onClick={() => navigate("edit")} icon="edit" />
+        )}
       </div>
       <Markdown className="help">{releaseNotes.content}</Markdown>
       <p />
