@@ -99,13 +99,6 @@ service cloud.firestore {
       return get(/databases/$(database)/documents/schools/$(schoolId)/votes/$(voteId)).data;
     }
 
-    function isSchoolVoteActive(schoolId, voteId) {
-      let voteData = getSchoolVoteData(schoolId, voteId);
-      return voteData.endTime > request.time && 
-             voteData.startTime < request.time && 
-             voteData.active == true;
-    }
-
     function areSchoolResultsPublished(schoolId, voteId) {
       return getSchoolVoteData(schoolId, voteId).result == true;
     }
