@@ -45,17 +45,23 @@ export async function handleDownload(
       state: "fetching",
     });
 
-    const vote = await getDoc(doc(db, `votes/${id}`));
+    const vote = await getDoc(doc(db, `schools/SCHOOLID/votes/${id}`));
     const voteData = { id: vote.id, ...vote.data() };
-    const options = await getDocs(collection(db, `votes/${id}/options`));
+    const options = await getDocs(
+      collection(db, `schools/SCHOOLID/votes/${id}/options`)
+    );
     const optionsData = options.docs.map((doc) => {
       return { id: doc.id, ...doc.data() };
     });
-    const choices = await getDocs(collection(db, `votes/${id}/choices`));
+    const choices = await getDocs(
+      collection(db, `schools/SCHOOLID/votes/${id}/choices`)
+    );
     const choicesData = choices.docs.map((doc) => {
       return { id: doc.id, ...doc.data() };
     });
-    const results = await getDocs(collection(db, `votes/${id}/results`));
+    const results = await getDocs(
+      collection(db, `schools/SCHOOLID/votes/${id}/results`)
+    );
     const resultsData = results.docs.map((doc) => {
       return { id: doc.id, ...doc.data() };
     });

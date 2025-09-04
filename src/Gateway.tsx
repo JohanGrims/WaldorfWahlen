@@ -20,7 +20,7 @@ export default function Gateway() {
 
 Gateway.loader = async function loader({ params, request }: { params: { id: string }; request: Request }) {
   const { id } = params;
-  const vote = await getDoc(doc(db, `/votes/${id}`));
+  const vote = await getDoc(doc(db, `schools/SCHOOLID/votes/${id}`));
   if (!vote.exists()) {
     throw new Response("Seite nicht gefunden", {
       status: 404,

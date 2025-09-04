@@ -310,7 +310,7 @@ export default function Results() {
       cancelText: "Abbrechen",
       onConfirm: () => {
         setDoc(
-          doc(db, `votes/${vote.id}`),
+          doc(db, `schools/SCHOOLID/votes/${vote.id}`),
           {
             result: true,
           },
@@ -407,7 +407,7 @@ export default function Results() {
         const currentResult = results.find((result) => result.id === id);
         const existingComments = currentResult?.comments || [];
         setDoc(
-          doc(db, `votes/${vote.id}/results/${id}`),
+          doc(db, `schools/SCHOOLID/votes/${vote.id}/results/${id}`),
           {
             comments: [
               ...existingComments,
@@ -444,7 +444,7 @@ export default function Results() {
         const comments = [...currentResult.comments];
         comments.splice(index, 1);
         setDoc(
-          doc(db, `votes/${vote.id}/results/${id}`),
+          doc(db, `schools/SCHOOLID/votes/${vote.id}/results/${id}`),
           {
             comments: comments,
           },
@@ -504,7 +504,7 @@ export default function Results() {
       const currentResult = results.find((res) => res.id === id);
       const existingComments = currentResult?.comments || [];
       setDoc(
-        doc(db, `votes/${vote.id}/results/${id}`),
+        doc(db, `schools/SCHOOLID/votes/${vote.id}/results/${id}`),
         {
           comments: [
             ...existingComments,
