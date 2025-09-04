@@ -2,10 +2,11 @@ import React, { useState } from "react";
 import { useLoaderData, useRevalidator } from "react-router-dom";
 import "mdui/components/text-field.js";
 
-import { auth, db } from "../firebase";
+import { auth, db, functions } from "../firebase";
 import { alert, confirm, prompt, snackbar } from "mdui";
 import { doc, getDoc, updateDoc } from "firebase/firestore";
 import { SchoolData } from "../types";
+import { httpsCallable } from "firebase/functions";
 
 interface AdminUser {
   email: string;
@@ -42,18 +43,27 @@ export default function School() {
         placeholder: "nutzer@waldorfschule-potsdam.de",
       },
       onConfirm: async (email: string) => {
-        await fetch(
-          `https://api.chatwithsteiner.de/waldorfwahlen/users?token=${await auth.currentUser?.getIdToken()}&uid=${
-            auth.currentUser?.uid
-          }`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ email, password, project: "SCHOOLID" }),
-          }
-        ).then(() => {
+        const usersResult = await httpsCallable(
+          functions,
+          "users"
+        )({
+          token: await auth.currentUser?.getIdToken(),
+          uid: auth.currentUser?.uid,
+          project: "SCHOOLID",
+          operation: "create",
+          email,
+          password,
+        });
+
+        if ((usersResult.data as { error: string }).error) {
+          alert({
+            icon: "error",
+            headline: "Fehler",
+            description: (usersResult.data as { error: string }).error,
+            confirmText: "OK",
+          });
+          return;
+        } else {
           alert({
             icon: "check",
             headline: "Admin erstellt",
@@ -61,7 +71,8 @@ export default function School() {
             confirmText: "OK",
           });
           revalidator.revalidate();
-        });
+          return;
+        }
       },
     });
   }
@@ -70,31 +81,45 @@ export default function School() {
     const email = admins.find((admin) => admin.uid === uid)?.email;
 
     confirm({
-  icon: "warning",
-  headline: "Bestätigen",
-  description: disabled
-    ? `Möchten Sie den Admin ${email} wirklich aktivieren?`
-    : `Möchten Sie den Admin ${email} wirklich deaktivieren?`,
-  confirmText: "Ja",
-  cancelText: "Nein",
-  onConfirm: async () => {
-    await fetch(
-      `https://api.chatwithsteiner.de/waldorfwahlen/users?token=${await auth.currentUser?.getIdToken()}&uid=${
-        auth.currentUser?.uid
-      }&user_id=${uid}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ disabled }),
-      }
-    ).then(() => {
-      snackbar({
-        message: `Admin ${email} ${disabled ? "deaktiviert" : "aktiviert"}!`,
-      });
-      revalidator.revalidate();
+      icon: "warning",
+      headline: "Bestätigen",
+      description: !disabled
+        ? `Möchten Sie den Admin ${email} wirklich aktivieren?`
+        : `Möchten Sie den Admin ${email} wirklich deaktivieren?`,
+      confirmText: "Ja",
+      cancelText: "Nein",
+      onConfirm: async () => {
+        const result = await httpsCallable(
+          functions,
+          "users"
+        )({
+          token: await auth.currentUser?.getIdToken(),
+          uid: auth.currentUser?.uid,
+          project: "SCHOOLID",
+          operation: "update",
+          user_id: uid,
+          disabled,
+        });
+
+        if ((result.data as { error: string }).error) {
+          alert({
+            icon: "error",
+            headline: "Fehler",
+            description: (result.data as { error: string }).error,
+            confirmText: "OK",
+          });
+          return;
+        } else {
+          snackbar({
+            message: `Admin ${email} ${
+              disabled ? "deaktiviert" : "aktiviert"
+            }!`,
+          });
+          revalidator.revalidate();
+          return;
+        }
+      },
     });
-  },
-});
   }
 
   async function deleteAdmin(uid: string) {
@@ -111,19 +136,32 @@ export default function School() {
       confirmText: "Ja",
       cancelText: "Nein",
       onConfirm: async () => {
-        const result = await fetch(
-          `https://api.chatwithsteiner.de/waldorfwahlen/users?token=${await auth.currentUser?.getIdToken()}&uid=${
-            auth.currentUser?.uid
-          }&user_id=${uid}`,
-          {
-            method: "DELETE",
-          }
-        ).then(() => {
+        const result = await httpsCallable(
+          functions,
+          "users"
+        )({
+          token: await auth.currentUser?.getIdToken(),
+          uid: auth.currentUser?.uid,
+          project: "SCHOOLID",
+          operation: "delete",
+          user_id: uid,
+        });
+
+        if ((result.data as { error: string }).error) {
+          alert({
+            icon: "error",
+            headline: "Fehler",
+            description: (result.data as { error: string }).error,
+            confirmText: "OK",
+          });
+          return;
+        } else {
           snackbar({
             message: `Admin ${email} gelöscht!`,
           });
           revalidator.revalidate();
-        });
+          return;
+        }
       },
     });
   }
@@ -353,18 +391,23 @@ School.loader = async () => {
     return { admins: [] };
   }
 
-  const response = await fetch(
-    `https://api.chatwithsteiner.de/waldorfwahlen/users?token=${token}&uid=${auth.currentUser?.uid}&project=SCHOOLID`,
-    {
-      headers: {},
-    }
-  );
-  if (!response.ok) {
-    throw new Response("Abruf fehlgeschlagen", {
-      status: response.status,
-      statusText: response.statusText || "Unbekannter Fehler",
-    });
+  const uid = auth.currentUser?.uid;
+  if (!uid) {
+    return { admins: [] };
   }
-  const admins = await response.json();
+
+  const usersResult = await httpsCallable(
+    functions,
+    "users"
+  )({
+    token,
+    uid,
+    project: "SCHOOLID",
+    operation: "list", // or 'create', 'update', 'delete'
+    // additional parameters based on operation
+  });
+
+  const admins = (usersResult.data as { users: AdminUser[] }).users;
+  console.log(admins);
   return { admins, schoolData };
 };

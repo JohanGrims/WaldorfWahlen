@@ -71,7 +71,7 @@ export default function CreateReleaseNotes() {
               <h1>Neuigkeiten 🎉</h1>
             </div>
             <p />
-            <Markdown className="help">{content}</Markdown>
+            <Markdown>{content}</Markdown>
             <p />
             <i
               style={{

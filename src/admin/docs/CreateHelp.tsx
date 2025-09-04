@@ -70,7 +70,7 @@ export default function CreateHelp() {
               <h1>Hilfe & Kontakt</h1>
             </div>
             <p />
-            <Markdown className="help">{content}</Markdown>
+            <Markdown>{content}</Markdown>
             <p />
             <i
               style={{

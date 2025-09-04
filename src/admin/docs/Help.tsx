@@ -36,7 +36,7 @@ export default function Help() {
           <mdui-button-icon onClick={() => navigate("edit")} icon="edit" />
         )}
       </div>
-      <Markdown className="help">{helpContent.content}</Markdown>
+      <Markdown>{helpContent.content}</Markdown>
       <p />
       <i
         style={{

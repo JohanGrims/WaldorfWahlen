@@ -16,8 +16,6 @@ setColorScheme("#000000");
 const routes = [
   {
     path: "/",
-    errorElement: <ErrorPage />,
-    HydrateFallback: () => <mdui-linear-progress />,
     element: <ScrollToTop />,
     children: [
       {
@@ -263,19 +261,6 @@ const routes = [
                   return {
                     loader: loaderModule.default.loader,
                     Component: componentModule.default,
-                  };
-                },
-              },
-              {
-                path: "admins",
-                lazy: async () => {
-                  const module = await import(
-                    /* webpackChunkName: "Admins" */
-                    "./admin/Admins"
-                  );
-                  return {
-                    loader: module.default.loader,
-                    Component: module.default,
                   };
                 },
               },

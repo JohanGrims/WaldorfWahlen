@@ -37,7 +37,7 @@ export default function ReleaseNotes() {
           <mdui-button-icon onClick={() => navigate("edit")} icon="edit" />
         )}
       </div>
-      <Markdown className="help">{releaseNotes.content}</Markdown>
+      <Markdown>{releaseNotes.content}</Markdown>
       <p />
       <i
         style={{

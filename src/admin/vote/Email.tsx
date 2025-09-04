@@ -6,10 +6,10 @@ import {
 } from "firebase/firestore";
 import React from "react";
 import { useLoaderData, useParams } from "react-router-dom";
-import { db, auth } from "../../firebase";
+import { db, auth, functions } from "../../firebase";
 import { Helmet } from "react-helmet";
-import { prompt, snackbar } from "mdui";
-import { getToken } from "firebase/app-check";
+import { alert, prompt, snackbar } from "mdui";
+import { httpsCallable } from "firebase/functions";
 
 interface VoteData extends DocumentData {
   id: string;
@@ -65,17 +65,9 @@ interface EmailTemplate {
   body: string;
 }
 
-interface SmtpConfig {
-  server: string;
-  port: number;
-  username: string;
-  from_address?: string;
-  password: string;
-}
-
 const EMAIL_TEMPLATES = {
   announcement: {
-    subject: "Neue Wahl verfügbar: {{vote_title}}",
+    subject: "Wählen: {{vote_title}}",
     body: `<!DOCTYPE html>
 <html lang="de">
 <head>
@@ -153,7 +145,7 @@ const EMAIL_TEMPLATES = {
         <p><strong>Wahlzeitraum:</strong> {{start_time}} bis {{end_time}}</p>
         <p>Bitte besuchen Sie die folgende Website, um Ihre Stimme abzugeben:</p>
         <p style="text-align: center;">
-            <a href="${window.location.origin}/v/{{vote_id}}?name={{student_name_encoded}}&grade={{student_grade}}&listIndex={{student_list_index}}" class="button">Zur Wahl</a>
+            <a href="${window.location.origin}/v/{{vote_id}}?name={{student_name_encoded}}&grade={{student_grade}}&listIndex={{student_list_index}}" class="button">Jetzt wählen</a>
         </p>
         <p><strong>Direktlink (mit vorausgefüllten Daten):</strong></p>
         <p class="link-box">${window.location.origin}/v/{{vote_id}}?name={{student_name_encoded}}&grade={{student_grade}}&listIndex={{student_list_index}}</p>
@@ -163,7 +155,7 @@ const EMAIL_TEMPLATES = {
 </html>`,
   },
   reminder: {
-    subject: "Erinnerung: {{vote_title}} - Bitte stimmen Sie ab",
+    subject: "Erinnerung: {{vote_title}}",
     body: `<!DOCTYPE html>
 <html lang="de">
 <head>
@@ -241,7 +233,7 @@ const EMAIL_TEMPLATES = {
         <p><strong>Wahlende:</strong> {{end_time}}</p>
         <p>Bitte vergessen Sie nicht, Ihre Stimme abzugeben:</p>
         <p style="text-align: center;">
-            <a href="${window.location.origin}/v/{{vote_id}}?name={{student_name_encoded}}&grade={{student_grade}}&listIndex={{student_list_index}}" class="button">Jetzt abstimmen</a>
+            <a href="${window.location.origin}/v/{{vote_id}}?name={{student_name_encoded}}&grade={{student_grade}}&listIndex={{student_list_index}}" class="button">Jetzt wählen</a>
         </p>
         <p>Falls Sie diese E-Mail unerwartet erhalten haben, ignorieren Sie diese Nachricht einfach.</p>
         <p><strong>Direktlink (mit vorausgefüllten Daten):</strong></p>
@@ -252,7 +244,7 @@ const EMAIL_TEMPLATES = {
 </html>`,
   },
   results: {
-    subject: "Ergebnisse der Wahl: {{vote_title}}",
+    subject: "Ergebnisse: {{vote_title}}",
     body: `<!DOCTYPE html>
 <html lang="de">
 <head>
@@ -378,26 +370,15 @@ export default function Email() {
   >("announcement");
   const [customSubject, setCustomSubject] = React.useState<string>("");
   const [customBody, setCustomBody] = React.useState<string>("");
-  const [smtpConfig, setSmtpConfig] = React.useState<SmtpConfig>(() => {
-    const saved = localStorage.getItem("waldorfwahlen-smtp-config");
-    return saved
-      ? JSON.parse(saved)
-      : {
-          server: "smtp.gmail.com",
-          port: 587,
-          username: "",
-          from_address: "",
-          password: "",
-        };
-  });
+
   const [sending, setSending] = React.useState<boolean>(false);
-  const [showSmtpSettings, setShowSmtpSettings] =
-    React.useState<boolean>(false);
 
   React.useEffect(() => {
     async function loadClasses() {
       try {
-        const classSnapshot = await getDocs(collection(db, "class"));
+        const classSnapshot = await getDocs(
+          collection(db, "schools/SCHOOLID/class")
+        );
         const classData = classSnapshot.docs.map((doc) => ({
           id: doc.id,
           ...doc.data(),
@@ -412,21 +393,6 @@ export default function Email() {
 
     loadClasses();
   }, []);
-
-  React.useEffect(() => {
-    // Save SMTP config to localStorage whenever it changes
-    localStorage.setItem(
-      "waldorfwahlen-smtp-config",
-      JSON.stringify(smtpConfig)
-    );
-  }, [smtpConfig]);
-
-  React.useEffect(() => {
-    // Set first available class as active tab
-    if (classes.length > 0 && activeTab === "class") {
-      setActiveTab(`class-${classes[0].grade}`);
-    }
-  }, [classes, activeTab]);
 
   React.useEffect(() => {
     // Load template when selected
@@ -573,11 +539,6 @@ export default function Email() {
       return;
     }
 
-    if (!smtpConfig.username || !smtpConfig.password) {
-      snackbar({ message: "SMTP-Konfiguration unvollständig" });
-      return;
-    }
-
     setSending(true);
 
     try {
@@ -642,31 +603,36 @@ export default function Email() {
             personalVariables
           );
 
-          const response = await fetch(
-            `https://api.chatwithsteiner.de/waldorfwahlen/send`,
-            {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({
-                token,
-                uid: user.uid,
-                emails: [email],
-                subject: customSubject,
-                body: customBody,
-                variables: personalVariables,
-                smtp_config: smtpConfig,
-              }),
-            }
-          );
+          const response = await httpsCallable(
+            functions,
+            "send_email_func"
+          )({
+            token,
+            uid: user.uid,
+            emails: [email],
+            subject: customSubject,
+            body: customBody,
+            variables: personalVariables,
+          });
+
+          if ((response.data as any).error) {
+            snackbar({
+              message: `Fehler beim Senden an ${email}: ${
+                (response.data as any).error
+              }`,
+              action: "Details",
+              onClick: () =>
+                alert({
+                  icon: "error",
+                  headline: "Fehlerdetails",
+                  description: JSON.stringify(response.data, null, 2),
+                }),
+            });
+          } else {
+            setProgress((prev) => prev + 1);
+          }
 
           setProgress((prev) => prev + 1);
-
-          if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.message || "Email sending failed");
-          }
         }
       }
 
@@ -689,11 +655,6 @@ export default function Email() {
   };
 
   const sendTestEmail = async () => {
-    if (!smtpConfig.username || !smtpConfig.password) {
-      snackbar({ message: "SMTP-Konfiguration unvollständig" });
-      return;
-    }
-
     const testEmailAddress = await prompt({
       headline: "Test-E-Mail senden",
       description:
@@ -797,28 +758,32 @@ export default function Email() {
         };
       }
 
-      const response = await fetch(
-        `https://api.chatwithsteiner.de/waldorfwahlen/send`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            token,
-            uid: user.uid,
-            emails: [testEmailAddress.trim()],
-            subject: `[TEST] ${customSubject}`,
-            body: customBody,
-            variables: personalVariables,
-            smtp_config: smtpConfig,
-          }),
-        }
-      );
+      const response = await httpsCallable(
+        functions,
+        "send_email_func"
+      )({
+        token,
+        uid: user.uid,
+        emails: [testEmailAddress.trim()],
+        subject: `[TEST] ${customSubject}`,
+        body: customBody,
+        variables: personalVariables,
+      });
 
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || "Test email sending failed");
+      if ((response.data as any).error) {
+        snackbar({
+          message: `Fehler beim Senden der Test-E-Mail: ${
+            (response.data as any).error
+          }`,
+          action: "Details",
+          onClick: () =>
+            alert({
+              icon: "error",
+              headline: "Fehlerdetails",
+              description: JSON.stringify(response.data, null, 2),
+            }),
+        });
+        return;
       }
 
       snackbar({
@@ -847,127 +812,6 @@ export default function Email() {
     );
   }
 
-  if (showSmtpSettings) {
-    return (
-      <mdui-dialog open fullscreen>
-        <h1>SMTP-Einstellungen </h1>
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "8px",
-            marginBottom: "8px",
-          }}
-        >
-          <mdui-icon name="warning" style={{ marginBottom: "0" }}></mdui-icon>
-          <h2 style={{ marginBottom: "0", marginTop: "0" }}>
-            Wichtiger Hinweis
-          </h2>
-        </div>
-        <ul>
-          <li>Verwenden Sie keinen privaten E-Mail-Account</li>
-          <li>Zugangsdaten werden lokal im Browser gespeichert</li>
-          <li>Und sind dadurch möglicherweise für Dritte einsehbar</li>
-          <li>Für Massen-E-Mails geeigneten SMTP-Server nutzen</li>
-        </ul>
-        <p>
-          Für einen vorkonfigurierten SMTP-Server nutzen Sie den Account
-          "waldorfwahlen@praktikum.click". Die Zugangsdaten finden Sie in der{" "}
-          <a href="/admin/help" target="_blank">
-            Hilfe
-          </a>{" "}
-          unter dem Abschnitt "E-Mails".
-        </p>
-
-        <mdui-text-field
-          label="SMTP-Server"
-          placeholder="z.B. smtp.gmail.com"
-          value={smtpConfig.server}
-          onInput={(e) =>
-            setSmtpConfig({
-              ...smtpConfig,
-              server: (e.target as HTMLInputElement).value,
-            })
-          }
-          required
-        ></mdui-text-field>
-
-        <p />
-
-        <mdui-text-field
-          label="Port"
-          placeholder="Standard: 587 (TLS) oder 465 (SSL)"
-          type="number"
-          value={smtpConfig.port?.toString() || "587"}
-          onInput={(e) =>
-            setSmtpConfig({
-              ...smtpConfig,
-              port: parseInt((e.target as HTMLInputElement).value, 10),
-            })
-          }
-          required
-        ></mdui-text-field>
-
-        <p />
-
-        <mdui-text-field
-          label="Benutzername"
-          placeholder="E-Mail-Adresse oder SMTP-Benutzername"
-          value={smtpConfig.username}
-          onInput={(e) =>
-            setSmtpConfig({
-              ...smtpConfig,
-              username: (e.target as HTMLInputElement).value,
-            })
-          }
-          required
-        ></mdui-text-field>
-
-        <p />
-
-        <mdui-text-field
-          label="Absender-E-Mail"
-          placeholder="E-Mail-Adresse des Absenders"
-          value={smtpConfig.from_address || ""}
-          onInput={(e) =>
-            setSmtpConfig({
-              ...smtpConfig,
-              from_address: (e.target as HTMLInputElement).value,
-            })
-          }
-          required
-        ></mdui-text-field>
-
-        <p />
-
-        <mdui-text-field
-          label="Passwort"
-          placeholder="SMTP-Passwort"
-          type="password"
-          value={smtpConfig.password}
-          onInput={(e) =>
-            setSmtpConfig({
-              ...smtpConfig,
-              password: (e.target as HTMLInputElement).value,
-            })
-          }
-          required
-        ></mdui-text-field>
-
-        <p />
-        <br />
-
-        <mdui-button
-          variant="filled"
-          onClick={() => setShowSmtpSettings(false)}
-          slot="action"
-        >
-          Schließen
-        </mdui-button>
-      </mdui-dialog>
-    );
-  }
-
   // Step 1: Student Selection
   if (step === "select") {
     const selectedCount = selectedStudents.size;
@@ -986,13 +830,6 @@ export default function Email() {
           }}
         >
           <h2>Empfänger auswählen</h2>
-          <mdui-button
-            variant="filled"
-            icon="settings"
-            onClick={() => setShowSmtpSettings(true)}
-          >
-            SMTP-Einstellungen
-          </mdui-button>
         </div>
 
         {/* Selection Actions */}
@@ -1421,7 +1258,7 @@ export default function Email() {
             variant="outlined"
             icon="mail"
             onClick={sendTestEmail}
-            disabled={sending || !smtpConfig.username || !smtpConfig.password}
+            disabled={sending}
           >
             Test-E-Mail senden
           </mdui-button>
@@ -1434,39 +1271,19 @@ export default function Email() {
             alignItems: "center",
           }}
         >
-          {!smtpConfig.username || !smtpConfig.password ? (
-            <mdui-fab
-              icon="settings"
-              style={{
-                position: "fixed",
-                right: "20px",
-                bottom: "20px",
-              }}
-              extended
-              onClick={() => setShowSmtpSettings(true)}
-            >
-              SMTP-Einstellungen
-            </mdui-fab>
-          ) : (
-            <mdui-fab
-              icon="send"
-              style={{
-                position: "fixed",
-                right: "20px",
-                bottom: "20px",
-              }}
-              extended
-              onClick={sendEmails}
-              disabled={
-                sending ||
-                !smtpConfig.username ||
-                !smtpConfig.password ||
-                !emailList
-              }
-            >
-              Senden
-            </mdui-fab>
-          )}
+          <mdui-fab
+            icon="send"
+            style={{
+              position: "fixed",
+              right: "20px",
+              bottom: "20px",
+            }}
+            extended
+            onClick={sendEmails}
+            disabled={sending}
+          >
+            Senden
+          </mdui-fab>
         </div>
       </div>
     );

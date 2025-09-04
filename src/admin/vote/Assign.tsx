@@ -14,8 +14,9 @@ import {
   useLoaderData,
   useNavigate,
 } from "react-router-dom";
-import { auth, db } from "../../firebase";
+import { auth, db, functions } from "../../firebase";
 import { getToken } from "firebase/app-check";
+import { httpsCallable } from "firebase/functions";
 
 interface VoteData extends DocumentData {
   id: string;
@@ -184,22 +185,12 @@ export default function Assign() {
         selectCount: vote.selectCount,
       };
 
-      const response = await fetch(
-        "https://api.chatwithsteiner.de/waldorfwahlen/assign",
-        {
-          method: "POST",
-          body: JSON.stringify(requestObject),
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
-      );
+      const response = await httpsCallable(functions, "assign")(requestObject);
 
-      if (!response.ok) {
-        throw new Error("Network response was not ok");
+      if (!response.data) {
+        throw new Error("No data in response");
       }
-
-      const data = await response.json();
+      const data = response.data as Record<string, string>;
 
       setResults(data);
       setChoicePoints(calculatedPoints);
@@ -678,10 +669,10 @@ export default function Assign() {
         <p />
         <div className="button-container">
           <mdui-button onClick={() => blocker.reset?.()} variant="text">
-            Zurück
+            Abbrechen
           </mdui-button>
           <mdui-button onClick={() => blocker.proceed?.()}>
-            Fortfahren
+            Verwerfen
           </mdui-button>
         </div>
       </mdui-dialog>
