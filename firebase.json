@@ -2,12 +2,10 @@
   "hosting": {
     "public": "dist",
     "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
-    "rewrites": [],
-    "redirects": [
+    "rewrites": [
       {
         "source": "**",
-        "destination": "https://wsp.beta.praktikum.click/",
-        "type": 301
+        "destination": "/index.html"
       }
     ]
   },

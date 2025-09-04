@@ -15,11 +15,10 @@ setTheme(localStorage.getItem("theme") || "dark");
 
 
 // Redirect everything to wsp.beta.praktikum.click/original-path
-// if (
-//   window.location.hostname !== "wsp.beta.praktikum.click") {
-//   const newUrl = `https://wsp.beta.praktikum.click${window.location.pathname}${window.location.search}`;
-//   window.location.replace(newUrl);
-// }
+if (window.location.hostname !== "wsp.beta.praktikum.click") {
+  const newUrl = `https://wsp.beta.praktikum.click${window.location.pathname}${window.location.search}`;
+  window.location.replace(newUrl);
+}
 
 
 
