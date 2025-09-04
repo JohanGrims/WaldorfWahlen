@@ -22,11 +22,11 @@ export default function Submitted() {
         </p>
         <p />
         <div className="button-container">
-          {urlParams.get("allowResubmission") ? (
+          {urlParams.has("a") ? (
             <mdui-button
               onClick={() => {
                 if (id) localStorage.removeItem(id);
-                navigate(`/v/${id}?allowResubmission=true`);
+                navigate(`/v/${id}?a=true`);
               }}
             >
               Erneut wählen

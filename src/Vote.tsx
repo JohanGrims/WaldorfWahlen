@@ -258,8 +258,8 @@ export default function Vote() {
   }
 
   function navigateToSubmitted() {
-    if (urlParams.get("allowResubmission")) {
-      navigate(`/x/${id}?allowResubmission=true`);
+    if (urlParams.has("a")) {
+      navigate(`/x/${id}?a=true`);
       return;
     }
     navigate(`/x/${id}`);
@@ -841,8 +841,8 @@ Vote.loader = async function loader({ params, request }: LoaderFunctionArgs) {
       localStorage.getItem(params.id) &&
       !new URL(request.url).searchParams.get("preview")
     ) {
-      if (new URL(request.url).searchParams.get("allowResubmission")) {
-        return redirect(`/x/${params.id}?allowResubmission=true`);
+      if (new URL(request.url).searchParams.get("a")) {
+        return redirect(`/x/${params.id}?a=true`);
       }
       return redirect(`/x/${params.id}`);
     }

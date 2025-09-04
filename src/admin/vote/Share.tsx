@@ -14,63 +14,141 @@ export default function Share() {
   const { vote } = useLoaderData() as { vote: Vote };
   const [allowResubmission, setAllowResubmission] = React.useState(false);
 
-  // Build URL
-  const url = allowResubmission
-    ? `${window.location.origin}/v/${id}?allowResubmission=true`
-    : `${window.location.origin}/v/${id}`;
+  // Styles grouped for readability
+  const styles: { [k: string]: React.CSSProperties } = {
+    container: { maxWidth: 500, margin: "0 auto", padding: 28 },
+    header: { textAlign: "center", marginBottom: 6 },
+    subtitle: { textAlign: "center", color: "#777", marginTop: 6 },
+    date: { textAlign: "center", fontSize: 14, color: "#666", marginTop: 8 },
+    centerCol: {
+      display: "flex",
+      flexDirection: "column",
+      alignItems: "center",
+      gap: 18,
+      marginTop: 14,
+    },
+    qrBox: {
+      background: "white",
+      padding: 18,
+      borderRadius: 10,
+      boxShadow: "0 6px 18px rgba(0,0,0,0.08)",
+    },
+    linkRow: { width: "100%", marginTop: 6 },
+    switchRow: { display: "flex", alignItems: "center", gap: 12 },
+    buttonsRow: {
+      display: "flex",
+      gap: 12,
+      marginTop: 12,
+      flexWrap: "wrap",
+      justifyContent: "center",
+    },
+  };
 
-  // PDF Export
-  const handleExportPDF = async () => {
+  const url = React.useMemo(() => {
+    if (!id) return window.location.origin;
+    return allowResubmission
+      ? `${window.location.origin}/v/${id}?a=true`
+      : `${window.location.origin}/v/${id}`;
+  }, [allowResubmission, id]);
+
+  const formatTs = React.useCallback((ts: any) => {
+    if (!ts) return "";
+    return moment
+      .tz(ts.seconds * 1000, "Europe/Berlin")
+      .format("DD.MM.YYYY HH:mm");
+  }, []);
+
+  const copyText = React.useCallback(
+    async (text: string, message = "Kopiert") => {
+      try {
+        await navigator.clipboard.writeText(text);
+        snackbar({ message });
+      } catch (err) {
+        snackbar({ message: "Kopieren fehlgeschlagen." });
+      }
+    },
+    []
+  );
+
+  const downloadQRCodePNG = React.useCallback(async () => {
+    const qrSvg = document.getElementById("qr-svg");
+    if (!qrSvg) {
+      snackbar({ message: "QR-Code nicht gefunden." });
+      return;
+    }
+    try {
+      const serializer = new XMLSerializer();
+      const svgString = serializer.serializeToString(qrSvg);
+      const canvas = document.createElement("canvas");
+      const bbox = qrSvg.getBoundingClientRect();
+      canvas.width = Math.max(180, Math.round(bbox.width || 180));
+      canvas.height = Math.max(180, Math.round(bbox.height || 180));
+      const ctx = canvas.getContext("2d");
+      if (!ctx) throw new Error("Canvas konnte nicht erstellt werden.");
+      const canvgInstance = await Canvg.fromString(ctx, svgString);
+      await canvgInstance.render();
+      canvas.toBlob((blob) => {
+        if (!blob) {
+          snackbar({ message: "PNG konnte nicht erzeugt werden." });
+          return;
+        }
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = "qrcode.png";
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        snackbar({ message: "PNG erfolgreich heruntergeladen." });
+      }, "image/png");
+    } catch (err) {
+      snackbar({ message: "Fehler beim Exportieren des QR-Codes." });
+    }
+  }, []);
+
+  const handleExportPDF = React.useCallback(async () => {
     const doc = new jsPDF({
       orientation: "portrait",
       unit: "mm",
       format: "a4",
     });
     const pageWidth = doc.internal.pageSize.getWidth();
-    let y = 32; // More top padding
-    // Title
-    doc.setFontSize(30);
+    let y = 32;
+
+    doc.setFontSize(28);
     doc.setTextColor(33, 33, 33);
     doc.text(vote.title || "Wahl teilen", pageWidth / 2, y, {
       align: "center",
     });
-    y += 16;
-    // Description
+    y += 14;
+
     if (vote.description) {
-      doc.setFontSize(18);
+      doc.setFontSize(16);
       doc.setTextColor(100, 100, 100);
       doc.text(vote.description, pageWidth / 2, y, {
         align: "center",
-        maxWidth: pageWidth - 40,
+        maxWidth: pageWidth - 48,
       });
       y += 18;
     }
-    // Space between description and dates
-    y += 2;
-    // Date range
+
     if (vote.startTime && vote.endTime) {
-      const start = moment
-        .tz(vote.startTime.seconds * 1000, "Europe/Berlin")
-        .format("DD.MM.YYYY HH:mm");
-      const end = moment
-        .tz(vote.endTime.seconds * 1000, "Europe/Berlin")
-        .format("DD.MM.YYYY HH:mm");
-      doc.setFontSize(16);
+      const start = formatTs(vote.startTime);
+      const end = formatTs(vote.endTime);
+      doc.setFontSize(14);
       doc.setTextColor(60, 60, 60);
       doc.text(`Abgabe: ${start} bis ${end}`, pageWidth / 2, y, {
         align: "center",
       });
-      y += 16;
+      y += 14;
     }
-    // QR code
+
     const qrSvg = document.getElementById("qr-svg");
     if (qrSvg) {
       try {
         const serializer = new XMLSerializer();
         const svgString = serializer.serializeToString(qrSvg);
         const canvas = document.createElement("canvas");
-        // Big QR code
-        const qrSize = 80; // mm
+        const qrSize = 80; // mm in PDF
         canvas.width = 400;
         canvas.height = 400;
         const ctx = canvas.getContext("2d");
@@ -78,7 +156,6 @@ export default function Share() {
         const canvgInstance = await Canvg.fromString(ctx, svgString);
         await canvgInstance.render();
         const imgData = canvas.toDataURL("image/png");
-        // Center QR code
         doc.addImage(
           imgData,
           "PNG",
@@ -87,24 +164,21 @@ export default function Share() {
           qrSize,
           qrSize
         );
-        y += qrSize + 6; // Less space under QR
-        // Link under QR code
-        doc.setFontSize(16);
+        y += qrSize + 6;
+        doc.setFontSize(12);
         doc.setTextColor(80, 80, 80);
         doc.text(url, pageWidth / 2, y, {
           align: "center",
           maxWidth: pageWidth - 40,
         });
-        y += 10; // Less space under link
-        // Gray info text
-        doc.setFontSize(14);
+        y += 10;
+        doc.setFontSize(12);
         doc.setTextColor(150, 150, 150);
         doc.text("Scannen zum Teilnehmen an der Wahl", pageWidth / 2, y, {
           align: "center",
         });
-        // Footer
         const footerY = doc.internal.pageSize.getHeight() - 18;
-        doc.setFontSize(11);
+        doc.setFontSize(10);
         doc.setTextColor(120, 120, 120);
         const userEmail = auth.currentUser?.email || "";
         const dateStr = new Date().toLocaleDateString();
@@ -122,42 +196,25 @@ export default function Share() {
     } else {
       doc.save("wahl-info.pdf");
     }
-  };
+  }, [vote, url, formatTs]);
 
   return (
-    <div style={{ maxWidth: 500, margin: "0 auto", padding: 24 }}>
-      <h2 style={{ textAlign: "center" }}>{vote.title || "Wahl teilen"}</h2>
-      {vote.description && (
-        <p style={{ textAlign: "center", color: "#555" }}>{vote.description}</p>
-      )}
+    <div style={styles.container}>
+      <h2 style={styles.header}>{vote.title || "Wahl teilen"}</h2>
+      {vote.description && <p style={styles.subtitle}>{vote.description}</p>}
       {vote.startTime && vote.endTime && (
-        <p style={{ textAlign: "center", fontSize: 14 }}>
-          Abgabe vom:{" "}
-          <b>
-            {moment
-              .tz(vote.startTime.seconds * 1000, "Europe/Berlin")
-              .format("DD.MM.YYYY HH:mm")}
-          </b>{" "}
-          bis{" "}
-          <b>
-            {moment
-              .tz(vote.endTime.seconds * 1000, "Europe/Berlin")
-              .format("DD.MM.YYYY HH:mm")}
-          </b>
+        <p style={styles.date}>
+          Abgabe vom: <b>{formatTs(vote.startTime)}</b> bis{" "}
+          <b>{formatTs(vote.endTime)}</b>
         </p>
       )}
-      <div
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          gap: 16,
-        }}
-      >
-        <div style={{ background: "white", padding: 16, borderRadius: 8 }}>
-          <QRCode id="qr-svg" value={url} size={180} />
+
+      <div style={styles.centerCol}>
+        <div style={styles.qrBox}>
+          <QRCode id="qr-svg" value={url} size={200} />
         </div>
-        <div style={{ width: "100%", marginTop: 8 }}>
+
+        <div style={styles.linkRow}>
           <mdui-text-field
             label="Wahl-Link"
             value={url}
@@ -167,22 +224,44 @@ export default function Share() {
             <mdui-button-icon
               slot="end-icon"
               icon="content_copy"
-              onClick={() => {
-                navigator.clipboard.writeText(url).then(() => {
-                  snackbar({ message: "Link kopiert" });
-                });
-              }}
+              onClick={() => copyText(url, "Link kopiert")}
             />
           </mdui-text-field>
         </div>
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 12,
-            marginTop: 12,
-          }}
-        >
+
+        <div style={styles.buttonsRow}>
+          <mdui-button
+            icon="image"
+            style={styles.actionButton}
+            onClick={downloadQRCodePNG}
+          >
+            QR-Code
+          </mdui-button>
+
+          <mdui-button
+            icon="picture_as_pdf"
+            style={styles.actionButton}
+            onClick={handleExportPDF}
+          >
+            PDF
+          </mdui-button>
+
+          <mdui-button
+            icon="share"
+            style={styles.actionButton}
+            onClick={() => {
+              if (navigator.share) {
+                navigator.share({ title: "Wahl", text: url });
+              } else {
+                copyText(url, "Link kopiert (Teilen nicht unterstützt)");
+              }
+            }}
+          >
+            Teilen
+          </mdui-button>
+        </div>
+
+        <div style={styles.switchRow}>
           <mdui-switch
             checked={allowResubmission}
             onChange={(e) =>
@@ -193,71 +272,6 @@ export default function Share() {
           <span style={{ fontWeight: 500 }}>
             Nutzern erlauben, mehrfach eine Wahl abzugeben
           </span>
-        </div>
-        <div style={{ display: "flex", gap: 12, marginTop: 18 }}>
-          <mdui-button
-            icon="download"
-            onClick={async () => {
-              const qrSvg = document.getElementById("qr-svg");
-              if (!qrSvg) {
-                snackbar({ message: "QR-Code nicht gefunden." });
-                return;
-              }
-              try {
-                const serializer = new XMLSerializer();
-                const svgString = serializer.serializeToString(qrSvg);
-                const canvas = document.createElement("canvas");
-                // Set canvas size to SVG size
-                const bbox = qrSvg.getBoundingClientRect();
-                canvas.width = bbox.width || 180;
-                canvas.height = bbox.height || 180;
-                const ctx = canvas.getContext("2d");
-                if (!ctx) {
-                  snackbar({ message: "Canvas konnte nicht erstellt werden." });
-                  return;
-                }
-                // Use canvg to render SVG to canvas
-                const canvgInstance = await Canvg.fromString(ctx, svgString);
-                await canvgInstance.render();
-                canvas.toBlob((blob) => {
-                  if (!blob) {
-                    snackbar({ message: "PNG konnte nicht erzeugt werden." });
-                    return;
-                  }
-                  const link = document.createElement("a");
-                  link.href = URL.createObjectURL(blob);
-                  link.download = "qrcode.png";
-                  document.body.appendChild(link);
-                  link.click();
-                  document.body.removeChild(link);
-                  snackbar({ message: "PNG erfolgreich heruntergeladen." });
-                }, "image/png");
-              } catch (err) {
-                snackbar({ message: "Fehler beim Exportieren des QR-Codes." });
-              }
-            }}
-          >
-            QR-Code als PNG
-          </mdui-button>
-          <mdui-button icon="picture_as_pdf" onClick={handleExportPDF}>
-            PDF exportieren
-          </mdui-button>
-          <mdui-button
-            icon="share"
-            onClick={() => {
-              if (navigator.share) {
-                navigator.share({ title: "Wahl", text: url });
-              } else {
-                navigator.clipboard.writeText(url).then(() => {
-                  snackbar({
-                    message: "Link kopiert (Teilen nicht unterstützt)",
-                  });
-                });
-              }
-            }}
-          >
-            Teilen
-          </mdui-button>
         </div>
       </div>
     </div>

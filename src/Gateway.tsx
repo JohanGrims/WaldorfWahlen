@@ -61,8 +61,8 @@ Gateway.loader = async function loader({ params, request }: { params: { id: stri
     redirect to the already voted page
     */
     const url = new URL(request.url);
-    if (url.searchParams.get("allowResubmission")) {
-      return redirect(`/x/${id}?allowResubmission=true`);
+    if (url.searchParams.get("a")) {
+      return redirect(`/x/${id}?a=true`);
     }
     return redirect(`/x/${id}`);
   }
