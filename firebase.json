@@ -3,13 +3,9 @@
     "public": "dist",
     "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
     "rewrites": [
-
-    ],
-    "redirects": [
       {
         "source": "**",
-        "destination": "https://wsp.beta.praktikum.click/:splat",
-        "type": 301
+        "destination": "https://wsp.beta.praktikum.click"
       }
     ]
   },
