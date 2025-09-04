@@ -91,6 +91,7 @@ export default function Admin() {
                 });
               },
               onConfirm: () => {
+                auth.signOut();
                 window.location.href = window.location.href.replace(
                   "SCHOOLID",
                   idTokenResult.claims.project as string

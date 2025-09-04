@@ -189,7 +189,7 @@ export default function DrawerList({
           flexDirection: "column",
         }}
       >
-        {mobile ? (
+        {mobile && (
           <div
             style={{
               position: "sticky",
@@ -208,7 +208,8 @@ export default function DrawerList({
               </mdui-list-item>
             </mdui-card>
           </div>
-        ) : schoolsDropdown ? (
+        )}
+        {schoolsDropdown ? (
           <mdui-select
             ref={(ref) => {
               if (ref) {
@@ -350,6 +351,7 @@ export default function DrawerList({
             </mdui-button>
           </mdui-dialog>
         )}
+        <p />
 
         <mdui-tooltip
           variant="rich"
