@@ -847,6 +847,29 @@ export default function Vote() {
   );
 }
 
+// Helper function to generate a secure random string for the code verifier
+function generateCodeVerifier() {
+  const possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~';
+  let text = '';
+  for (let i = 0; i < 128; i++) {
+    text += possible.charAt(Math.floor(Math.random() * possible.length));
+  }
+  return text;
+}
+
+// Helper function to create the code challenge from the code verifier
+async function generateCodeChallenge(codeVerifier: string) {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(codeVerifier);
+  const digest = await window.crypto.subtle.digest('SHA-256', data);
+
+  // Base64Url encode the digest
+  return btoa(String.fromCharCode(...new Uint8Array(digest)))
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=+$/, '');
+}
+
 Vote.loader = async function loader({ params, request }: LoaderFunctionArgs) {
   let accessToken = null;
   let userInfo = null;
@@ -907,7 +930,11 @@ Vote.loader = async function loader({ params, request }: LoaderFunctionArgs) {
     // Check if .oauth config is present
     if (schoolData?.oauth?.enabled && !preview) {
       const code = new URL(request.url).searchParams.get("code");
-      if (code) {
+      
+      // Get the code verifier from storage
+      const codeVerifier = localStorage.getItem('pkce_code_verifier');
+      
+      if (code && codeVerifier) {
         // Exchange code for access token
         const tokenResponse = await fetch(schoolData.oauth.tokenEndpoint, {
           method: "POST",
@@ -919,12 +946,17 @@ Vote.loader = async function loader({ params, request }: LoaderFunctionArgs) {
             client_id: schoolData.oauth.clientId,
             redirect_uri: `${window.location.origin}${window.location.pathname}`,
             grant_type: "authorization_code",
+            // Include the code verifier here
+            code_verifier: codeVerifier,
           }),
         });
 
         const tokenData = await tokenResponse.json();
         console.log("Token Data:", tokenData);
         accessToken = tokenData;
+        
+        // Remove code verifier from storage after use
+        localStorage.removeItem('pkce_code_verifier');
 
         if (accessToken) {
           // Fetch user info
@@ -944,6 +976,13 @@ Vote.loader = async function loader({ params, request }: LoaderFunctionArgs) {
         }
       } else {
         // If no code is present, redirect to OAuth authorization URL
+        // Generate and store the code verifier
+        const codeVerifier = generateCodeVerifier();
+        localStorage.setItem('pkce_code_verifier', codeVerifier);
+        
+        // Generate the code challenge
+        const codeChallenge = await generateCodeChallenge(codeVerifier);
+        
         const authUrl = new URL(schoolData.oauth.authorizeEndpoint);
         authUrl.searchParams.set("response_type", "code");
         authUrl.searchParams.set("client_id", schoolData.oauth.clientId);
@@ -953,6 +992,9 @@ Vote.loader = async function loader({ params, request }: LoaderFunctionArgs) {
         );
         authUrl.searchParams.set("scope", "openid profile email");
         authUrl.searchParams.set("state", params.id || "");
+        // Add PKCE parameters to the URL
+        authUrl.searchParams.set("code_challenge", codeChallenge);
+        authUrl.searchParams.set("code_challenge_method", "S256");
 
         console.log("Redirecting to OAuth URL:", authUrl.toString());
 
