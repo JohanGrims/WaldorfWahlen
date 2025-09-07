@@ -95,6 +95,13 @@ async function uploadDocument(
 ): Promise<void> {
   console.log(`Uploading document: ${docRef.path}`);
 
+  // Check if the document already exists
+  const docSnapshot = await docRef.get();
+  if (docSnapshot.exists) {
+    console.log(`  Document ${docRef.path} already exists. Skipping upload.`);
+    return;
+  }
+
   // Separate document fields from subcollections
   const documentFields: any = {};
   const subcollections: { [key: string]: any } = {};

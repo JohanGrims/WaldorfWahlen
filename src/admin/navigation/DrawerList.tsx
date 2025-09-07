@@ -253,9 +253,7 @@ export default function DrawerList({
             </mdui-menu-item>
           </mdui-select>
         ) : (
-          <mdui-list-item disabled>
-            <mdui-list-item-content>{schoolData?.name}</mdui-list-item-content>
-          </mdui-list-item>
+          <mdui-list-item disabled>{schoolData?.name}</mdui-list-item>
         )}
         {loading && <mdui-linear-progress></mdui-linear-progress>}
 
@@ -381,7 +379,7 @@ export default function DrawerList({
               end-icon="expand_more"
               slot="header"
             >
-              <mdui-list-item-content>Laufende Wahlen</mdui-list-item-content>
+              Laufende Wahlen
             </mdui-list-item>
             <div style={{ padding: "0 1rem" }}>
               {loading ? (
@@ -421,7 +419,7 @@ export default function DrawerList({
               end-icon="expand_more"
               slot="header"
             >
-              <mdui-list-item-content>Geplante Wahlen</mdui-list-item-content>
+              Geplante Wahlen
             </mdui-list-item>
             <div style={{ padding: "0 1rem" }}>
               {loading ? (
@@ -461,7 +459,7 @@ export default function DrawerList({
               end-icon="expand_more"
               slot="header"
             >
-              <mdui-list-item-content>Beendete Wahlen</mdui-list-item-content>
+              Beendete Wahlen
             </mdui-list-item>
             <div style={{ padding: "0 1rem" }}>
               {loading ? (

@@ -84,6 +84,11 @@ async function backupFirestore() {
 
   console.log(`Processing ${collections.length} collections...`);
   for (const colName of collections) {
+    if (colName === "schools") {
+      console.log(`Skipping collection: ${colName}`);
+      continue;
+    }
+
     console.log(`\n--- Processing collection: ${colName} ---`);
     backup[colName] = {};
     const colRef = db.collection(colName);

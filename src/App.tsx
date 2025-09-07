@@ -125,7 +125,7 @@ function App() {
               end-icon="expand_more"
               slot="header"
             >
-              <mdui-list-item-content>Geplante Wahlen</mdui-list-item-content>
+              Geplante Wahlen
             </mdui-list-item>
             <div style={{ padding: "0 1rem" }}>
               <>
@@ -157,7 +157,7 @@ function App() {
               end-icon="expand_more"
               slot="header"
             >
-              <mdui-list-item-content>Beendete Wahlen</mdui-list-item-content>
+              Beendete Wahlen
             </mdui-list-item>
             <div style={{ padding: "0 1rem" }}>
               <>
