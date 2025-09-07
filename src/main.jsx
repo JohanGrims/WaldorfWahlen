@@ -156,6 +156,19 @@ const routes = [
                 },
               },
               {
+                path: "power",
+                lazy: async () => {
+                  const module = await import(
+                    /* webpackChunkName: "Power" */
+                    "./admin/Power"
+                  );
+                  return {
+                    loader: module.default.loader,
+                    Component: module.default,
+                  };
+                },
+              },
+              {
                 path: "new",
                 lazy: async () => {
                   const module = await import(

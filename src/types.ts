@@ -24,6 +24,7 @@ export type Vote = {
   description?: string;
   startTime?: { seconds: number; nanoseconds: number };
   endTime?: { seconds: number; nanoseconds: number };
+  schoolId?: string;
 };
 
 export type Student = {

@@ -365,7 +365,7 @@ export default function DrawerList({
         </mdui-tooltip>
 
         <DrawerItem
-          active={active === undefined}
+          active={active === undefined || active === "power"}
           title={"Dashboard"}
           icon={"home"}
           onClick={() => navigateTo("/admin")}

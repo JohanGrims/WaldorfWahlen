@@ -1134,20 +1134,24 @@ export default function Edit() {
 Edit.loader = async function loader({ params }: LoaderFunctionArgs) {
   try {
     const { id } = params;
-    const vote = await getDoc(doc(db, `/votes/${id}`));
+    const vote = await getDoc(doc(db, `schools/SCHOOLID/votes/${id}`));
 
     if (!vote.exists()) {
       throw new Error(`Vote with id ${id} not found`);
     }
 
     const voteData = { id, ...vote.data() };
-    const options = await getDocs(collection(db, `/votes/${id}/options`));
+    const options = await getDocs(
+      collection(db, `schools/SCHOOLID/votes/${id}/options`)
+    );
     const optionData = options.docs.map((doc) => ({
       id: doc.id,
       ...doc.data(),
     }));
 
-    const proposals = await getDocs(collection(db, `/votes/${id}/proposals`));
+    const proposals = await getDocs(
+      collection(db, `schools/SCHOOLID/votes/${id}/proposals`)
+    );
     const proposalData = proposals.docs.map((doc) => ({
       id: doc.id,
       ...doc.data(),

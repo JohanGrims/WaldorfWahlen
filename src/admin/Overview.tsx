@@ -1,8 +1,8 @@
 import { collection, getDocs, Timestamp } from "firebase/firestore";
 import moment from "moment-timezone";
-import { useLoaderData, useNavigate } from "react-router-dom";
-import { db } from "../firebase";
-
+import { redirect, useLoaderData, useNavigate } from "react-router-dom";
+import { auth, db } from "../firebase";
+import React from "react";
 interface VoteData {
   id: string;
   title: string;
@@ -19,6 +19,22 @@ export default function Overview() {
   const { votes } = useLoaderData() as LoaderData;
 
   const navigate = useNavigate();
+
+  const [isAdmin, setIsAdmin] = React.useState(false);
+
+  React.useEffect(() => {
+    auth.currentUser?.getIdTokenResult().then((idTokenResult) => {
+      const claims = idTokenResult.claims;
+      if (claims.role === "admin") {
+        setIsAdmin(true);
+        navigate("/admin/power");
+      }
+    });
+  }, []);
+
+  if (isAdmin) {
+    redirect("/admin/power");
+  }
 
   return (
     <div className="mdui-prose" style={{ width: "100%" }}>
