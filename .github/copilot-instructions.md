@@ -1,6 +1,6 @@
 # WaldorfWahlen Development Instructions
 
-WaldorfWahlen is a React/TypeScript web application for managing project voting/elections at Waldorf School Potsdam. The application uses Vite as the build tool, Firebase for backend services (authentication, Firestore database, hosting), and includes a Python Flask component for assignment optimization algorithms.
+WaldorfWahlen is a React/TypeScript web application for managing project voting/elections at Waldorfschools. The application uses Vite as the build tool, Firebase for backend services (authentication, Firestore database, hosting), and includes a Python Flask component for assignment optimization algorithms.
 
 Always reference these instructions first and fallback to search or bash commands only when you encounter unexpected information that does not match the info here.
 

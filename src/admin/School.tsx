@@ -42,7 +42,7 @@ export default function School() {
       confirmText: "Erstellen",
       cancelText: "Abbrechen",
       textFieldOptions: {
-        placeholder: "nutzer@waldorfschule-potsdam.de",
+        placeholder: "nutzer@meine-schule.de",
       },
       onConfirm: async (email: string) => {
         const usersResult = await httpsCallable(

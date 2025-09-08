@@ -83,7 +83,7 @@ export default function Login() {
       cancelText: "Abbrechen",
       closeOnOverlayClick: true,
       textFieldOptions: {
-        placeholder: "nutzer@waldorfschule-potsdam.de",
+        placeholder: "nutzer@meine-schule.de",
         type: "email",
         label: "Email",
       },
@@ -129,7 +129,7 @@ export default function Login() {
         <form onSubmit={handleLogin}>
           <mdui-text-field
             type="email"
-            placeholder="nutzer@waldorfschule-potsdam.de"
+            placeholder="nutzer@meine-schule.de"
             label="Email"
             name="email"
             required
