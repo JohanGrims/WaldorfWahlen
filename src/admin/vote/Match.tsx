@@ -979,7 +979,9 @@ export default function Match() {
 
 Match.loader = async function loader({ params }: LoaderFunctionArgs) {
   const { id } = params;
-  const choices = await getDocs(collection(db, `/votes/${id}/choices`));
+  const choices = await getDocs(
+    collection(db, `schools/SCHOOLID/votes/${id}/choices`)
+  );
   const choiceData = choices.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
 
   const classes = await getDocs(collection(db, `/schools/SCHOOLID/class`));
