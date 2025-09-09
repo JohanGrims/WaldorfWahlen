@@ -5,7 +5,6 @@ import {
   getDocs,
   setDoc,
   DocumentData,
-  Timestamp,
 } from "firebase/firestore";
 import {
   LoaderFunctionArgs,
@@ -1578,22 +1577,22 @@ export default function Results() {
 
 Results.loader = async function loader({ params }: LoaderFunctionArgs) {
   const { id } = params as { id: string };
-  const vote = await getDoc(doc(db, `/votes/${id}`));
+  const vote = await getDoc(doc(db, `schools/SCHOOLID/votes/${id}`));
   const voteData = { id, ...vote.data() } as VoteData;
   const options = (
-    await getDocs(collection(db, `/votes/${id}/options`))
+    await getDocs(collection(db, `schools/SCHOOLID/votes/${id}/options`))
   ).docs.map((doc) => {
     return { id: doc.id, ...doc.data() };
   }) as OptionData[];
 
   const results = (
-    await getDocs(collection(db, `/votes/${id}/results`))
+    await getDocs(collection(db, `schools/SCHOOLID/votes/${id}/results`))
   ).docs.map((doc) => {
     return { id: doc.id, ...doc.data() };
   }) as ResultData[];
 
   const choices = (
-    await getDocs(collection(db, `/votes/${id}/choices`))
+    await getDocs(collection(db, `schools/SCHOOLID/votes/${id}/choices`))
   ).docs.map((doc) => {
     return { id: doc.id, ...doc.data() };
   }) as ChoiceData[];

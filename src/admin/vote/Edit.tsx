@@ -294,7 +294,7 @@ export default function Edit() {
   async function update() {
     try {
       await setDoc(
-        doc(db, "/votes", vote.id),
+        doc(db, "schools/SCHOOLID/votes", vote.id),
         {
           title,
           description: description || "",
@@ -315,17 +315,22 @@ export default function Edit() {
           cancelText: "Abbrechen",
           confirmText: "Trotzdem löschen",
           onConfirm: async () => {
-            await deleteDoc(doc(db, `/votes/${vote.id}/options/${opt.id}`));
+            await deleteDoc(
+              doc(db, `schools/SCHOOLID/votes/${vote.id}/options/${opt.id}`)
+            );
           },
         })
       );
       const optionsPromises = options.map(async (e) => {
-        return setDoc(doc(db, `/votes/${vote.id}/options/${e.id}`), {
-          title: e.title,
-          max: e.max,
-          teacher: e.teacher,
-          description: e.description,
-        });
+        return setDoc(
+          doc(db, `schools/SCHOOLID/votes/${vote.id}/options/${e.id}`),
+          {
+            title: e.title,
+            max: e.max,
+            teacher: e.teacher,
+            description: e.description,
+          }
+        );
       });
 
       await Promise.all([...optionsPromises]);
@@ -477,7 +482,10 @@ export default function Edit() {
       onConfirm: async () => {
         try {
           await deleteDoc(
-            doc(db, `/votes/${vote.id}/proposals/${proposal.id}`)
+            doc(
+              db,
+              `schools/SCHOOLID/votes/${vote.id}/proposals/${proposal.id}`
+            )
           );
           setProposals((proposals) =>
             proposals.filter((p) => p.id !== proposal.id)

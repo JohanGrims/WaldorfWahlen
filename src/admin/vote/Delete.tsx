@@ -13,7 +13,7 @@ export default function Delete() {
 
   function deleteVote() {
     if (!id) return;
-    deleteDoc(doc(db, "/votes", id))
+    deleteDoc(doc(db, `schools/SCHOOLID/votes`, id))
       .then(() => {
         snackbar({ message: "Wahl gelöscht." });
         navigate("/admin");

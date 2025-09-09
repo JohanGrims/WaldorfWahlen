@@ -95,7 +95,7 @@ export default function Add() {
 
   async function saveChoice() {
     setSaving(true);
-    addDoc(collection(db, `/votes/${vote.id}/choices`), {
+    addDoc(collection(db, `schools/SCHOOLID/votes/${vote.id}/choices`), {
       name,
       grade,
       listIndex,
@@ -332,23 +332,29 @@ export default function Add() {
 
 Add.loader = async function loader({ params }: LoaderFunctionArgs) {
   const { id } = params;
-  const vote = await getDoc(doc(db, `/votes/${id}`));
+  const vote = await getDoc(doc(db, `schools/SCHOOLID/votes/${id}`));
   if (!vote.exists()) {
     throw new Response("Seite nicht gefunden", { status: 404 });
   }
   const voteData = { id: vote.id, ...vote.data() };
 
-  const choices = await getDocs(collection(db, `/votes/${id}/choices`));
+  const choices = await getDocs(
+    collection(db, `schools/SCHOOLID/votes/${id}/choices`)
+  );
   const choiceData = choices.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
 
-  const options = await getDocs(collection(db, `/votes/${id}/options`));
+  const options = await getDocs(
+    collection(db, `schools/SCHOOLID/votes/${id}/options`)
+  );
   const optionData = options.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
 
-  const results = await getDocs(collection(db, `/votes/${id}/results`));
+  const results = await getDocs(
+    collection(db, `schools/SCHOOLID/votes/${id}/results`)
+  );
   const resultData = results.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
 
   // get student database
-  const classes = await getDocs(collection(db, `/class`));
+  const classes = await getDocs(collection(db, `schools/SCHOOLID/class`));
   const classesData = classes.docs.map((doc) => ({
     id: doc.id,
     ...doc.data(),
