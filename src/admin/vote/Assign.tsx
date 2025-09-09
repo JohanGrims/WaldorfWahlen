@@ -1376,22 +1376,28 @@ export default function Assign() {
 Assign.loader = async function loader({ params }: LoaderFunctionArgs) {
   const { id } = params as { id: string };
 
-  const vote = await getDoc(doc(db, `/votes/${id}`));
+  const vote = await getDoc(doc(db, `schools/SCHOOLID/votes/${id}`));
   const voteData = { id: vote.id, ...vote.data() } as VoteData;
 
-  const choices = await getDocs(collection(db, `/votes/${id}/choices`));
+  const choices = await getDocs(
+    collection(db, `schools/SCHOOLID/votes/${id}/choices`)
+  );
   const choiceData = choices.docs.map((doc) => ({
     id: doc.id,
     ...doc.data(),
   })) as ChoiceData[];
 
-  const options = await getDocs(collection(db, `/votes/${id}/options`));
+  const options = await getDocs(
+    collection(db, `schools/SCHOOLID/votes/${id}/options`)
+  );
   const optionData = options.docs.map((doc) => ({
     id: doc.id,
     ...doc.data(),
   })) as OptionData[];
 
-  const results = await getDocs(collection(db, `/votes/${id}/results`));
+  const results = await getDocs(
+    collection(db, `schools/SCHOOLID/votes/${id}/results`)
+  );
   const resultsData = results.docs.map((doc) => ({
     id: doc.id,
     ...doc.data(),
