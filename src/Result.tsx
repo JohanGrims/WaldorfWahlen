@@ -68,7 +68,9 @@ export default function Result() {
       }
 
       if (choiceId) {
-        getDoc(doc(db, `/votes/${id}/results/${choiceId}`)).then((docSnap) => {
+        getDoc(
+          doc(db, `schools/SCHOOLID/votes/${id}/results/${choiceId}`)
+        ).then((docSnap) => {
           if (docSnap.exists()) {
             setVoteResult(docSnap.data() as VoteResultData);
           }
@@ -198,9 +200,11 @@ export default function Result() {
 
 export async function loader({ params }: { params: { id: string } }) {
   const { id } = params;
-  const vote = (await getDoc(doc(db, `/votes/${id}`))).data() as VoteData;
+  const vote = (
+    await getDoc(doc(db, `schools/SCHOOLID/votes/${id}`))
+  ).data() as VoteData;
   const options = (
-    await getDocs(collection(db, `/votes/${id}/options`))
+    await getDocs(collection(db, `schools/SCHOOLID/votes/${id}/options`))
   ).docs.map((doc) => {
     return { id: doc.id, ...doc.data() };
   }) as OptionData[];
