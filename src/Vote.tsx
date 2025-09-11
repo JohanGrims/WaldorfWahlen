@@ -837,7 +837,10 @@ export default function Vote() {
           {Array.from({ length: selectCount }).map((_, index) => (
             <CheckItem
               key={index}
-              label={`${index + 1}. Wahl`}
+              label={`${index + 1}. Wahl (${
+                options.find((o) => o.id === selected[index])?.title ||
+                "keine Wahl"
+              })`}
               checked={selected[index] !== "null"}
             />
           ))}

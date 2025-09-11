@@ -35,7 +35,7 @@ interface OptionData extends DocumentData {
 interface AnswerData extends DocumentData {
   id: string;
   name: string;
-  grade: number | string;
+  grade: number; // Changed from string to number
   listIndex: number | string;
   selected: string[];
   extraFields?: string[];
@@ -248,7 +248,7 @@ export default function Answers() {
                 const updatedAnswer: AnswerData = {
                   ...editingAnswer,
                   name: formData.get("name") as string,
-                  grade: formData.get("grade") as string,
+                  grade: parseInt(formData.get("grade") as string), // Ensure grade is parsed as a number
                   listIndex: parseInt(formData.get("listIndex") as string),
                   selected: Array.from(
                     { length: vote.selectCount },
