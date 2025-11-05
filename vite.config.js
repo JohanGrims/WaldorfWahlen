@@ -2,65 +2,64 @@ import react from "@vitejs/plugin-react";
 import { visualizer } from "rollup-plugin-visualizer";
 import { defineConfig } from "vite";
 import momentTimezonePlugin from "vite-plugin-moment-timezone";
-import { manualChunksPlugin } from "vite-plugin-webpackchunkname";
 import { readFileSync } from "fs";
 import { join } from "path";
 
 // Custom plugin for SCHOOLID replacement in dev server
 function schoolIdReplacementPlugin() {
-  let lastSchoolId = '';
-  
+  let lastSchoolId = "";
+
   return {
-    name: 'schoolid-replacement',
+    name: "schoolid-replacement",
     configureServer(server) {
       server.middlewares.use((req, res, next) => {
         const forwardedHost = req.headers["x-forwarded-host"];
         const host = req.headers["host"];
-        
+
         const hostname = forwardedHost || host || "SCHOOLID";
         const schoolId = hostname.split(".")[0] || "SCHOOLID";
-        
+
         // If school ID changed, invalidate all modules to force re-transform
         if (schoolId !== lastSchoolId) {
           lastSchoolId = schoolId;
-          
+
           // Clear the module cache to force retransformation
           const moduleGraph = server.moduleGraph;
           for (const [url, mod] of moduleGraph.urlToModuleMap) {
-            if (mod.file && mod.file.includes('src/')) {
+            if (mod.file && mod.file.includes("src/")) {
               moduleGraph.invalidateModule(mod);
             }
           }
-          
+
           // Send full reload to browser
           server.ws.send({
-            type: 'full-reload'
+            type: "full-reload",
           });
         }
-        
+
         // Store current school ID globally
         global.currentSchoolId = schoolId;
-        
+
         next();
       });
     },
     transform(code, id) {
       // Only transform source files (not node_modules)
-      if (id.includes('node_modules')) return;
-      
+      if (id.includes("node_modules")) return;
+
       // Only transform files that contain SCHOOLID
-      if (code.includes('SCHOOLID')) {
+      if (code.includes("SCHOOLID")) {
         const schoolId = global.currentSchoolId || "SCHOOLID";
-        
+
         // Simple replacement: replace every SCHOOLID with the actual schoolId value
         let transformedCode = code.replace(/SCHOOLID/g, schoolId);
-        
+
         return {
           code: transformedCode,
-          map: null
+          map: null,
         };
       }
-    }
+    },
   };
 }
 
@@ -103,7 +102,6 @@ export default defineConfig({
   plugins: [
     react(),
     schoolIdReplacementPlugin(), // Add the custom plugin
-    manualChunksPlugin(),
     momentTimezonePlugin({
       zones: ["Europe/Berlin"],
       startYear: 2020,
