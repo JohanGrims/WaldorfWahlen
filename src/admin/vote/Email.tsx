@@ -438,14 +438,15 @@ export default function Email() {
   };
 
   const selectAllVoters = () => {
-    const participantListIndexes = new Set(
-      choices.map((choice) => choice.listIndex)
+    const participantKeys = new Set(
+      choices.map((choice) => `${choice.grade}-${choice.listIndex}`)
     );
     const newSelected = new Set<string>();
 
     classes.forEach((cls) => {
       cls.students.forEach((student) => {
-        if (student.email && participantListIndexes.has(student.listIndex)) {
+        const studentKey = `${cls.grade}-${student.listIndex}`;
+        if (student.email && participantKeys.has(studentKey)) {
           newSelected.add(`${cls.id}-${student.listIndex}`);
         }
       });
@@ -455,14 +456,15 @@ export default function Email() {
   };
 
   const selectAllNonVoters = () => {
-    const participantListIndexes = new Set(
-      choices.map((choice) => choice.listIndex)
+    const participantKeys = new Set(
+      choices.map((choice) => `${choice.grade}-${choice.listIndex}`)
     );
     const newSelected = new Set<string>();
 
     classes.forEach((cls) => {
       cls.students.forEach((student) => {
-        if (student.email && !participantListIndexes.has(student.listIndex)) {
+        const studentKey = `${cls.grade}-${student.listIndex}`;
+        if (student.email && !participantKeys.has(studentKey)) {
           newSelected.add(`${cls.id}-${student.listIndex}`);
         }
       });
@@ -910,7 +912,7 @@ export default function Email() {
           {classes.map((cls) => {
             const studentsWithEmail = cls.students.filter((s) => s.email);
             const participantListIndexes = new Set(
-              choices.map((c) => c.listIndex)
+              choices.map((c) => Number(c.listIndex))
             );
 
             return (
@@ -961,7 +963,7 @@ export default function Email() {
                         const studentKey = `${cls.id}-${student.listIndex}`;
                         const isSelected = selectedStudents.has(studentKey);
                         const hasVoted = participantListIndexes.has(
-                          student.listIndex
+                          Number(student.listIndex)
                         );
 
                         return (
