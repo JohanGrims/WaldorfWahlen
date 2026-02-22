@@ -1,5 +1,4 @@
 import { doc, getDoc, Timestamp, DocumentData } from "firebase/firestore";
-import moment from "moment-timezone";
 import { redirect } from "react-router-dom";
 import { db } from "./firebase";
 import { Helmet } from "react-helmet";
@@ -30,13 +29,11 @@ Gateway.loader = async function loader({ params, request }: { params: { id: stri
 
   const voteData = { id: vote.id, ...vote.data() } as unknown as VoteData;
 
-  const berlinTime = moment.tz(Date.now(), "Europe/Berlin");
+  const now = Date.now();
 
   if (
     !voteData.active ||
-    berlinTime.isAfter(
-      moment.unix(voteData.endTime.seconds).tz("Europe/Berlin")
-    )
+    now > voteData.endTime.seconds * 1000
   ) {
     /* 
     if the vote is not active or the current time is after the end time of the vote,
@@ -45,9 +42,7 @@ Gateway.loader = async function loader({ params, request }: { params: { id: stri
     return redirect(`/r/${id}`);
   }
   if (
-    berlinTime.isBefore(
-      moment.unix(voteData.startTime.seconds).tz("Europe/Berlin")
-    )
+    now < voteData.startTime.seconds * 1000
   ) {
     /*
     if the current time is before the start time of the vote,

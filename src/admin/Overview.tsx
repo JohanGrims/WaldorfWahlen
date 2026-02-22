@@ -1,5 +1,4 @@
 import { collection, getDocs, Timestamp } from "firebase/firestore";
-import moment from "moment-timezone";
 import { redirect, useLoaderData, useNavigate } from "react-router-dom";
 import { auth, db } from "../firebase";
 import React from "react";
@@ -123,13 +122,13 @@ export default function Overview() {
             return b.startTime.seconds - a.startTime.seconds;
           })
           .map((vote) => {
-            const now = moment();
-            const startTime = moment.unix(vote.startTime.seconds);
-            const endTime = moment.unix(vote.endTime.seconds);
+            const now = Date.now();
+            const startTimeMs = vote.startTime.seconds * 1000;
+            const endTimeMs = vote.endTime.seconds * 1000;
             const isActive =
-              vote.active && endTime.isAfter(now) && startTime.isBefore(now);
+              vote.active && endTimeMs > now && startTimeMs < now;
 
-            const isPlanned = startTime.isAfter(now);
+            const isPlanned = startTimeMs > now;
 
             return (
               <mdui-card

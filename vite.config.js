@@ -1,7 +1,6 @@
 import react from "@vitejs/plugin-react";
 import { visualizer } from "rollup-plugin-visualizer";
 import { defineConfig } from "vite";
-import momentTimezonePlugin from "vite-plugin-moment-timezone";
 import { readFileSync } from "fs";
 import { join } from "path";
 
@@ -77,10 +76,10 @@ const commonLargePackages = [
   "react-dom",
   "react-router-dom",
   "firebase",
-  "moment",
   "lodash",
   "rxjs",
   "date-fns",
+  "date-fns-tz",
   "core-js",
   "regenerator-runtime",
   "tslib",
@@ -102,11 +101,6 @@ export default defineConfig({
   plugins: [
     react(),
     schoolIdReplacementPlugin(), // Add the custom plugin
-    momentTimezonePlugin({
-      zones: ["Europe/Berlin"],
-      startYear: 2020,
-      endYear: 2050,
-    }),
     visualizer({ filename: "dist/stats.html" }),
   ],
   esbuild: { legalComments: "external" },
