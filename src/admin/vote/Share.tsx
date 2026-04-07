@@ -4,7 +4,7 @@ import { useLoaderData, useParams } from "react-router-dom";
 import { Vote } from "../../types";
 
 import jsPDF from "jspdf";
-import { formatBerlinDate } from "../../utils/date";
+import { formatBerlinTimestamp } from "../../utils/date";
 import { snackbar } from "mdui";
 import { auth } from "../../firebase";
 import { Canvg } from "canvg";
@@ -53,7 +53,7 @@ export default function Share() {
 
   const formatTs = React.useCallback((ts: any) => {
     if (!ts) return "";
-    return formatBerlinDate(ts.seconds, "dd.MM.yyyy HH:mm");
+    return formatBerlinTimestamp(ts.seconds, "dd.MM.yyyy HH:mm");
   }, []);
 
   const copyText = React.useCallback(

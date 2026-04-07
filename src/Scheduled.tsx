@@ -1,7 +1,7 @@
 import React from "react";
 import { useLoaderData, useNavigate } from "react-router-dom";
 import { Timestamp, DocumentData } from "firebase/firestore";
-import { formatBerlinDate } from "./utils/date";
+import { formatBerlinTimestamp } from "./utils/date";
 
 interface VoteData extends DocumentData {
   startTime: Timestamp;
@@ -23,9 +23,9 @@ export default function Scheduled() {
         <p>Diese Wahl ist noch nicht aktiv.</p>
         <p>
           Die Wahl wird am{" "}
-          {formatBerlinDate(vote.startTime.seconds, "dd.MM.yyyy HH:mm")}{" "}
+          {formatBerlinTimestamp(vote.startTime.seconds, "dd.MM.yyyy HH:mm")}{" "}
           starten und am{" "}
-          {formatBerlinDate(vote.endTime.seconds, "dd.MM.yyyy HH:mm")}{" "}
+          {formatBerlinTimestamp(vote.endTime.seconds, "dd.MM.yyyy HH:mm")}{" "}
           enden.
         </p>
       </div>

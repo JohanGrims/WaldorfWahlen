@@ -1,6 +1,6 @@
 import { addDoc, collection, doc, setDoc, Timestamp } from "firebase/firestore";
 import { alert, confirm, prompt, snackbar } from "mdui";
-import { parseBerlinDateTime, tryParseToBerlinDatetimeLocal } from "../utils/date";
+import { parseBerlinDateTime, formatBerlinDate, tryParseToBerlinDatetimeLocal } from "../utils/date";
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { db } from "../firebase";
@@ -427,15 +427,15 @@ export default function NewVote() {
           if (importedData.config.selectCount)
             setSelectCount(importedData.config.selectCount);
           if (importedData.config.startTime) {
-            const parsed = tryParseToBerlinDatetimeLocal(importedData.config.startTime);
-            if (parsed) {
-              setStartTime(parsed);
+            const parsedDayJS = parseBerlinDateTime(importedData.config.startTime);
+            if (parsedDayJS) {
+              setStartTime(formatBerlinDate(parsedDayJS.toDate(), "yyyy-MM-dd'T'HH:mm"));
             }
           }
           if (importedData.config.endTime) {
-            const parsed = tryParseToBerlinDatetimeLocal(importedData.config.endTime);
-            if (parsed) {
-              setEndTime(parsed);
+            const parsedDayJS = parseBerlinDateTime(importedData.config.endTime);
+            if (parsedDayJS) {
+              setEndTime(formatBerlinDate(parsedDayJS.toDate(), "yyyy-MM-dd'T'HH:mm"));
             }
           }
           if (importedData.config.proposals !== undefined) {

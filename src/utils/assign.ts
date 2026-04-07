@@ -1,8 +1,9 @@
 /**
  * Represents a scoring rule for the assignment algorithm.
+ * Note: Condition separators moved from ',' to ';' to support multiple selected IDs (e.g., "grade=12;selected=a,b"). Persisted rules using ',' need migration.
  */
 export interface Rule {
-  /** The condition string, e.g. "*", "grade=12", "grade=12,name=Max" */
+  /** The condition string, e.g. "*", "grade=12", "grade=12;name=Max" */
   apply: string;
   /** The scores for each choice position, e.g. [1, 2, 4] */
   scores: number[];
@@ -50,7 +51,7 @@ export function calculatePoints(
       continue;
     }
 
-    const conditions = rule.apply.split(",");
+    const conditions = rule.apply.split(";");
     let matches = true;
 
     for (const condition of conditions) {

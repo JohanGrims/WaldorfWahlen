@@ -67,7 +67,7 @@ export const capitalizeWords = (str: string): string => {
   return str
     .replace(/[^a-zA-ZäöüÄÖÜß\s-]/g, "") // Remove non-alphabetic characters except hyphens and umlauts
     .replace(/(^|[\s-])[a-zA-ZäöüÄÖÜß]/g, (match) =>
-      match.toUpperCase()
+      match.toLocaleUpperCase("de")
     ); // Capitalize first letter of each word (including umlauts)
 };
 

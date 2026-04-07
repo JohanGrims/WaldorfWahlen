@@ -180,7 +180,7 @@ describe("calculateAllPoints", () => {
     const rules: Rule[] = [
       { apply: "*", scores: [1, 2, 4] },
       { apply: "grade=12", scores: [1, 5, 10] },
-      { apply: "grade=12,name=anna", scores: [1, 10, 20] },
+      { apply: "grade=12;name=anna", scores: [1, 10, 20] },
     ];
 
     const result = calculateAllPoints(choices, rules);

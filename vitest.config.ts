@@ -11,7 +11,7 @@ export default defineConfig({
     coverage: {
       reporter: ["text", "html"],
       include: ["src/**/*.{ts,tsx}"],
-      exclude: ["src/test/**", "src/**/*.d.ts"],
+      exclude: ["src/test/**", "src/**/*.d.ts", "**/*.test.{ts,tsx}", "**/*.spec.{ts,tsx}"],
     },
   },
 });

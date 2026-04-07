@@ -12,9 +12,9 @@ const TIMEZONE = "Europe/Berlin";
  * @returns The formatted date string in Berlin timezone.
  *
  * @example
- * formatBerlinDate(1700000000, "dd.MM.yyyy HH:mm") // "14.11.2023 22:13"
+ * formatBerlinTimestamp(1700000000, "dd.MM.yyyy HH:mm") // "14.11.2023 22:13"
  */
-export function formatBerlinDate(
+export function formatBerlinTimestamp(
   timestampSeconds: number,
   formatStr: string
 ): string {
@@ -32,7 +32,7 @@ export function formatBerlinDate(
  * @param formatStr - The date-fns format string.
  * @returns The formatted date string in Berlin timezone.
  */
-export function formatDateBerlin(
+export function formatBerlinDate(
   date: Date,
   formatStr: string
 ): string {
@@ -59,7 +59,7 @@ export function parseBerlinDateTime(dateTimeStr: string): Date {
  * @returns A string suitable for a datetime-local input element.
  */
 export function toBerlinDatetimeLocal(timestampSeconds: number): string {
-  return formatBerlinDate(timestampSeconds, "yyyy-MM-dd'T'HH:mm");
+  return formatBerlinTimestamp(timestampSeconds, "yyyy-MM-dd'T'HH:mm");
 }
 
 /**
@@ -69,8 +69,8 @@ export function toBerlinDatetimeLocal(timestampSeconds: number): string {
  * @param value - Any value that can be parsed by `new Date()`.
  * @returns The datetime-local string, or null if the value is invalid.
  */
-export function tryParseToBerlinDatetimeLocal(value: any): string | null {
-  const date = new Date(value);
+export function tryParseToBerlinDatetimeLocal(value: unknown): string | null {
+  const date = new Date(value as string | number | Date);
   if (isNaN(date.getTime())) return null;
-  return formatDateBerlin(date, "yyyy-MM-dd'T'HH:mm");
+  return formatBerlinDate(date, "yyyy-MM-dd'T'HH:mm");
 }

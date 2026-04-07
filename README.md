@@ -89,7 +89,7 @@ Test-Dateien liegen neben den Quelldateien mit dem Suffix `.test.ts` bzw. `.test
 
 ## Projektstruktur
 
-```
+```plaintext
 src/
 ├── admin/           # Admin-Dashboard (Wahlen verwalten, Statistiken)
 │   ├── auth/        # Login-Komponenten

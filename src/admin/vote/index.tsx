@@ -5,7 +5,7 @@ import {
   useNavigate,
 } from "react-router-dom";
 import { db } from "../../firebase";
-import { formatDateBerlin } from "../../utils/date";
+import { formatBerlinDate } from "../../utils/date";
 
 interface VoteData extends DocumentData {
   id: string;
@@ -68,10 +68,10 @@ export default function AdminVote() {
         <mdui-chip onClick={() => navigate("./schedule")}>
           {!vote.active
             ? "Nicht aktiv"
-            : `${formatDateBerlin(
+            : `${formatBerlinDate(
                 vote.startTime.toDate(),
                 "dd.MM.yyyy HH:mm"
-              )} bis ${formatDateBerlin(
+              )} bis ${formatBerlinDate(
                 vote.endTime.toDate(),
                 "dd.MM.yyyy HH:mm"
               )}`}

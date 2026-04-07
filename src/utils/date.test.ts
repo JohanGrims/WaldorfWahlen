@@ -1,13 +1,13 @@
 import { describe, it, expect } from "vitest";
 import {
+  formatBerlinTimestamp,
   formatBerlinDate,
-  formatDateBerlin,
   parseBerlinDateTime,
   toBerlinDatetimeLocal,
   tryParseToBerlinDatetimeLocal,
 } from "./date";
 
-describe("formatBerlinDate", () => {
+describe("formatBerlinTimestamp", () => {
   // 2024-01-15 12:00:00 UTC = 2024-01-15 13:00:00 CET (Berlin, winter)
   const winterTimestamp = 1705320000; // 2024-01-15 12:00:00 UTC
 
@@ -15,43 +15,43 @@ describe("formatBerlinDate", () => {
   const summerTimestamp = 1721044800; // 2024-07-15 12:00:00 UTC
 
   it("formats a winter date in dd.MM.yyyy HH:mm format", () => {
-    const result = formatBerlinDate(winterTimestamp, "dd.MM.yyyy HH:mm");
+    const result = formatBerlinTimestamp(winterTimestamp, "dd.MM.yyyy HH:mm");
     expect(result).toBe("15.01.2024 13:00");
   });
 
   it("formats a summer date with CEST offset", () => {
-    const result = formatBerlinDate(summerTimestamp, "dd.MM.yyyy HH:mm");
+    const result = formatBerlinTimestamp(summerTimestamp, "dd.MM.yyyy HH:mm");
     expect(result).toBe("15.07.2024 14:00");
   });
 
   it("formats with comma separator", () => {
-    const result = formatBerlinDate(winterTimestamp, "dd.MM.yyyy, HH:mm");
+    const result = formatBerlinTimestamp(winterTimestamp, "dd.MM.yyyy, HH:mm");
     expect(result).toBe("15.01.2024, 13:00");
   });
 
   it("formats with German day and month names", () => {
-    const result = formatBerlinDate(winterTimestamp, "EEEE, d. MMMM yyyy, HH:mm");
+    const result = formatBerlinTimestamp(winterTimestamp, "EEEE, d. MMMM yyyy, HH:mm");
     expect(result).toBe("Montag, 15. Januar 2024, 13:00");
   });
 
   it("formats summer date with German day name", () => {
-    const result = formatBerlinDate(summerTimestamp, "EEEE, d. MMMM yyyy, HH:mm");
+    const result = formatBerlinTimestamp(summerTimestamp, "EEEE, d. MMMM yyyy, HH:mm");
     expect(result).toBe("Montag, 15. Juli 2024, 14:00");
   });
 
   it("handles midnight UTC correctly (next day in Berlin during CET)", () => {
     // 2024-01-15 23:30:00 UTC = 2024-01-16 00:30:00 CET
     const lateUtcTimestamp = 1705361400;
-    const result = formatBerlinDate(lateUtcTimestamp, "dd.MM.yyyy HH:mm");
+    const result = formatBerlinTimestamp(lateUtcTimestamp, "dd.MM.yyyy HH:mm");
     expect(result).toBe("16.01.2024 00:30");
   });
 });
 
-describe("formatDateBerlin", () => {
+describe("formatBerlinDate", () => {
   it("formats a Date object in Berlin timezone", () => {
     // 2024-01-15 12:00:00 UTC
     const date = new Date(Date.UTC(2024, 0, 15, 12, 0, 0));
-    const result = formatDateBerlin(date, "dd.MM.yyyy HH:mm");
+    const result = formatBerlinDate(date, "dd.MM.yyyy HH:mm");
     expect(result).toBe("15.01.2024 13:00");
   });
 });

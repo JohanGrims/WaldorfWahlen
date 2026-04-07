@@ -16,7 +16,7 @@ import {
 import { db } from "../../firebase";
 
 import { toBerlinDatetimeLocal, parseBerlinDateTime } from "../../utils/date";
-import AdminVote from ".";;
+import AdminVote from ".";
 
 interface VoteData extends DocumentData {
   active: boolean;
@@ -36,10 +36,10 @@ export default function Schedule() {
 
   const [active, setActive] = React.useState<boolean>(vote.active);
   const [startTime, setStartTime] = React.useState<string>(
-    toBerlinDatetimeLocal(vote.startTime?.seconds)
+    typeof vote.startTime?.seconds === "number" ? toBerlinDatetimeLocal(vote.startTime.seconds) : ""
   );
   const [endTime, setEndTime] = React.useState<string>(
-    toBerlinDatetimeLocal(vote.endTime?.seconds)
+    typeof vote.endTime?.seconds === "number" ? toBerlinDatetimeLocal(vote.endTime.seconds) : ""
   );
 
   const switchRef = React.useRef<HTMLInputElement>(null);
