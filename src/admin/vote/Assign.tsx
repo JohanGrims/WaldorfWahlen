@@ -17,6 +17,7 @@ import {
 import { auth, db, functions } from "../../firebase";
 import { getToken } from "firebase/app-check";
 import { httpsCallable } from "firebase/functions";
+import { calculatePoints, type Rule } from "../../utils/assign";
 
 interface VoteData extends DocumentData {
   id: string;
@@ -47,11 +48,6 @@ interface LoaderData {
   choices: ChoiceData[];
   options: OptionData[];
   results: ResultData[];
-}
-
-interface Rule {
-  apply: string;
-  scores: number[];
 }
 
 export default function Assign() {
@@ -130,45 +126,7 @@ export default function Assign() {
       const calculatedPoints: Record<string, number[]> = {};
 
       for (const choice of choices) {
-        let points = [1, 2, 4];
-        for (const rule of rules) {
-          if (rule.apply === "*") {
-            points = rule.scores;
-          }
-          const conditions = rule.apply.split(",");
-          let matches = true;
-          for (const condition of conditions) {
-            const [key, value] = condition.split("=");
-            if (
-              key === "grade" &&
-              parseInt(choice.grade.toString()) !== parseInt(value)
-            ) {
-              matches = false;
-              break;
-            }
-            if (key === "listIndex" && choice.listIndex !== parseInt(value)) {
-              matches = false;
-              break;
-            }
-            if (key === "selected") {
-              const selected = value.split(",");
-              if (!selected.every((id) => choice.selected.includes(id))) {
-                matches = false;
-                break;
-              }
-            }
-            if (
-              key === "name" &&
-              !choice.name.toLowerCase().includes(value.toLowerCase())
-            ) {
-              matches = false;
-              break;
-            }
-          }
-          if (matches) {
-            points = rule.scores;
-          }
-        }
+        const points = calculatePoints(choice, rules);
 
         preferences[choice.id] = {
           selected: choice.selected,

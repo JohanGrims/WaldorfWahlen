@@ -1,6 +1,6 @@
 import { addDoc, collection, doc, setDoc, Timestamp } from "firebase/firestore";
 import { alert, confirm, prompt, snackbar } from "mdui";
-import moment from "moment-timezone";
+import { parseBerlinDateTime, formatBerlinDate, tryParseToBerlinDatetimeLocal } from "../utils/date";
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { db } from "../firebase";
@@ -427,19 +427,15 @@ export default function NewVote() {
           if (importedData.config.selectCount)
             setSelectCount(importedData.config.selectCount);
           if (importedData.config.startTime) {
-            const startMoment = moment(importedData.config.startTime);
-            if (startMoment.isValid()) {
-              setStartTime(
-                startMoment.tz("Europe/Berlin").format("YYYY-MM-DDTHH:mm")
-              );
+            const parsedDayJS = parseBerlinDateTime(importedData.config.startTime);
+            if (parsedDayJS) {
+              setStartTime(formatBerlinDate(parsedDayJS.toDate(), "yyyy-MM-dd'T'HH:mm"));
             }
           }
           if (importedData.config.endTime) {
-            const endMoment = moment(importedData.config.endTime);
-            if (endMoment.isValid()) {
-              setEndTime(
-                endMoment.tz("Europe/Berlin").format("YYYY-MM-DDTHH:mm")
-              );
+            const parsedDayJS = parseBerlinDateTime(importedData.config.endTime);
+            if (parsedDayJS) {
+              setEndTime(formatBerlinDate(parsedDayJS.toDate(), "yyyy-MM-dd'T'HH:mm"));
             }
           }
           if (importedData.config.proposals !== undefined) {
@@ -770,8 +766,8 @@ export default function NewVote() {
   }
 
   async function publish() {
-    const berlinStartTime = moment.tz(startTime, "Europe/Berlin").toDate();
-    const berlinEndTime = moment.tz(endTime, "Europe/Berlin").toDate();
+    const berlinStartTime = parseBerlinDateTime(startTime);
+    const berlinEndTime = parseBerlinDateTime(endTime);
 
     try {
       await setDoc(doc(db, "schools/SCHOOLID/votes", id), {
@@ -1055,11 +1051,7 @@ export default function NewVote() {
             type="datetime-local"
             value={startTime}
             onInput={(e: React.ChangeEvent<HTMLInputElement>) =>
-              setStartTime(
-                moment
-                  .tz(e.target.value, "Europe/Berlin")
-                  .format("YYYY-MM-DDTHH:mm")
-              )
+              setStartTime(e.target.value)
             }
           ></mdui-text-field>
 
@@ -1068,11 +1060,7 @@ export default function NewVote() {
             type="datetime-local"
             value={endTime}
             onInput={(e: React.ChangeEvent<HTMLInputElement>) =>
-              setEndTime(
-                moment
-                  .tz(e.target.value, "Europe/Berlin")
-                  .format("YYYY-MM-DDTHH:mm")
-              )
+              setEndTime(e.target.value)
             }
           ></mdui-text-field>
         </div>

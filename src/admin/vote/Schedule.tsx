@@ -15,7 +15,7 @@ import {
 } from "react-router-dom";
 import { db } from "../../firebase";
 
-import moment from "moment-timezone";
+import { toBerlinDatetimeLocal, parseBerlinDateTime } from "../../utils/date";
 import AdminVote from ".";
 
 interface VoteData extends DocumentData {
@@ -36,14 +36,10 @@ export default function Schedule() {
 
   const [active, setActive] = React.useState<boolean>(vote.active);
   const [startTime, setStartTime] = React.useState<string>(
-    moment
-      .tz(vote.startTime?.seconds * 1000, "Europe/Berlin")
-      .format("YYYY-MM-DDTHH:mm")
+    typeof vote.startTime?.seconds === "number" ? toBerlinDatetimeLocal(vote.startTime.seconds) : ""
   );
   const [endTime, setEndTime] = React.useState<string>(
-    moment
-      .tz(vote.endTime?.seconds * 1000, "Europe/Berlin")
-      .format("YYYY-MM-DDTHH:mm")
+    typeof vote.endTime?.seconds === "number" ? toBerlinDatetimeLocal(vote.endTime.seconds) : ""
   );
 
   const switchRef = React.useRef<HTMLInputElement>(null);
@@ -72,9 +68,9 @@ export default function Schedule() {
       ...vote,
       active: active,
       startTime: Timestamp.fromDate(
-        moment.tz(startTime, "Europe/Berlin").toDate()
+        parseBerlinDateTime(startTime)
       ),
-      endTime: Timestamp.fromDate(moment.tz(endTime, "Europe/Berlin").toDate()),
+      endTime: Timestamp.fromDate(parseBerlinDateTime(endTime)),
     })
       .then(() => {
         snackbar({ message: "Einstellungen gespeichert." });

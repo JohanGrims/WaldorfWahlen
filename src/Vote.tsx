@@ -17,9 +17,8 @@ import {
 } from "react-router-dom";
 import { db, functions } from "./firebase";
 
-import moment from "moment-timezone";
-
 import { alert, breakpoint, confirm, prompt, snackbar } from "mdui";
+import { formatBerlinTimestamp } from "./utils/date";
 import { redirect } from "react-router-dom";
 import { capitalizeWords } from "./admin/utils";
 import CheckItem from "./CheckItem";
@@ -560,9 +559,7 @@ export default function Vote() {
           <h1 className="vote-title">{title}</h1>
           <div className="time-label">
             Endet am{" "}
-            {moment
-              .tz(endTime.seconds * 1000, "Europe/Berlin")
-              .format("DD.MM.YYYY, HH:mm")}{" "}
+            {formatBerlinTimestamp(endTime.seconds, "dd.MM.yyyy, HH:mm")}{" "}
             Uhr
           </div>
         </div>
@@ -923,9 +920,7 @@ Vote.loader = async function loader({ params, request }: LoaderFunctionArgs) {
       snackbar({
         message:
           "Die Wahl startet erst am " +
-          moment
-            .tz(voteData.startTime.seconds * 1000, "Europe/Berlin")
-            .format("dddd, D. MMMM YYYY, HH:mm"),
+          formatBerlinTimestamp(voteData.startTime.seconds, "EEEE, d. MMMM yyyy, HH:mm"),
       });
       return redirect(`/s/${params.id}`);
     }

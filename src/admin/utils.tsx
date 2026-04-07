@@ -40,6 +40,9 @@ export const deepEqual = (a: any, b: any): boolean => {
   )
     return false;
 
+  // Arrays and plain objects are not equal to each other
+  if (Array.isArray(a) !== Array.isArray(b)) return false;
+
   const keysA: string[] = Object.keys(a);
   const keysB: string[] = Object.keys(b);
 
@@ -63,14 +66,9 @@ export const deepEqual = (a: any, b: any): boolean => {
 export const capitalizeWords = (str: string): string => {
   return str
     .replace(/[^a-zA-ZäöüÄÖÜß\s-]/g, "") // Remove non-alphabetic characters except hyphens and umlauts
-    .replace(/\b\w/g, (char: string, index: number): string => {
-      if (index === 0 || str[index - 1].match(/\s/)) {
-        return char.toUpperCase();
-      } else if (str[index - 1] === "-") {
-        return char.toUpperCase();
-      }
-      return char;
-    }); // Capitalize words correctly
+    .replace(/(^|[\s-])[a-zA-ZäöüÄÖÜß]/g, (match) =>
+      match.toLocaleUpperCase("de")
+    ); // Capitalize first letter of each word (including umlauts)
 };
 
 /**

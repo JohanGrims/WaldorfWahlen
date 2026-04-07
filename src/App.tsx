@@ -6,7 +6,6 @@ import {
   getDoc,
   doc,
 } from "firebase/firestore";
-import moment from "moment-timezone";
 import { useLoaderData } from "react-router-dom";
 import { db } from "./firebase";
 import VoteCard from "./VoteCard";
@@ -198,12 +197,12 @@ App.loader = async function loader() {
   votes.docs.map((e) => {
     let data = e.data() as VoteData;
 
-    const now = moment().tz("Europe/Berlin");
-    const startTime = moment.unix(data.startTime.seconds).tz("Europe/Berlin");
-    const endTime = moment.unix(data.endTime.seconds).tz("Europe/Berlin");
+    const now = Date.now();
+    const startTimeMs = data.startTime.seconds * 1000;
+    const endTimeMs = data.endTime.seconds * 1000;
 
-    if (now.isAfter(startTime)) {
-      if (data.active && now.isBefore(endTime)) {
+    if (now > startTimeMs) {
+      if (data.active && now < endTimeMs) {
         activeVotes.push({
           id: e.id,
           title: data.title,
