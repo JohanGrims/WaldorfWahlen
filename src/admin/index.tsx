@@ -10,7 +10,6 @@ import { useNavigate } from "react-router-dom";
 import Login from "./auth/Login";
 import DrawerList from "./navigation/DrawerList";
 import { doc, getDoc, DocumentData } from "firebase/firestore";
-import { Helmet } from "react-helmet";
 
 interface ReleaseNotesData extends DocumentData {
   updated?: {
@@ -126,9 +125,7 @@ export default function Admin() {
 
   return (
     <mdui-layout style={{ width: "100vw", height: "100vh" }}>
-      <Helmet>
-        <title>Admin - WaldorfWahlen</title>
-      </Helmet>
+      <title>Admin - WaldorfWahlen</title>
       {open && (
         <DrawerList
           onClose={() => {

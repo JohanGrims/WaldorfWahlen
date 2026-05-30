@@ -22,7 +22,6 @@ import { formatBerlinTimestamp } from "./utils/date";
 import { redirect } from "react-router-dom";
 import { capitalizeWords } from "./admin/utils";
 import CheckItem from "./CheckItem";
-import { Helmet } from "react-helmet";
 import { httpsCallable } from "firebase/functions";
 
 interface VoteData extends DocumentData {
@@ -311,10 +310,8 @@ export default function Vote() {
 
   return (
     <div className="container">
-      <Helmet>
-        <title>{title} - Projektwahl</title>
-        <meta name="description" content={description} />
-      </Helmet>
+      <title>{title} - Projektwahl</title>
+      <meta name="description" content={description} />
       <mdui-dialog open={confirmDialog} headline="Bestätigen" icon="check">
         <div className="mdui-prose">
           <p>

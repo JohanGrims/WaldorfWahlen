@@ -1,7 +1,6 @@
 import { doc, getDoc, Timestamp, DocumentData } from "firebase/firestore";
 import { redirect } from "react-router-dom";
 import { db } from "./firebase";
-import { Helmet } from "react-helmet";
 
 interface VoteData extends DocumentData {
   active: boolean;
@@ -11,9 +10,7 @@ interface VoteData extends DocumentData {
 
 export default function Gateway() {
   return (
-    <Helmet>
-      <title>Sie werden weitergeleitet...</title>
-    </Helmet>
+    <title>Sie werden weitergeleitet...</title>
   );
 }
 

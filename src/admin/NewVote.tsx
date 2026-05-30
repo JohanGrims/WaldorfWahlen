@@ -5,7 +5,6 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 import { db } from "../firebase";
 import { generateRandomHash } from "./utils";
-import { Helmet } from "react-helmet";
 import * as XLSX from "xlsx";
 
 interface ProposeField {
@@ -915,9 +914,7 @@ export default function NewVote() {
 
   return (
     <div className="mdui-prose">
-      <Helmet>
-        <title>Neue Wahl - WaldorfWahlen</title>
-      </Helmet>
+      <title>Neue Wahl - WaldorfWahlen</title>
       <h2>Neue Wahl</h2>
       <p />
       <mdui-card

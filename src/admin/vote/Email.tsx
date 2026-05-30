@@ -7,7 +7,6 @@ import {
 import React from "react";
 import { useLoaderData, useParams } from "react-router-dom";
 import { db, auth, functions } from "../../firebase";
-import { Helmet } from "react-helmet";
 import { alert, prompt, snackbar } from "mdui";
 import { httpsCallable } from "firebase/functions";
 
@@ -1156,9 +1155,7 @@ export default function Email() {
 
     return (
       <div className="mdui-prose">
-        <Helmet>
-          <title>E-Mail senden - {vote.title}</title>
-        </Helmet>
+        <title>E-Mail senden - {vote.title}</title>
         <div
           style={{
             display: "flex",

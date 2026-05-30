@@ -9,7 +9,6 @@ import {
 import { useLoaderData } from "react-router-dom";
 import { db } from "./firebase";
 import VoteCard from "./VoteCard";
-import { Helmet } from "react-helmet";
 
 import { useSchool } from "./contexts";
 
@@ -35,9 +34,7 @@ function App() {
 
   return (
     <div className="mdui-prose">
-      <Helmet>
-        <title>WaldorfWahlen - Start</title>
-      </Helmet>
+      <title>WaldorfWahlen - Start</title>
       <div style={{ position: "fixed", top: 0, left: 0, padding: "1rem" }}>
         <mdui-button-icon
           data-umami-event="home-link"

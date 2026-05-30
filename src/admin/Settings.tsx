@@ -7,7 +7,6 @@ import {
 import { setTheme, snackbar } from "mdui";
 import React from "react";
 import { auth } from "../firebase";
-import { Helmet } from "react-helmet";
 
 export default function Settings() {
   const [email, setEmail] = React.useState<string>(auth.currentUser?.email || "");
@@ -82,9 +81,7 @@ export default function Settings() {
 
   return (
     <div className="mdui-prose">
-      <Helmet>
-        <title>Einstellungen - WaldorfWahlen</title>
-      </Helmet>
+      <title>Einstellungen - WaldorfWahlen</title>
       <h1>Einstellungen</h1>
       <h3>Account</h3>
       <mdui-text-field

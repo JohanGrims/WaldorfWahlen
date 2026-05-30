@@ -4,7 +4,6 @@ import React from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { db } from "../../firebase";
 import { DrawerItem } from "./components";
-import { Helmet } from "react-helmet";
 
 interface VoteDrawerProps {
   onClose?: () => void;
@@ -80,9 +79,7 @@ export default function VoteDrawer({ onClose = () => {} }: VoteDrawerProps) {
 
   return (
     <mdui-navigation-drawer open>
-      <Helmet>
-        <title>{data.title} - Admin</title>
-      </Helmet>
+      <title>{data.title} - Admin</title>
       <mdui-list
         style={{
           margin: "0 0.5rem",
