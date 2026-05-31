@@ -107,6 +107,10 @@ service cloud.firestore {
       return getSchoolVoteData(schoolId, voteId).proposals;
     }
 
+    function canCreateSchoolProposalsV2(schoolId, voteId) {
+      return get(/databases/$(database)/documents/schools/$(schoolId)/v2_votes/$(voteId)).data.proposals;
+    }
+
     match /schools/{schoolId} {
       // Allow read access for all users
       allow get: if true;
@@ -160,6 +164,37 @@ service cloud.firestore {
           allow read, update, delete: if isSchoolAuthenticated(schoolId);
           // Allow creation for all users
           allow create: if true;
+        }
+      }
+
+      // Main document rule for /v2_votes/{voteId}
+      match /v2_votes/{voteId} {
+        allow read: if true;
+        allow write: if isSchoolAuthenticated(schoolId);
+
+        match /choices/{choiceId} {
+          allow read, create, delete, update: if isSchoolAuthenticated(schoolId);
+          allow create: if true; // students must be able to vote
+        }
+        
+        match /results/{resultId} {
+          allow get, list: if isSchoolAuthenticated(schoolId);
+          allow write: if isSchoolAuthenticated(schoolId);
+        }
+        
+        match /options/{optionId} {
+          allow read: if true;
+          allow write: if isSchoolAuthenticated(schoolId);
+        }
+        
+        match /feedback/{feedbackId} {
+          allow read, update, delete: if isSchoolAuthenticated(schoolId);
+          allow create: if true;
+        }
+        
+        match /proposals/{proposalId} {
+          allow read, update, delete: if isSchoolAuthenticated(schoolId);
+          allow create: if canCreateSchoolProposalsV2(schoolId, voteId);
         }
       }
       
