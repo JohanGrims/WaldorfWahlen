@@ -8,7 +8,7 @@ import { alert, setColorScheme, setTheme } from "mdui";
 import "mdui/mdui.css";
 import { getToken } from "firebase/app-check";
 import ScrollToTop from "./admin/utils";
-import { SchoolProvider } from "./contexts";
+import { SchoolProvider, DecryptionProvider } from "./contexts";
 
 setTheme("dark");
 setColorScheme("#000000");
@@ -126,142 +126,7 @@ const routes = [
           };
         },
       },
-      {
-        path: "/v2/vote/:id",
-        lazy: async () => {
-          const module = await import("./v2/vote/Vote");
-          return { Component: module.default };
-        },
-      },
-      {
-        path: "/v2/admin/*",
-        lazy: async () => {
-          const module = await import("./v2/admin/index");
-          return { Component: module.default };
-        },
-        children: [
-          {
-            path: "*",
-            errorElement: <ErrorPage />,
-            children: [
-              {
-                path: "",
-                lazy: async () => {
-                  const module = await import("./v2/admin/Overview");
-                  return {
-                    loader: module.default.loader,
-                    Component: module.default,
-                  };
-                },
-              },
-              {
-                path: "new",
-                lazy: async () => {
-                  const module = await import("./v2/admin/NewVote");
-                  return { Component: module.default };
-                },
-              },
-              {
-                path: ":id/manage",
-                lazy: async () => {
-                  const module = await import("./v2/admin/vote/V2Layout");
-                  return {
-                    loader: module.default.loader,
-                    Component: module.default,
-                  };
-                },
-                children: [
-                  {
-                    index: true,
-                    lazy: async () => {
-                      const loaderModule = await import("./v2/admin/vote/V2Layout");
-                      const module = await import("./v2/admin/vote/V2Overview");
-                      return { 
-                        loader: loaderModule.default.loader,
-                        Component: module.default 
-                      };
-                    },
-                  },
-                  {
-                    path: "edit",
-                    lazy: async () => {
-                      const module = await import("./v2/admin/vote/V2Edit");
-                      return { 
-                        loader: module.default.loader,
-                        Component: module.default 
-                      };
-                    },
-                  },
-                  {
-                    path: "schedule",
-                    lazy: async () => {
-                      const loaderModule = await import("./v2/admin/vote/V2Layout");
-                      const module = await import("./v2/admin/vote/V2Schedule");
-                      return { 
-                        loader: loaderModule.default.loader,
-                        Component: module.default 
-                      };
-                    },
-                  },
-                  {
-                    path: "answers",
-                    lazy: async () => {
-                      const loaderModule = await import("./v2/admin/vote/V2Layout");
-                      const module = await import("./v2/admin/vote/V2Answers");
-                      return { 
-                        loader: loaderModule.default.loader,
-                        Component: module.default 
-                      };
-                    },
-                  },
-                  {
-                    path: "assign",
-                    lazy: async () => {
-                      const module = await import("./v2/admin/vote/V2Assign");
-                      return { 
-                        loader: module.default.loader,
-                        Component: module.default 
-                      };
-                    },
-                  },
-                  {
-                    path: "results",
-                    lazy: async () => {
-                      const module = await import("./v2/admin/vote/V2Results");
-                      return { 
-                        loader: module.default.loader,
-                        Component: module.default 
-                      };
-                    },
-                  },
-                  {
-                    path: "email",
-                    lazy: async () => {
-                      const loaderModule = await import("./v2/admin/vote/V2Layout");
-                      const module = await import("./v2/admin/vote/V2Email");
-                      return { 
-                        loader: loaderModule.default.loader,
-                        Component: module.default 
-                      };
-                    },
-                  },
-                  {
-                    path: "exports",
-                    lazy: async () => {
-                      const loaderModule = await import("./v2/admin/vote/V2Layout");
-                      const module = await import("./v2/admin/vote/V2Exports");
-                      return { 
-                        loader: loaderModule.default.loader,
-                        Component: module.default 
-                      };
-                    },
-                  },
-                ],
-              },
-            ],
-          },
-        ],
-      },
+
       {
         path: "/admin/*",
         lazy: async () => {
@@ -612,12 +477,15 @@ const routes = [
   },
 ];
 
+
 const router = createBrowserRouter(routes);
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <div className="wrapper">
     <SchoolProvider>
-      <RouterProvider router={router} />
+      <DecryptionProvider>
+        <RouterProvider router={router} />
+      </DecryptionProvider>
     </SchoolProvider>
   </div>
 );

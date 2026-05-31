@@ -170,6 +170,28 @@ export default function NewVote() {
   const [options, setOptions] = React.useState<OptionData[]>([]);
 
   const [proposals, setProposals] = React.useState<boolean>(false);
+  const [anonymous, setAnonymous] = React.useState<boolean>(true);
+
+  const proposalsSwitchRef = React.useRef<HTMLInputElement>(null);
+  const dbSwitchRef = React.useRef<HTMLInputElement>(null);
+
+  React.useEffect(() => {
+    if (proposalsSwitchRef.current) {
+      proposalsSwitchRef.current.checked = proposals;
+      const handleToggle = () => setProposals(proposalsSwitchRef.current!.checked);
+      proposalsSwitchRef.current.addEventListener("change", handleToggle);
+      return () => proposalsSwitchRef.current?.removeEventListener("change", handleToggle);
+    }
+  }, [proposals]);
+
+  React.useEffect(() => {
+    if (dbSwitchRef.current) {
+      dbSwitchRef.current.checked = !anonymous;
+      const handleToggle = () => setAnonymous(!dbSwitchRef.current!.checked);
+      dbSwitchRef.current.addEventListener("change", handleToggle);
+      return () => dbSwitchRef.current?.removeEventListener("change", handleToggle);
+    }
+  }, [anonymous]);
 
   const [id, setId] = React.useState<string>(generateRandomHash());
 
@@ -250,6 +272,14 @@ export default function NewVote() {
                   case "proposals":
                   case "vorschläge":
                     voteConfig.proposals =
+                      value === true ||
+                      value === "true" ||
+                      value === 1 ||
+                      value === "1";
+                    break;
+                  case "anonym":
+                  case "anonymous":
+                    voteConfig.anonymous =
                       value === true ||
                       value === "true" ||
                       value === 1 ||
@@ -410,6 +440,8 @@ export default function NewVote() {
           : "Standard"
       }\nVorschläge aktiviert: ${
         importedData.config.proposals ? "Ja" : "Nein"
+      }\nAnonyme Wahl: ${
+        importedData.config.anonymous ? "Ja" : "Nein"
       }\n      `.trim();
 
       confirm({
@@ -439,6 +471,9 @@ export default function NewVote() {
           }
           if (importedData.config.proposals !== undefined) {
             setProposals(importedData.config.proposals);
+          }
+          if (importedData.config.anonymous !== undefined) {
+            setAnonymous(importedData.config.anonymous);
           }
 
           // Set options for manual mode
@@ -518,6 +553,11 @@ export default function NewVote() {
         "Vorschläge",
         proposals,
         "true für Vorschlagsmodus, false für manuelle Optionen",
+      ],
+      [
+        "Anonym",
+        anonymous,
+        "true für anonyme Wahlen (Zero-PII), false für Standardwahlen",
       ],
     ];
     const configWs = XLSX.utils.aoa_to_sheet(configData);
@@ -663,6 +703,11 @@ export default function NewVote() {
         false,
         "true für Vorschlagsmodus, false für manuelle Optionen",
       ],
+      [
+        "Anonym",
+        false,
+        "true für anonyme Wahlen (Zero-PII), false für Standardwahlen",
+      ],
     ];
     const configWs = XLSX.utils.aoa_to_sheet(configData);
     XLSX.utils.book_append_sheet(wb, configWs, "Config");
@@ -779,6 +824,7 @@ export default function NewVote() {
         version: 3,
         extraFields: extraFields,
         proposals: proposals,
+        anonymous: anonymous,
         proposeFields: proposals ? proposeFields : [],
         proposeTexts: proposals ? proposeTexts : {},
       });
@@ -952,6 +998,7 @@ export default function NewVote() {
                     setExtraFields([]);
                     setOptions([]);
                     setProposals(false);
+                    setAnonymous(false);
                     setProposeFields([]);
                     setProposeTexts({
                       welcomeHeadline: "Vorschlag einreichen",
@@ -1168,6 +1215,24 @@ export default function NewVote() {
       </div>
 
       <p />
+      <mdui-divider></mdui-divider>
+      <p />
+
+      <div style={{ display: "flex", alignItems: "center" }}>
+        <label style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+          <mdui-switch
+            ref={dbSwitchRef}
+            checked={!anonymous}
+          ></mdui-switch>
+          Schülerdatenbank nutzen (Veraltet) <mdui-icon name="key_off"/>
+        </label>
+      </div>
+      <br />
+      <div style={{ color: "gray", fontSize: "0.9em", marginLeft: "48px" }}>
+        Standardmäßig sind Wahlen pseudonymisiert (Zero-PII). Die Entschlüsselung von Ergebnissen erfolgt dann lokal im Browser durch Excel-Uploads der Klassenlisten. Wenn Sie diesen Schalter aktivieren, wird das alte System mit der Firebase-Schülerdatenbank verwendet.
+      </div>
+      <p />
+      <br />
       <mdui-divider></mdui-divider>
       <p />
 

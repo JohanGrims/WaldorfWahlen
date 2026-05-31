@@ -14,6 +14,7 @@ import {
   useLoaderData,
   useNavigate,
 } from "react-router-dom";
+import { useDecryption } from "../../contexts";
 import { auth, db, functions } from "../../firebase";
 import { getToken } from "firebase/app-check";
 import { httpsCallable } from "firebase/functions";
@@ -22,6 +23,7 @@ import { calculatePoints, type Rule } from "../../utils/assign";
 interface VoteData extends DocumentData {
   id: string;
   selectCount: number;
+  anonymous?: boolean;
 }
 
 interface ChoiceData extends DocumentData {
@@ -61,6 +63,15 @@ export default function Assign() {
   const [results, setResults] = React.useState<Record<string, string> | null>(
     null
   );
+  
+  const { resolveName } = useDecryption();
+  
+  const getChoiceName = (choiceId: string) => {
+    const choice = choices.find((c) => c.id === choiceId);
+    if (!choice) return "Unbekannt";
+    return vote.anonymous ? resolveName(choice.id) : choice.name;
+  };
+
   const [loading, setLoading] = React.useState<boolean>(false);
   const [mode, setMode] = React.useState<string>("by-option");
   const [choicePoints, setChoicePoints] = React.useState<
@@ -507,12 +518,8 @@ export default function Assign() {
   const wahlenCounts = countWahlen(vote.selectCount);
 
   const sortedResults = Object.entries(results!).sort(([keyA], [keyB]) => {
-    const nameA = choices
-      .find((choice) => choice.id === keyA)!
-      .name.toLowerCase();
-    const nameB = choices
-      .find((choice) => choice.id === keyB)!
-      .name.toLowerCase();
+    const nameA = getChoiceName(keyA).toLowerCase();
+    const nameB = getChoiceName(keyB).toLowerCase();
     return nameA.localeCompare(nameB);
   });
 
@@ -566,8 +573,8 @@ export default function Assign() {
             if (value) {
               if (key === "name") {
                 return isNegative
-                  ? !choice.name.toLowerCase().includes(value.toLowerCase())
-                  : choice.name.toLowerCase().includes(value.toLowerCase());
+                  ? !getChoiceName(choice.id).toLowerCase().includes(value.toLowerCase())
+                  : getChoiceName(choice.id).toLowerCase().includes(value.toLowerCase());
               }
               if (key === "grade") {
                 return isNegative
@@ -1201,21 +1208,14 @@ export default function Assign() {
                               .grade.toString() === grade.toString()
                         )
                         .sort(([keyA], [keyB]) => {
-                          const nameA = choices
-                            .find((choice) => choice.id === keyA)!
-                            .name.toLowerCase();
-                          const nameB = choices
-                            .find((choice) => choice.id === keyB)!
-                            .name.toLowerCase();
+                          const nameA = getChoiceName(keyA).toLowerCase();
+                          const nameB = getChoiceName(keyB).toLowerCase();
                           return nameA.localeCompare(nameB);
                         })
                         .map(([key, value], i) => (
                           <tr key={i}>
                             <td>
-                              {
-                                choices.find((choice) => choice.id === key)!
-                                  .name
-                              }
+                              {getChoiceName(key)}
                             </td>
                             <td>
                               {
@@ -1300,7 +1300,7 @@ export default function Assign() {
               <tbody>
                 {sortedResults.map(([key, value]) => (
                   <tr key={key}>
-                    <td>{choices.find((choice) => choice.id === key)!.name}</td>
+                    <td>{getChoiceName(key)}</td>
                     <td>
                       {choices.find((choice) => choice.id === key)!.grade}
                     </td>

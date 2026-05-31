@@ -32,6 +32,7 @@ interface VoteData extends DocumentData {
   endTime: Timestamp;
   startTime: Timestamp;
   description: string;
+  anonymous?: boolean;
 }
 
 interface OptionData extends DocumentData {
@@ -85,6 +86,7 @@ export default function Vote() {
   const urlName = urlParams.get("name");
   const urlGrade = urlParams.get("grade");
   const urlListIndex = urlParams.get("listIndex");
+  const urlToken = urlParams.get("t");
 
   // Decode URL-encoded name if present
   const decodedUrlName = urlName ? decodeURIComponent(urlName) : null;
@@ -143,6 +145,13 @@ export default function Vote() {
   }, [userInfo, accessToken]);
 
   const submitDisabled = (): boolean => {
+    if (vote.anonymous) {
+      if (!urlToken || selected.includes("null") || !accepted) {
+        return true;
+      }
+      return false;
+    }
+
     // If name is provided via URL, use it instead of firstName/lastName
     if (decodedUrlName) {
       if (
@@ -208,10 +217,11 @@ export default function Vote() {
       )({
         token: accessToken ? accessToken.access_token : null,
         voteId: id,
+        tokenId: vote.anonymous ? urlToken : undefined,
         choice: {
-          name: finalName,
-          grade: parseInt(grade),
-          listIndex: parseInt(listIndex),
+          name: vote.anonymous ? "Anonym" : finalName,
+          grade: vote.anonymous ? 0 : parseInt(grade),
+          listIndex: vote.anonymous ? 0 : parseInt(listIndex),
           selected,
           extraFields: extraFieldsValues,
           version: 2,
@@ -328,6 +338,17 @@ export default function Vote() {
               background: "transparent",
             }}
           >
+            {vote.anonymous ? (
+            <div style={{ padding: "16px", backgroundColor: "var(--mdui-color-secondary-container)", color: "var(--mdui-color-on-secondary-container)", borderRadius: "12px", marginBottom: "24px" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px" }}>
+                <mdui-icon name="shield"></mdui-icon>
+                <strong>Anonyme Abstimmung</strong>
+              </div>
+              <p style={{ margin: 0 }}>
+                Ihre Stimme wird über ein pseudonymisiertes Token erfasst. Personenbezogene Daten werden nicht übermittelt.
+              </p>
+            </div>
+          ):(<>
             <mdui-list-item rounded>
               <mdui-icon name="person" slot="icon" style={{ marginRight: 8 }} />
               <span style={{ fontWeight: 500 }}>Name:</span>
@@ -349,6 +370,8 @@ export default function Vote() {
               <span style={{ fontWeight: 500 }}>Klassenlistennr.:</span>
               <span style={{ marginLeft: 8 }}>{listIndex}</span>
             </mdui-list-item>
+            </>
+            )}
             {extraFields?.map((e, i) => (
               <mdui-list-item key={i} rounded>
                 <mdui-icon name="edit" slot="icon" style={{ marginRight: 8 }} />
@@ -553,7 +576,7 @@ export default function Vote() {
         className="card"
       >
         <div className="mdui-prose">
-          <h1 className="vote-title">{title}</h1>
+          <h1 className="vote-title"> {vote.anonymous && <mdui-tooltip content="Es werden keine persönlichen Daten übermittelt"><mdui-icon name="shield"></mdui-icon></mdui-tooltip>}{title}</h1>
           <div className="time-label">
             Endet am{" "}
             {formatBerlinTimestamp(endTime.seconds, "dd.MM.yyyy, HH:mm")}{" "}
@@ -568,7 +591,19 @@ export default function Vote() {
         )}
         <p />
         <br />
-        {decodedUrlName ? (
+        {vote.anonymous && !urlToken ? (
+          <mdui-card style={{ padding: "24px", backgroundColor: "var(--mdui-color-error-container)", color: "var(--mdui-color-on-error-container)" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+              <mdui-icon name="error"></mdui-icon>
+              <h3>Ungültiger Zugangslink</h3>
+            </div>
+            <p>Es fehlt das Zugangstoken. Bitte verwenden Sie den Link aus Ihrer Einladungs-E-Mail, um abzustimmen.</p>
+          </mdui-card>
+        ) : (
+          <>
+            {!vote.anonymous && (
+              <>
+                {decodedUrlName ? (
           // Single name field when name is prefilled from URL
           <mdui-text-field
             label="Name"
@@ -640,9 +675,13 @@ export default function Vote() {
           </div>
         ))}
         <p />
-        <br />
-        <mdui-divider></mdui-divider>
-        <p />
+                <p />
+                <br />
+                <mdui-divider></mdui-divider>
+                <p />
+              </>
+            )}
+            
         {Array.from({ length: selectCount }).map((_, index) => (
           <div key={index}>
             <div className="mdui-prosa">
@@ -727,7 +766,10 @@ export default function Vote() {
             <mdui-divider></mdui-divider>
           </div>
         ))}
+        </>
+        )}
         <p />
+        <br />
         <br />
         <mdui-checkbox
           checked={accepted}
@@ -735,16 +777,9 @@ export default function Vote() {
             setAccepted(e.target.checked)
           }
         >
-          Ich willige ein, dass mein Vorname, der erste Buchstabe meines
-          Nachnamens, meine Klasse sowie meine Position in der Klassenliste
-          zusammen mit meinen Wahlentscheidungen zum Zweck der Durchführung und
-          Auswertung der Projektwahl gespeichert und verarbeitet werden. Die
-          Daten werden in einer abgesicherten Datenbank von Google Firestore
-          innerhalb der EU gespeichert und sind ausschließlich für berechtigte
-          Lehrkräfte zugänglich. Die Nutzung dieser Plattform ist freiwillig.
-          Wenn ich nicht möchte, dass meine Daten online verarbeitet werden,
-          kann ich meine Wahl stattdessen direkt bei den verantwortlichen
-          Lehrer:innen abgeben.
+          {vote.anonymous 
+            ? "Ich willige ein, dass meine Wahlentscheidungen pseudonymisiert zum Zweck der Durchführung und Auswertung der Projektwahlen maschinell verarbeitet und gespeichert werden. Die Daten werden in einer abgesicherten Datenbank von Google Firestore innerhalb der EU gespeichert und sind ausschließlich für berechtigte Lehrkräfte zugänglich. Die Nutzung dieser Plattform ist freiwillig. Wenn ich nicht möchte, dass meine Daten online verarbeitet werden, kann ich meine Wahl stattdessen direkt bei den verantwortlichen Lehrer:innen abgeben."
+            : "Ich willige ein, dass mein Vorname, der erste Buchstabe meines Nachnamens, meine Klasse sowie meine Position in der Klassenliste zusammen mit meinen Wahlentscheidungen zum Zweck der Durchführung und Auswertung der Projektwahlen maschinell verarbeitet und gespeichert werden. Die Daten werden in einer abgesicherten Datenbank von Google Firestore innerhalb der EU gespeichert und sind ausschließlich für berechtigte Lehrkräfte zugänglich. Die Nutzung dieser Plattform ist freiwillig. Wenn ich nicht möchte, dass meine Daten online verarbeitet werden, kann ich meine Wahl stattdessen direkt bei den verantwortlichen Lehrer:innen abgeben."}
         </mdui-checkbox>
         <p />
 
@@ -810,6 +845,8 @@ export default function Vote() {
             justifyContent: "center",
           }}
         >
+          {!vote.anonymous && (
+            <>
           <CheckItem
             label={"Vorname(n)"}
             checked={!!(firstName?.trim() && firstName.length >= 2)}
@@ -821,6 +858,8 @@ export default function Vote() {
           <div className="break" />
           <CheckItem label={"Klasse"} checked={!!grade} />
           <CheckItem label={"Klassenlistennr."} checked={!!listIndex} />
+          </>
+          )}
           <div className="break" />
           {extraFields?.map((e, i) => (
             <React.Fragment key={i}>

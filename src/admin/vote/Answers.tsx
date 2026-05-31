@@ -19,6 +19,7 @@ import {
   LoaderFunctionArgs,
 } from "react-router-dom";
 import { db } from "../../firebase";
+import { useDecryption } from "../../contexts/DecryptionContext";
 
 interface VoteData extends DocumentData {
   id: string;
@@ -49,6 +50,11 @@ interface LoaderData {
 
 export default function Answers() {
   const { vote, options } = useLoaderData() as LoaderData;
+  const { resolveName } = useDecryption();
+
+  const getAnswerName = (answer: AnswerData) => {
+    return (vote as any).anonymous ? resolveName(answer.id) : answer.name;
+  };
 
   const [loading, setLoading] = React.useState<boolean>(true);
 
@@ -94,7 +100,7 @@ export default function Answers() {
           );
           if (newAnswer) {
             snackbar({
-              message: `Neue Antwort von ${newAnswer.name} (${newAnswer.grade})`,
+              message: `Neue Antwort von ${getAnswerName(newAnswer)} (${newAnswer.grade})`,
               action: "Anzeigen",
               autoCloseDelay: 5000,
               onActionClick: () => {
@@ -229,7 +235,7 @@ export default function Answers() {
         <mdui-dialog open>
           <div slot="headline">Antwort bearbeiten</div>
           <div slot="description">
-            Bearbeiten Sie die Antwort von {editingAnswer.name}
+            Bearbeiten Sie die Antwort von {getAnswerName(editingAnswer)}
           </div>
           <mdui-button slot="action" variant="text" onClick={closeAnswerEditor}>
             Abbrechen
@@ -451,7 +457,7 @@ export default function Answers() {
                     <tbody>
                       {answers
                         .filter((answer) => answer.selected[0] === option.id)
-                        .sort((a, b) => a.name.localeCompare(b.name))
+                        .sort((a, b) => getAnswerName(a).localeCompare(getAnswerName(b)))
                         .map((answer, i) => (
                           <tr key={i}>
                             <td>
@@ -469,7 +475,7 @@ export default function Answers() {
                                     navigate(`.?search=${answer.id}`);
                                   }}
                                 >
-                                  {answer.name}
+                                  {getAnswerName(answer)}
                                 </a>
                                 <mdui-icon
                                   name="edit"
@@ -583,7 +589,7 @@ export default function Answers() {
                                     navigate(`.?search=${answer.id}`);
                                   }}
                                 >
-                                  {answer.name}
+                                  {getAnswerName(answer)}
                                 </a>
                                 <mdui-icon
                                   name="edit"
@@ -689,10 +695,10 @@ export default function Answers() {
               </thead>
               <tbody>
                 {answers
-                  .sort((a, b) => a.name.localeCompare(b.name))
-                  .map((answer, i) => (
-                    <tr key={i}>
-                      <td>{answer.name}</td>
+                  .sort((a, b) => getAnswerName(a).localeCompare(getAnswerName(b)))
+                  .map((answer) => (
+                    <tr key={answer.id}>
+                      <td>{getAnswerName(answer)}</td>
                       <td>{answer.grade}</td>
                       <td>{answer.listIndex}</td>
                       {answer.selected.map((selected, i) => (
@@ -783,7 +789,7 @@ export default function Answers() {
               <tbody>
                 {answers
                   .sort((a, b) => b.timestamp.seconds - a.timestamp.seconds)
-                  .map((answer, i) => (
+                  .map((answer) => (
                     <tr key={answer.id}>
                       <td>
                         <div
@@ -800,14 +806,15 @@ export default function Answers() {
                               navigate(`.?search=${answer.id}`);
                             }}
                           >
-                            {answer.name}
+                            {getAnswerName(answer)}
                           </a>
                           <mdui-icon
                             name="edit"
                             style={{
                               fontSize: "16px",
                               cursor: "pointer",
-                              color: "rgb(var(--mdui-color-tertiary-dark))",
+                              color:
+                                "rgb(var(--mdui-color-tertiary-dark))",
                             }}
                             onClick={(e) => {
                               e.stopPropagation();

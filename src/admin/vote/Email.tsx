@@ -9,6 +9,8 @@ import { useLoaderData, useParams } from "react-router-dom";
 import { db, auth, functions } from "../../firebase";
 import { alert, prompt, snackbar } from "mdui";
 import { httpsCallable } from "firebase/functions";
+import { useDecryption } from "../../contexts";
+import { V2_EMAIL_TEMPLATES } from "../../utils/emailTemplates";
 
 interface VoteData extends DocumentData {
   id: string;
@@ -33,10 +35,11 @@ interface OptionData extends DocumentData {
   description?: string;
 }
 
-interface StudentData extends DocumentData {
+interface StudentData {
   name: string;
   listIndex: string;
   email?: string;
+  token?: string;
 }
 
 interface ClassData extends DocumentData {
@@ -64,7 +67,7 @@ interface EmailTemplate {
   body: string;
 }
 
-const EMAIL_TEMPLATES = {
+const EMAIL_TEMPLATES: Record<string, EmailTemplate> = {
   announcement: {
     subject: "Wählen: {{vote_title}}",
     body: `<!DOCTYPE html>
@@ -348,6 +351,7 @@ const EMAIL_TEMPLATES = {
 export default function Email() {
   const { vote, choices, options, results } = useLoaderData() as LoaderData;
   const { id } = useParams<{ id: string }>();
+  const { students: decryptedStudents, hasMapping } = useDecryption();
 
   const [loading, setLoading] = React.useState<boolean>(true);
   const [classes, setClasses] = React.useState<ClassData[]>([]);
@@ -374,31 +378,64 @@ export default function Email() {
 
   React.useEffect(() => {
     async function loadClasses() {
-      try {
-        const classSnapshot = await getDocs(
-          collection(db, "schools/SCHOOLID/class")
-        );
-        const classData = classSnapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        })) as ClassData[];
+      if (vote.anonymous) {
+        // Group DecryptionContext students by grade to mimic class data
+        if (!hasMapping || decryptedStudents.length === 0) {
+          setClasses([]);
+          setLoading(false);
+          return;
+        }
+
+        const grouped = decryptedStudents.reduce((acc, student, index) => {
+          const grade = student.grade || 0;
+          if (!acc[grade]) {
+            acc[grade] = [];
+          }
+          acc[grade].push({
+            name: student.name,
+            email: student.email,
+            listIndex: student.token || index.toString(), // Use token as listIndex for anonymous
+            token: student.token,
+          });
+          return acc;
+        }, {} as Record<number, StudentData[]>);
+
+        const classData: ClassData[] = Object.keys(grouped).map((gradeStr) => ({
+          id: `grade-${gradeStr}`,
+          grade: Number(gradeStr),
+          students: grouped[Number(gradeStr)],
+        }));
         setClasses(classData);
         setLoading(false);
-      } catch (error) {
-        console.error("Error loading classes:", error);
-        setLoading(false);
+      } else {
+        try {
+          const classSnapshot = await getDocs(
+            collection(db, "schools/SCHOOLID/class")
+          );
+          const classData = classSnapshot.docs.map((doc) => ({
+            id: doc.id,
+            ...doc.data(),
+          })) as ClassData[];
+          setClasses(classData);
+          setLoading(false);
+        } catch (error) {
+          console.error("Error loading classes:", error);
+          setLoading(false);
+        }
       }
     }
 
     loadClasses();
-  }, []);
+  }, [vote.anonymous, hasMapping, decryptedStudents]);
 
   React.useEffect(() => {
     // Load template when selected
-    const template = EMAIL_TEMPLATES[selectedTemplate];
-    setCustomSubject(template.subject);
-    setCustomBody(template.body);
-  }, [selectedTemplate]);
+    const template = vote.anonymous ? V2_EMAIL_TEMPLATES[selectedTemplate as keyof typeof V2_EMAIL_TEMPLATES] : EMAIL_TEMPLATES[selectedTemplate];
+    if (template) {
+      setCustomSubject(template.subject);
+      setCustomBody(template.body);
+    }
+  }, [selectedTemplate, vote.anonymous]);
 
   // Helper functions for selection management
   const toggleStudentSelection = (classId: string, listIndex: string) => {
@@ -537,6 +574,7 @@ export default function Email() {
 
     if (!emailList.trim()) {
       snackbar({ message: "Keine E-Mail-Adressen verfügbar" });
+      setStep("select");
       return;
     }
 
@@ -579,12 +617,6 @@ export default function Email() {
               ? options.find((o) => o.id == studentResult.result)
               : null;
 
-            // DEBUG
-            console.log(
-              `Processing result for student ${student.name} (${student.listIndex})`
-            );
-            console.log(choice, studentResult, assignedOption);
-
             personalVariables = {
               ...personalVariables,
               choice_id: choice?.id || "",
@@ -599,10 +631,10 @@ export default function Email() {
             };
           }
 
-          console.log(
-            `Sending email to ${email} with variables:`,
-            personalVariables
-          );
+          if (vote.anonymous) {
+            personalVariables.token = student.token || "";
+            personalVariables.link = `${window.location.origin}/v/${vote.id}?t=${student.token}`;
+          }
 
           const response = await httpsCallable(
             functions,
@@ -632,8 +664,6 @@ export default function Email() {
           } else {
             setProgress((prev) => prev + 1);
           }
-
-          setProgress((prev) => prev + 1);
         }
       }
 
@@ -670,7 +700,6 @@ export default function Email() {
       return; // User cancelled or entered empty email
     }
 
-    // Basic email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(testEmailAddress.trim())) {
       snackbar({ message: "Ungültige E-Mail-Adresse" });
@@ -687,40 +716,18 @@ export default function Email() {
 
       const token = await user.getIdToken();
 
-      // Get a random student from the selected ones, or any student with email if none selected
       const selectedData = getSelectedStudentsData();
-      let randomStudent;
+      let randomStudent = selectedData.length > 0 ? selectedData[0] : null;
 
-      if (selectedData.length > 0) {
-        randomStudent =
-          selectedData[Math.floor(Math.random() * selectedData.length)];
-      } else {
-        // Fallback: get any student with email
-        const allStudentsWithEmail: (StudentData & {
-          grade: number;
-          classId: string;
-        })[] = [];
+      if (!randomStudent) {
         classes.forEach((cls) => {
-          cls.students.forEach((student) => {
-            if (student.email) {
-              allStudentsWithEmail.push({
-                ...student,
-                grade: cls.grade,
-                classId: cls.id!,
-              });
-            }
-          });
+          if (!randomStudent && cls.students.length > 0) {
+            randomStudent = { ...cls.students[0], grade: cls.grade, classId: cls.id };
+          }
         });
-
-        if (allStudentsWithEmail.length === 0) {
-          throw new Error("Keine Schüler mit E-Mail-Adresse gefunden");
-        }
-
-        randomStudent =
-          allStudentsWithEmail[
-            Math.floor(Math.random() * allStudentsWithEmail.length)
-          ];
       }
+
+      if (!randomStudent) throw new Error("Kein Schüler gefunden");
 
       let personalVariables: Record<string, string> = {
         ...getTemplateVariables(),
@@ -730,33 +737,9 @@ export default function Email() {
         student_list_index: randomStudent.listIndex,
       };
 
-      // Add result-specific variables for results emails
-      if (selectedTemplate === "results" && results) {
-        const choice = choices.find(
-          (c) =>
-            c.listIndex == randomStudent.listIndex &&
-            c.grade == randomStudent.grade
-        );
-
-        const studentResult = choice
-          ? results.find((r) => r.id == choice.id)
-          : null;
-        const assignedOption = studentResult
-          ? options.find((o) => o.id == studentResult.result)
-          : null;
-
-        personalVariables = {
-          ...personalVariables,
-          choice_id: choice?.id || "",
-          assigned_option: assignedOption?.title || "Nicht zugewiesen",
-          assigned_details: assignedOption
-            ? `<p><strong>Lehrer:</strong> ${
-                assignedOption.teacher || "N/A"
-              }</p><p><strong>Beschreibung:</strong> ${
-                assignedOption.description || "Keine Beschreibung verfügbar"
-              }</p>`
-            : "",
-        };
+      if (vote.anonymous) {
+        personalVariables.token = randomStudent.token || "";
+        personalVariables.link = `${window.location.origin}/v/${vote.id}?t=${randomStudent.token}`;
       }
 
       const response = await httpsCallable(
@@ -772,33 +755,12 @@ export default function Email() {
       });
 
       if ((response.data as any).error) {
-        snackbar({
-          message: `Fehler beim Senden der Test-E-Mail: ${
-            (response.data as any).error
-          }`,
-          action: "Details",
-          onClick: () =>
-            alert({
-              icon: "error",
-              headline: "Fehlerdetails",
-              description: JSON.stringify(response.data, null, 2),
-            }),
-        });
-        return;
+        snackbar({ message: `Fehler: ${(response.data as any).error}` });
+      } else {
+        snackbar({ message: "Test-E-Mail gesendet!" });
       }
-
-      snackbar({
-        message: `Test-E-Mail erfolgreich an ${testEmailAddress.trim()} gesendet! (mit Daten von ${
-          randomStudent.name
-        })`,
-      });
     } catch (error) {
-      console.error("Error sending test email:", error);
-      snackbar({
-        message: `Fehler beim Senden der Test-E-Mail: ${
-          error instanceof Error ? error.message : "Unbekannter Fehler"
-        }`,
-      });
+      console.error(error);
     } finally {
       setSending(false);
     }
@@ -833,7 +795,6 @@ export default function Email() {
           <h2>Empfänger auswählen</h2>
         </div>
 
-        {/* Selection Actions */}
         <div
           style={{
             display: "flex",
@@ -880,72 +841,72 @@ export default function Email() {
           )}
         </div>
 
+        {vote.anonymous && !hasMapping && (
+          <mdui-card
+            variant="filled"
+            style={{
+              padding: "24px",
+              marginBottom: "24px",
+              backgroundColor: "var(--mdui-color-error-container)",
+              color: "var(--mdui-color-on-error-container)"
+            }}
+          >
+            <h3><mdui-icon name="warning" style={{ verticalAlign: "middle", marginRight: "8px" }}/> Anonyme Wahl</h3>
+            <p>
+              Da dies eine anonyme Wahl ist, können die IServ-Klassendaten nicht verwendet werden.
+              Bitte laden Sie über das <b>Schlüssel-Symbol oben in der Navigationsleiste</b> eine Excel-Liste hoch,
+              die die Klarnamen und E-Mail-Adressen enthält.
+            </p>
+          </mdui-card>
+        )}
+
         <mdui-divider style={{ marginBottom: "16px" }} />
 
-        {/* Class Tabs */}
         <mdui-tabs value={activeTab}>
           {classes
             .sort((a, b) => a.grade - b.grade)
-            .map((cls) => {
-              const studentsWithEmail = cls.students.filter((s) => s.email);
-              const selectedInClass = cls.students.filter((s) =>
-                selectedStudents.has(`${cls.id}-${s.listIndex}`)
-              ).length;
-              const participantCount = cls.students.filter((s) =>
-                choices.some((c) => c.listIndex === s.listIndex)
-              ).length;
+            .map((cls) => (
+              <mdui-tab
+                key={cls.id}
+                value={`class-${cls.grade}`}
+                onClick={() => setActiveTab(`class-${cls.grade}`)}
+              >
+                Klasse {cls.grade}
+              </mdui-tab>
+            ))}
 
-              return (
-                <mdui-tab
-                  key={cls.id}
-                  value={`class-${cls.grade}`}
-                  onClick={() => setActiveTab(`class-${cls.grade}`)}
-                >
-                  Klasse {cls.grade}
-                  {selectedInClass > 0 && ` (${selectedInClass})`}
-                </mdui-tab>
-              );
-            })}
-
-          {/* Class Content */}
           {classes.map((cls) => {
-            const studentsWithEmail = cls.students.filter((s) => s.email);
+            const studentsWithEmail = (vote as any).anonymous
+              ? decryptedStudents.filter((s) => s.grade === cls.grade).map(s => ({ ...s, listIndex: s.token }))
+              : cls.students.filter((s) => s.email && s.email.trim().length > 0);
+
             const participantListIndexes = new Set(
-              choices.map((c) => Number(c.listIndex))
+              (vote as any).anonymous
+                ? choices.map(c => c.id) // token is ID
+                : choices.filter(c => c.grade == cls.grade).map(c => String(c.listIndex))
             );
 
             return (
-              <mdui-tab-panel
-                key={cls.id}
-                slot="panel"
-                value={`class-${cls.grade}`}
-              >
-                <div style={{ padding: "16px 0" }}>
-                  <div
-                    style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "center",
-                      marginBottom: "16px",
-                    }}
-                  >
-                    <h3>Klasse {cls.grade}</h3>
-                    <div style={{ display: "flex", gap: "8px" }}>
-                      <mdui-button
-                        variant="outlined"
-                        onClick={() => selectAllInClass(cls.id!)}
-                      >
-                        Alle auswählen
-                      </mdui-button>
-                      <mdui-button
-                        variant="outlined"
-                        onClick={() => deselectAllInClass(cls.id!)}
-                      >
-                        Alle abwählen
-                      </mdui-button>
-                    </div>
+            <mdui-tab-panel
+              key={cls.id}
+              slot="panel"
+              value={`class-${cls.grade}`}
+            >
+              <div style={{ padding: "16px 0" }}>
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    marginBottom: "16px",
+                  }}
+                >
+                  <h3>Klasse {cls.grade}</h3>
+                  <div style={{ display: "flex", gap: "8px" }}>
                   </div>
+                </div>
 
+                <div style={{ marginTop: "16px" }}>
                   {studentsWithEmail.length === 0 ? (
                     <p
                       style={{
@@ -962,7 +923,7 @@ export default function Email() {
                         const studentKey = `${cls.id}-${student.listIndex}`;
                         const isSelected = selectedStudents.has(studentKey);
                         const hasVoted = participantListIndexes.has(
-                          Number(student.listIndex)
+                          String(student.listIndex)
                         );
 
                         return (
@@ -1023,7 +984,8 @@ export default function Email() {
                     </mdui-list>
                   )}
                 </div>
-              </mdui-tab-panel>
+              </div>
+            </mdui-tab-panel>
             );
           })}
         </mdui-tabs>

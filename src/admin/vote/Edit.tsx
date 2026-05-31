@@ -57,8 +57,8 @@ interface VoteData extends DocumentData {
   title: string;
   description: string;
   selectCount: number;
-  extraFields?: string[];
   proposals: boolean;
+  anonymous?: boolean;
   proposeFields?: ProposeField[];
   proposeTexts?: ProposeTexts;
 }
@@ -214,6 +214,21 @@ export default function Edit() {
     vote.extraFields || []
   );
 
+  const [anonymous, setAnonymous] = React.useState<boolean>(
+    vote.anonymous ?? true
+  );
+
+  const dbSwitchRef = React.useRef<HTMLInputElement>(null);
+
+  React.useEffect(() => {
+    if (dbSwitchRef.current) {
+      dbSwitchRef.current.checked = !anonymous;
+      const handleToggle = () => setAnonymous(!dbSwitchRef.current!.checked);
+      dbSwitchRef.current.addEventListener("change", handleToggle);
+      return () => dbSwitchRef.current?.removeEventListener("change", handleToggle);
+    }
+  }, [anonymous]);
+
   // Proposal fields and dialog texts
   const [proposeFields, setProposeFields] = React.useState<ProposeField[]>(
     vote.proposeFields || []
@@ -296,9 +311,10 @@ export default function Edit() {
       await setDoc(
         doc(db, "schools/SCHOOLID/votes", vote.id),
         {
-          title,
           description: description || "",
           extraFields: extraFields.length > 0 ? extraFields : [],
+          proposals: vote.proposals,
+          anonymous: anonymous,
           proposeFields: vote.proposals ? proposeFields : [],
           proposeTexts: vote.proposals ? proposeTexts : {},
         },
@@ -353,10 +369,11 @@ export default function Edit() {
   const isVoteUnchanged = (): boolean => {
     const newVote = {
       title,
-      description,
       selectCount,
       version: 3,
       extraFields: extraFields.length > 0 ? extraFields : [],
+      proposals: vote.proposals,
+      anonymous: anonymous,
       proposeFields: vote.proposals ? proposeFields : [],
       proposeTexts: vote.proposals ? proposeTexts : {},
     };
@@ -693,6 +710,24 @@ export default function Edit() {
         >
           Erweitert
         </mdui-button>
+      </div>
+
+      <p />
+      <mdui-divider></mdui-divider>
+      <p />
+
+      <div style={{ display: "flex", alignItems: "center" }}>
+        <label style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+          <mdui-switch
+            ref={dbSwitchRef}
+            checked={!anonymous}
+          ></mdui-switch>
+          Schülerdatenbank nutzen (Veraltet) <mdui-icon name="key_off"></mdui-icon>
+        </label>
+      </div>
+      <br />
+      <div style={{ color: "gray", fontSize: "0.9em", marginLeft: "48px" }}>
+        Standardmäßig sind Wahlen anonym (Zero-PII). Die Entschlüsselung von Ergebnissen erfolgt dann lokal im Browser durch Excel-Uploads. Wenn Sie diesen Schalter aktivieren, wird das alte System mit der Firebase-Schülerdatenbank verwendet.
       </div>
 
       <p />

@@ -10,6 +10,7 @@ import { useNavigate } from "react-router-dom";
 import Login from "./auth/Login";
 import DrawerList from "./navigation/DrawerList";
 import { doc, getDoc, DocumentData } from "firebase/firestore";
+import { useDecryption } from "../contexts/DecryptionContext";
 
 interface ReleaseNotesData extends DocumentData {
   updated?: {
@@ -33,6 +34,22 @@ export default function Admin() {
   const navigate = useNavigate();
 
   const revalidator = useRevalidator();
+  const { hasMapping, loadFromExcel, clearMapping } = useDecryption();
+  
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
+
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      try {
+        const count = await loadFromExcel(file);
+        snackbar({ message: `${count} Schüler erfolgreich geladen und im Browser entschlüsselt.` });
+      } catch (err) {
+        console.error(err);
+        snackbar({ message: "Fehler beim Laden der Excel-Datei." });
+      }
+    }
+  };
 
   async function checkForReleaseNotes() {
     const response = await getDoc(doc(db, "docs", "release-notes"));
@@ -146,6 +163,31 @@ export default function Admin() {
           ></mdui-button-icon>
         )}
         <mdui-top-app-bar-title>{authUser.email}</mdui-top-app-bar-title>
+
+        <input 
+          type="file" 
+          ref={fileInputRef} 
+          style={{ display: "none" }} 
+          accept=".xlsx, .xls" 
+          onChange={handleFileUpload} 
+        />
+        
+        {hasMapping ? (
+          <mdui-tooltip content="Entschlüsselung aktiv (Daten löschen)" open-delay={0}>
+            <mdui-button-icon
+              icon="key_off"
+              onClick={() => clearMapping()}
+              style={{ color: "var(--mdui-color-primary)" }}
+            ></mdui-button-icon>
+          </mdui-tooltip>
+        ) : (
+          <mdui-tooltip content="Excel hochladen (für Klarnamen in anonymen Wahlen)" open-delay={0}>
+            <mdui-button-icon
+              icon="vpn_key"
+              onClick={() => fileInputRef.current?.click()}
+            ></mdui-button-icon>
+          </mdui-tooltip>
+        )}
 
         <mdui-dropdown>
           <mdui-avatar

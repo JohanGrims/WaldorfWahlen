@@ -672,7 +672,12 @@ def submit_vote(req: https_fn.CallableRequest) -> dict:
         
 
         # create a new choice document in the choices subcollection
-        choice_ref = vote_ref.collection("choices").document()
+        token_id = data.get("tokenId")
+        if token_id:
+            choice_ref = vote_ref.collection("choices").document(token_id)
+        else:
+            choice_ref = vote_ref.collection("choices").document()
+            
         choice_data = data.get("choice", {})
         choice_data["timestamp"] = firestore.SERVER_TIMESTAMP
         choice_ref.set(choice_data)

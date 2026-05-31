@@ -1,6 +1,6 @@
 export const V2_EMAIL_TEMPLATES = {
   announcement: {
-    subject: "Wählen: {{title}}",
+    subject: "Einladung zur Wahl: {{vote_title}}",
     body: `<!DOCTYPE html>
 <html lang="de">
 <head>
@@ -72,22 +72,22 @@ export const V2_EMAIL_TEMPLATES = {
 </head>
 <body>
     <div class="container">
-        <h3>Neue Wahl: {{title}}</h3>
-        <p>Liebe/r {{name}},</p>
-        <p>es ist eine neue Wahl verfügbar: <strong>{{title}}</strong></p>
-        <p>Bitte besuchen Sie die folgende Website, um Ihre Stimme abzugeben:</p>
+        <h3>Neue Wahl: {{vote_title}}</h3>
+        <p>Liebe/r {{student_name}},</p>
+        <p>es ist eine neue Wahl verfügbar: <strong>{{vote_title}}</strong></p>
+        <p>Bitte besuchen Sie die folgende Website, um Ihre Stimme <strong>komplett pseudonymisiert</strong> abzugeben:</p>
         <p style="text-align: center;">
-            <a href="{{link}}" class="button">Jetzt pseudonymisiert wählen</a>
+            <a href="{{link}}" class="button">Jetzt wählen</a>
         </p>
-        <p><strong>Direktlink:</strong></p>
+        <p><strong>Direktlink (mit Ihrem Zugangstoken):</strong></p>
         <p class="link-box">{{link}}</p>
         <p class="footer">Mit freundlichen Grüßen!</p>
     </div>
 </body>
-</html>`,
+</html>`
   },
   reminder: {
-    subject: "Erinnerung: {{title}}",
+    subject: "Erinnerung: {{vote_title}}",
     body: `<!DOCTYPE html>
 <html lang="de">
 <head>
@@ -159,19 +159,19 @@ export const V2_EMAIL_TEMPLATES = {
 </head>
 <body>
     <div class="container">
-        <h3>Erinnerung: {{title}}</h3>
-        <p>Liebe/r {{name}},</p>
-        <p>Sie haben noch nicht an der Wahl <strong>{{title}}</strong> teilgenommen.</p>
-        <p>Bitte vergessen Sie nicht, Ihre Stimme abzugeben:</p>
+        <h3>Erinnerung: {{vote_title}}</h3>
+        <p>Liebe/r {{student_name}},</p>
+        <p>Sie haben noch nicht an der Wahl <strong>{{vote_title}}</strong> teilgenommen.</p>
+        <p>Bitte vergessen Sie nicht, Ihre Stimme <strong>komplett pseudonymisiert</strong> abzugeben:</p>
         <p style="text-align: center;">
-            <a href="{{link}}" class="button">Jetzt pseudonymisiert wählen</a>
+            <a href="{{link}}" class="button">Jetzt wählen</a>
         </p>
         <p>Falls Sie diese E-Mail unerwartet erhalten haben, ignorieren Sie diese Nachricht einfach.</p>
-        <p><strong>Direktlink:</strong></p>
+        <p><strong>Direktlink (mit Ihrem Zugangstoken):</strong></p>
         <p class="link-box">{{link}}</p>
         <p class="footer">Mit freundlichen Grüßen!</p>
     </div>
 </body>
-</html>`,
+</html>`
   }
 };

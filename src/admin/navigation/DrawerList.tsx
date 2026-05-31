@@ -509,12 +509,12 @@ export default function DrawerList({
         </mdui-tooltip>
         <mdui-tooltip
           variant="rich"
-          headline="Klassen"
-          content="Verwalten Sie die Klassen und SchülerInnen."
+          headline="Klassen (veraltet)"
+          content="Verwalten Sie die Klassen und SchülerInnen. Hinweis: Nutzen Sie stattdessen die neue Anonyme Wahl mit direktem Excel-Upload."
         >
           <DrawerItem
             active={active === "students"}
-            title={"SchülerInnen"}
+            title={"SchülerInnen (veraltet)"}
             icon={"groups"}
             onClick={() => navigateTo("/admin/students/new-class")}
           />

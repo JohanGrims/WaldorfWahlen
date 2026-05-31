@@ -12,15 +12,17 @@ import {
   useRevalidator,
 } from "react-router-dom";
 import { auth, db } from "../../firebase";
-
+import * as XLSX from "xlsx";
 import { confirm, prompt, snackbar } from "mdui";
 import React from "react";
 import jsPDF from "jspdf";
+import { useDecryption } from "../../contexts";
 
 interface VoteData extends DocumentData {
   id: string;
   title: string;
   result: boolean;
+  anonymous?: boolean;
 }
 
 interface OptionData extends DocumentData {
@@ -58,6 +60,14 @@ interface LoaderData {
 
 export default function Results() {
   const { vote, options, results, choices } = useLoaderData() as LoaderData;
+  const { resolveName } = useDecryption();
+
+  const getChoiceName = (choiceId: string | undefined) => {
+    if (!choiceId) return "";
+    const choice = choices.find((c) => c.id === choiceId);
+    if (!choice) return "Unbekannt";
+    return vote.anonymous ? resolveName(choice.id) : choice.name;
+  };
 
   const [mode, setMode] = React.useState<"all" | "project" | "class">("all");
 
@@ -154,9 +164,7 @@ export default function Results() {
               .map(
                 (result) => `
               <tr>
-                <td>${choices
-                  .find((choice) => choice.id === result.id)
-                  ?.name?.replace(/\[.*?\]/g, "")
+                <td>${getChoiceName(result.id)?.replace(/\[.*?\]/g, "")
                   .trim()}</td>
                 <td>${
                   choices.find((choice) => choice.id === result.id)?.grade
@@ -241,9 +249,7 @@ export default function Results() {
               .map(
                 (result) => `
               <tr>
-                <td>${choices
-                  .find((choice) => choice.id === result.id)
-                  ?.name?.replace(/\[.*?\]/g, "")
+                <td>${getChoiceName(result.id)?.replace(/\[.*?\]/g, "")
                   .trim()}</td>
                 <td>${
                   options.find((option) => option.id === result.result)?.title
@@ -350,7 +356,7 @@ export default function Results() {
       }
       resultsByGrade[choice.grade].push({
         ...result,
-        name: choice.name,
+        name: getChoiceName(choice.id),
         grade: choice.grade,
         listIndex: choice.listIndex,
       });
@@ -478,7 +484,7 @@ export default function Results() {
       if (
         Object.keys(group).every((key) => {
           if (key === "name") {
-            return choice.name.toLowerCase().includes(group[key].toLowerCase());
+            return getChoiceName(choice.id).toLowerCase().includes(group[key].toLowerCase());
           } else if (key === "grade") {
             return choice.grade.toString() === group[key];
           } else if (key === "assignedTo") {
@@ -525,6 +531,25 @@ export default function Results() {
     });
 
     setCommenting(false);
+  }
+
+  function exportExcel() {
+    const data = filteredResults().map((result) => {
+      const choice = choices.find((c) => c.id === result.id);
+      const option = options.find((o) => o.id === result.result);
+      return {
+        Name: getChoiceName(result.id)?.replace(/\[.*?\]/g, "").trim(),
+        Klasse: choice?.grade,
+        "Listen-Nr": choice?.listIndex,
+        Projekt: option?.title?.replace(/\[.*?\]/g, ""),
+        Leitung: option?.teacher,
+      };
+    });
+
+    const worksheet = XLSX.utils.json_to_sheet(data);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Zuteilungen");
+    XLSX.writeFile(workbook, `zuteilungen_${vote.title}.xlsx`);
   }
 
   function exportAttendancePDF() {
@@ -725,7 +750,7 @@ export default function Results() {
 
           // Student name
           doc.text(
-            student?.name?.replace(/\[.*?\]/g, "").trim() || "",
+            getChoiceName(projectStudents[rowIndex].id)?.replace(/\[.*?\]/g, "").trim() || "",
             margin + 2,
             rowY + 3
           );
@@ -1095,6 +1120,10 @@ export default function Results() {
           >
             Anwesenheitsliste
           </mdui-button>
+
+          <mdui-button onClick={exportExcel} icon="download" variant="outlined">
+            Excel-Export
+          </mdui-button>
         </div>
       </div>
 
@@ -1114,9 +1143,7 @@ export default function Results() {
                 {filteredResults().map((result) => (
                   <tr key={result.id}>
                     <td>
-                      {choices
-                        .find((choice) => choice.id === result.id)
-                        ?.name?.replace(/\[.*?\]/g, "")
+                      {getChoiceName(result.id)?.replace(/\[.*?\]/g, "")
                         .trim()}
                     </td>
                     <td>
@@ -1244,9 +1271,7 @@ export default function Results() {
                       {choices.find((choice) => choice.id === result.id)?.grade}
                     </td>
                     <td>
-                      {choices
-                        .find((choice) => choice.id === result.id)
-                        ?.name?.replace(/\[.*?\]/g, "")
+                      {getChoiceName(result.id)?.replace(/\[.*?\]/g, "")
                         .trim()}
                     </td>
                     <td>
@@ -1330,10 +1355,7 @@ export default function Results() {
                             .map((result) => (
                               <tr key={result.id}>
                                 <td>
-                                  {choices
-                                    .find((choice) => choice.id === result.id)
-                                    ?.name?.replace(/\[.*?\]/g, "")
-                                    .trim()}
+                                  {getChoiceName(result.id)?.replace(/\[.*?\]/g, "")}
                                 </td>
                                 <td>
                                   {
@@ -1389,10 +1411,7 @@ export default function Results() {
                       .map((result) => (
                         <tr key={result.id}>
                           <td>
-                            {choices
-                              .find((choice) => choice.id === result.id)
-                              ?.name?.replace(/\[.*?\]/g, "")
-                              .trim()}
+                            {getChoiceName(result.id)?.replace(/\[.*?\]/g, "")}
                           </td>
                           <td
                             style={{
@@ -1484,10 +1503,7 @@ export default function Results() {
                               .map((result) => (
                                 <tr key={result.id}>
                                   <td>
-                                    {choices
-                                      .find((choice) => choice.id === result.id)
-                                      ?.name?.replace(/\[.*?\]/g, "")
-                                      .trim()}
+                                    {getChoiceName(result.id)?.replace(/\[.*?\]/g, "")}
                                   </td>
                                   <td>
                                     {
@@ -1544,9 +1560,7 @@ export default function Results() {
                       .map((result) => (
                         <tr key={result.id}>
                           <td style={{ width: "50%" }}>
-                            {choices
-                              .find((choice) => choice.id === result.id)
-                              ?.name?.replace(/\[.*?\]/g, "")}
+                            {getChoiceName(result.id)?.replace(/\[.*?\]/g, "")}
                           </td>
                           <td>
                             {
