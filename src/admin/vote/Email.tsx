@@ -366,6 +366,7 @@ export default function Email() {
   const [activeTab, setActiveTab] = React.useState<string>("class");
 
   const [progress, setProgress] = React.useState<number>(0);
+  const [logs, setLogs] = React.useState<{type: 'success' | 'error' | 'info', message: string}[]>([]);
 
   // Email sending state
   const [selectedTemplate, setSelectedTemplate] = React.useState<
@@ -375,6 +376,8 @@ export default function Email() {
   const [customBody, setCustomBody] = React.useState<string>("");
 
   const [sending, setSending] = React.useState<boolean>(false);
+
+  const delay = (ms: number) => new Promise((res) => setTimeout(res, ms));
 
   React.useEffect(() => {
     async function loadClasses() {
@@ -570,76 +573,60 @@ export default function Email() {
 
   const sendEmails = async () => {
     setStep("sending");
-    const emailList = getEmailList();
-
-    if (!emailList.trim()) {
-      snackbar({ message: "Keine E-Mail-Adressen verfügbar" });
-      setStep("select");
-      return;
-    }
-
     setSending(true);
+    setLogs([{ type: "info", message: "🚀 Starte Massenversand..." }]);
+    setProgress(0);
 
     try {
       const user = auth.currentUser;
-      if (!user) {
-        throw new Error("Nicht angemeldet");
+      if (!user) throw new Error("Nicht angemeldet");
+      const token = await user.getIdToken();
+
+      const selectedData = getSelectedStudentsData();
+      const totalMails = selectedData.length;
+
+      if (totalMails === 0) {
+        snackbar({ message: "Keine E-Mail-Adressen verfügbar" });
+        setStep("select");
+        setSending(false);
+        return;
       }
 
-      const token = await user.getIdToken();
-      const emails = emailList.split(", ").filter((email) => email.trim());
-      const selectedData = getSelectedStudentsData();
+      // Schleife mit Throttling
+      for (let i = 0; i < totalMails; i++) {
+        const student = selectedData[i];
+        const email = student.email!;
 
-      // All emails are now personalized
-      for (const email of emails) {
-        const student = selectedData.find((s) => s.email === email);
+        // Variablen zusammenbauen (deine bestehende Logik)
+        let personalVariables: Record<string, string> = {
+          ...getTemplateVariables(),
+          student_name: student.name,
+          student_name_encoded: encodeURIComponent(student.name),
+          student_grade: student.grade.toString(),
+          student_list_index: student.listIndex,
+        };
 
-        if (student) {
-          let personalVariables: Record<string, string> = {
-            ...getTemplateVariables(),
-            student_name: student.name,
-            student_name_encoded: encodeURIComponent(student.name),
-            student_grade: student.grade.toString(),
-            student_list_index: student.listIndex,
+        if (selectedTemplate === "results" && results) {
+          const choice = choices.find(c => c.listIndex == student.listIndex && c.grade == student.grade);
+          const studentResult = choice ? results.find(r => r.id == choice.id) : null;
+          const assignedOption = studentResult ? options.find(o => o.id == studentResult.result) : null;
+
+          personalVariables = {
+            ...personalVariables,
+            choice_id: choice?.id || "",
+            assigned_option: assignedOption?.title || "Nicht zugewiesen",
+            assigned_details: assignedOption ? `<p><strong>Lehrer:</strong> ${assignedOption.teacher || "N/A"}</p><p><strong>Beschreibung:</strong> ${assignedOption.description || "Keine Beschreibung verfügbar"}</p>` : "",
           };
+        }
 
-          // Add result-specific variables for results emails
-          if (selectedTemplate === "results" && results) {
-            const choice = choices.find(
-              (c) =>
-                c.listIndex == student.listIndex && c.grade == student.grade
-            );
+        if (vote.anonymous) {
+          personalVariables.token = student.token || "";
+          personalVariables.link = `${window.location.origin}/v/${vote.id}?t=${student.token}`;
+        }
 
-            const studentResult = choice
-              ? results.find((r) => r.id == choice.id)
-              : null;
-            const assignedOption = studentResult
-              ? options.find((o) => o.id == studentResult.result)
-              : null;
-
-            personalVariables = {
-              ...personalVariables,
-              choice_id: choice?.id || "",
-              assigned_option: assignedOption?.title || "Nicht zugewiesen",
-              assigned_details: assignedOption
-                ? `<p><strong>Lehrer:</strong> ${
-                    assignedOption.teacher || "N/A"
-                  }</p><p><strong>Beschreibung:</strong> ${
-                    assignedOption.description || "Keine Beschreibung verfügbar"
-                  }</p>`
-                : "",
-            };
-          }
-
-          if (vote.anonymous) {
-            personalVariables.token = student.token || "";
-            personalVariables.link = `${window.location.origin}/v/${vote.id}?t=${student.token}`;
-          }
-
-          const response = await httpsCallable(
-            functions,
-            "send_email_func"
-          )({
+        // Einzelne E-Mail senden
+        try {
+          const response = await httpsCallable(functions, "send_email_func")({
             token,
             uid: user.uid,
             emails: [email],
@@ -649,41 +636,34 @@ export default function Email() {
           });
 
           if ((response.data as any).error) {
-            snackbar({
-              message: `Fehler beim Senden an ${email}: ${
-                (response.data as any).error
-              }`,
-              action: "Details",
-              onClick: () =>
-                alert({
-                  icon: "error",
-                  headline: "Fehlerdetails",
-                  description: JSON.stringify(response.data, null, 2),
-                }),
-            });
+            setLogs(prev => [...prev, { type: "error", message: `[${i + 1}/${totalMails}] ❌ Fehler bei ${email}: ${(response.data as any).error}` }]);
           } else {
-            setProgress((prev) => prev + 1);
+            setLogs(prev => [...prev, { type: "success", message: `[${i + 1}/${totalMails}] ✅ Erfolgreich gesendet an: ${email}` }]);
           }
+        } catch (err: any) {
+          setLogs(prev => [...prev, { type: "error", message: `[${i + 1}/${totalMails}] 🚨 Kritischer Fehler bei ${email}: ${err.message}` }]);
+        }
+
+        // Fortschritt aktualisieren
+        setProgress(i + 1);
+
+        // THROTTLING: Warte 2 Sekunden (außer nach der allerletzten E-Mail)
+        if (i < totalMails - 1) {
+          await delay(2000); // 2000 Millisekunden = 2 Sekunden
         }
       }
 
-      snackbar({
-        message: `E-Mails erfolgreich an ${emails.length} Empfänger gesendet!`,
-      });
-      setProgress(0);
-      setStep("select");
-      setSelectedStudents(new Set());
+      setLogs(prev => [...prev, { type: "info", message: "🎉 Alle E-Mails wurden abgearbeitet!" }]);
+      snackbar({ message: `Versandlauf beendet!` });
+      
     } catch (error) {
       console.error("Error sending emails:", error);
-      snackbar({
-        message: `Fehler beim Senden: ${
-          error instanceof Error ? error.message : "Unbekannter Fehler"
-        }`,
-      });
+      setLogs(prev => [...prev, { type: "error", message: `Abbruch: ${error instanceof Error ? error.message : "Unbekannter Fehler"}` }]);
     } finally {
       setSending(false);
     }
   };
+
 
   const sendTestEmail = async () => {
     const testEmailAddress = await prompt({
@@ -1250,45 +1230,81 @@ export default function Email() {
     );
   }
 
-  if (step === "sending") {
-    const emailCount = getEmailList()
-      .split(", ")
-      .filter((email) => email.trim()).length;
+  if (step === "sending" || (step === "send" && logs.length > 0)) { // Erlaubt Ansicht auch wenn fertig
+    const totalMails = getSelectedStudentsData().length;
+    
     return (
       <div className="mdui-prose">
-        <h2>E-Mails werden gesendet...</h2>
+        <h2>E-Mail Versand {sending ? "läuft..." : "abgeschlossen"}</h2>
 
-        {/* Warning notice */}
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "12px",
-            padding: "16px",
-            backgroundColor: "var(--mdui-color-warning-container)",
-            color: "var(--mdui-color-on-warning-container)",
-            borderRadius: "8px",
-            marginBottom: "16px",
-          }}
-        >
-          <mdui-icon name="warning" style={{ fontSize: "24px" }}></mdui-icon>
-          <div>
-            <strong>Wichtiger Hinweis:</strong>
-            <br />
-            Schließen Sie diesen Tab nicht und navigieren Sie nicht weg, bis
-            alle E-Mails gesendet wurden. Der Sendevorgang wird sonst
-            unterbrochen.
+        {sending && (
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "12px",
+              padding: "16px",
+              backgroundColor: "var(--mdui-color-warning-container)",
+              color: "var(--mdui-color-on-warning-container)",
+              borderRadius: "8px",
+              marginBottom: "16px",
+            }}
+          >
+            <mdui-icon name="warning" style={{ fontSize: "24px" }}></mdui-icon>
+            <div>
+              <strong>Wichtiger Hinweis:</strong>
+              <br />
+              Schließen Sie diesen Tab nicht und navigieren Sie nicht weg, bis der Versand abgeschlossen ist.
+            </div>
           </div>
+        )}
+
+        <div style={{ marginBottom: "24px" }}>
+          <mdui-linear-progress value={progress} max={totalMails}></mdui-linear-progress>
+          <p style={{ marginTop: "8px", fontWeight: "bold" }}>
+            Fortschritt: {progress} von {totalMails} E-Mails verarbeitet
+          </p>
         </div>
 
-        <mdui-linear-progress
-          value={progress}
-          max={emailCount}
-        ></mdui-linear-progress>
-        <p>
-          Bitte warten Sie, während die E-Mails gesendet werden. ({progress} /{" "}
-          {emailCount})
-        </p>
+        {/* Live Log Terminal */}
+        <div 
+          style={{ 
+            backgroundColor: "#1e1e1e", 
+            color: "#d4d4d4", 
+            padding: "16px", 
+            borderRadius: "8px",
+            height: "300px",
+            overflowY: "auto",
+            fontFamily: "monospace",
+            fontSize: "14px",
+            display: "flex",
+            flexDirection: "column",
+            gap: "8px"
+          }}
+        >
+          {logs.map((log, index) => (
+            <div key={index} style={{ 
+              color: log.type === 'error' ? '#f48771' : log.type === 'success' ? '#89d185' : '#569cd6'
+            }}>
+              {log.message}
+            </div>
+          ))}
+          {/* Ein unsichtbares Element am Ende, falls du später Auto-Scroll einbauen willst */}
+          <div id="log-end" />
+        </div>
+
+        {!sending && (
+          <mdui-button 
+            style={{ marginTop: "24px" }} 
+            onClick={() => {
+              setStep("select");
+              setLogs([]);
+              setSelectedStudents(new Set());
+            }}
+          >
+            Zurück zur Auswahl
+          </mdui-button>
+        )}
       </div>
     );
   }
