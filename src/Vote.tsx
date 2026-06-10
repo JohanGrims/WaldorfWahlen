@@ -94,6 +94,12 @@ export default function Vote() {
   const [lastName, setLastName] = React.useState<string>("");
   const [grade, setGrade] = React.useState<string>(urlGrade || "");
   const [listIndex, setListIndex] = React.useState<string>(urlListIndex || "");
+  const [detailsEdited, setDetailsEdited] = React.useState<boolean>(false);
+  const [editDialogOpen, setEditDialogOpen] = React.useState<boolean>(false);
+  const [disclaimerExpanded, setDisclaimerExpanded] = React.useState<boolean>(false);
+  const [tempName, setTempName] = React.useState<string>("");
+  const [tempGrade, setTempGrade] = React.useState<string>("");
+  const [tempListIndex, setTempListIndex] = React.useState<string>("");
   const [selected, setSelected] = React.useState<string[]>(
     Array.from({ length: selectCount }, () => "null")
   );
@@ -215,6 +221,7 @@ export default function Vote() {
           selected,
           extraFields: extraFieldsValues,
           version: 2,
+          detailsEdited: detailsEdited,
         },
       });
 
@@ -312,6 +319,48 @@ export default function Vote() {
     <div className="container">
       <title>{title} - Projektwahl</title>
       <meta name="description" content={description} />
+      
+      <mdui-dialog open={editDialogOpen} headline="Eigene Daten korrigieren" icon="edit">
+        <div style={{ display: "flex", flexDirection: "column", gap: "16px", marginTop: "8px" }}>
+          <mdui-text-field
+            label="Name"
+            value={tempName}
+            onInput={(e: React.ChangeEvent<HTMLInputElement>) => setTempName(capitalizeWords(e.target.value))}
+            icon="person"
+          ></mdui-text-field>
+          <div style={{ display: "flex", gap: "20px" }}>
+            <mdui-text-field
+              type="number"
+              label="Klasse"
+              value={tempGrade}
+              onInput={(e: React.ChangeEvent<HTMLInputElement>) => setTempGrade(e.target.value)}
+              icon="school"
+            ></mdui-text-field>
+            <mdui-text-field
+              type="number"
+              label="Nummer"
+              value={tempListIndex}
+              onInput={(e: React.ChangeEvent<HTMLInputElement>) => setTempListIndex(e.target.value)}
+              icon="format_list_numbered"
+            ></mdui-text-field>
+          </div>
+        </div>
+        <div className="button-container" style={{ marginTop: "24px" }}>
+          <mdui-button variant="text" onClick={() => setEditDialogOpen(false)}>
+            Abbrechen
+          </mdui-button>
+          <mdui-button onClick={() => {
+            setName(tempName);
+            setGrade(tempGrade);
+            setListIndex(tempListIndex);
+            setDetailsEdited(true);
+            setEditDialogOpen(false);
+          }}>
+            Speichern
+          </mdui-button>
+        </div>
+      </mdui-dialog>
+
       <mdui-dialog open={confirmDialog} headline="Bestätigen" icon="check">
         <div className="mdui-prose">
           <p>
@@ -578,7 +627,9 @@ export default function Vote() {
               setName(capitalizeWords(e.target.value))
             }
             icon="person"
-          ></mdui-text-field>
+            disabled={true}
+          >
+          </mdui-text-field>
         ) : (
           // Separate first/last name fields when not prefilled
           <div className="flex-row">
@@ -613,6 +664,7 @@ export default function Vote() {
               setGrade(e.target.value)
             }
             icon="school"
+            disabled={decodedUrlName !== null}
           ></mdui-text-field>
           <mdui-text-field
             type="number"
@@ -623,7 +675,22 @@ export default function Vote() {
               setListIndex(e.target.value)
             }
             icon="format_list_numbered"
+            disabled={decodedUrlName !== null}
           ></mdui-text-field>
+
+          {decodedUrlName !== null && (
+            <div style={{display: "flex", alignItems: "center", justifyContent: "center"}}>
+              <mdui-button-icon 
+                icon="edit" 
+                onClick={() => {
+                  setTempName(name);
+                  setTempGrade(grade);
+                  setTempListIndex(listIndex);
+                  setEditDialogOpen(true);
+                }}
+              ></mdui-button-icon>
+            </div>
+          )}
         </div>
         <p />
         {extraFields?.map((e, i) => (
@@ -729,23 +796,68 @@ export default function Vote() {
         ))}
         <p />
         <br />
-        <mdui-checkbox
-          checked={accepted}
-          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-            setAccepted(e.target.checked)
-          }
-        >
-          Ich willige ein, dass mein Vorname, der erste Buchstabe meines
-          Nachnamens, meine Klasse sowie meine Position in der Klassenliste
-          zusammen mit meinen Wahlentscheidungen zum Zweck der Durchführung und
-          Auswertung der Projektwahl gespeichert und verarbeitet werden. Die
-          Daten werden in einer abgesicherten Datenbank von Google Firestore
-          innerhalb der EU gespeichert und sind ausschließlich für berechtigte
-          Lehrkräfte zugänglich. Die Nutzung dieser Plattform ist freiwillig.
-          Wenn ich nicht möchte, dass meine Daten online verarbeitet werden,
-          kann ich meine Wahl stattdessen direkt bei den verantwortlichen
-          Lehrer:innen abgeben.
-        </mdui-checkbox>
+        <div style={{ display: "flex", alignItems: "flex-start", gap: "8px", marginTop: "8px" }}>
+          <mdui-checkbox
+            checked={accepted}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+              setAccepted(e.target.checked)
+            }
+            style={{ flexShrink: 0, marginTop: "-8px", marginBottom: "-8px", marginLeft: "-10px" }}
+          ></mdui-checkbox>
+          <div
+            style={{ cursor: "pointer", lineHeight: 1.5, flexGrow: 1 }}
+            onClick={() => setAccepted(!accepted)}
+          >
+            Ich willige ein, dass mein Vorname, der erste Buchstabe meines
+            {!disclaimerExpanded && (
+              <span
+                style={{
+                  cursor: "pointer",
+                  fontWeight: "bold",
+                  padding: "0 4px",
+                  opacity: 0.6,
+                  whiteSpace: "nowrap"
+                }}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setDisclaimerExpanded(true);
+                }}
+              >
+                ...
+              </span>
+            )}
+            {disclaimerExpanded && (
+              <span>
+                {" "}Nachnamens, meine Klasse sowie meine Position in der Klassenliste
+                zusammen mit meinen Wahlentscheidungen zum Zweck der Durchführung und
+                Auswertung der Projektwahl gespeichert und verarbeitet werden. Die
+                Daten werden in einer abgesicherten Datenbank von Google Firestore
+                innerhalb der EU gespeichert und sind ausschließlich für berechtigte
+                Lehrkräfte und die Organisator:innen zugänglich. Die Nutzung dieser
+                Plattform ist freiwillig. Wenn ich nicht möchte, dass meine Daten
+                online verarbeitet werden, kann ich meine Wahl stattdessen direkt bei
+                den verantwortlichen Lehrkräften oder Organisator:innen{" "}
+                <span
+                  style={{
+                    cursor: "pointer",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    verticalAlign: "bottom",
+                    whiteSpace: "nowrap"
+                  }}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setDisclaimerExpanded(false);
+                  }}
+                >
+                  abgeben.<mdui-icon name="expand_less" style={{ fontSize: "1.4em", marginBottom: "-2px", opacity: 0.6 }} />
+                </span>
+              </span>
+            )}
+          </div>
+        </div>
         <p />
 
         <div
@@ -768,8 +880,15 @@ export default function Vote() {
                   );
                   setFirstName("");
                   setLastName("");
-                  setGrade("");
-                  setListIndex("");
+                  if (decodedUrlName) {
+                    setName(decodedUrlName);
+                    setGrade(urlGrade || "");
+                    setListIndex(urlListIndex || "");
+                    setDetailsEdited(false);
+                  } else {
+                    setGrade("");
+                    setListIndex("");
+                  }
                   setExtraFieldsValues([]);
                   setAccepted(false);
                 },
@@ -810,6 +929,7 @@ export default function Vote() {
             justifyContent: "center",
           }}
         >
+          {decodedUrlName !== null ? <CheckItem label={"Name"} checked={true} /> :<>
           <CheckItem
             label={"Vorname(n)"}
             checked={!!(firstName?.trim() && firstName.length >= 2)}
@@ -818,6 +938,8 @@ export default function Vote() {
             label={"Nachname"}
             checked={!!(lastName?.trim() && lastName.length >= 2)}
           />
+          </>}
+          {detailsEdited && <CheckItem label={"Daten geändert"} checked={true} checkedIcon="edit" />}
           <div className="break" />
           <CheckItem label={"Klasse"} checked={!!grade} />
           <CheckItem label={"Klassenlistennr."} checked={!!listIndex} />
