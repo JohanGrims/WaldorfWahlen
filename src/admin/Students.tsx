@@ -19,6 +19,76 @@ import { db } from "../firebase";
 import { Class, Student } from "../types";
 
 import * as XLSX from "xlsx";
+// @ts-expect-error missing types
+import mammoth from "mammoth";
+
+function parseDocxHtml(html: string) {
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(html, "text/html");
+  const tables = doc.querySelectorAll("table");
+  if (tables.length === 0) return [];
+  
+  const table = tables[0];
+  const rows = Array.from(table.querySelectorAll("tr"));
+  if (rows.length < 2) return [];
+
+  const headers = Array.from(rows[0].querySelectorAll("th, td")).map((el) => el.textContent?.trim().toLowerCase() || "");
+  
+  const nachnameIdx = headers.findIndex((h) => h.includes("nachname"));
+  const vornameIdx = headers.findIndex((h) => h.includes("vorname"));
+  const emailIdx = headers.findIndex((h) => h.includes("e-mail") || h.includes("email"));
+
+  const students = [];
+  for (let i = 1; i < rows.length; i++) {
+    const cells = Array.from(rows[i].querySelectorAll("td"));
+    let nachname = nachnameIdx >= 0 && cells[nachnameIdx] ? cells[nachnameIdx].textContent?.trim() : "";
+    const vorname = vornameIdx >= 0 && cells[vornameIdx] ? cells[vornameIdx].textContent?.trim() : "";
+    const email = emailIdx >= 0 && cells[emailIdx] ? cells[emailIdx].textContent?.trim() : "";
+
+    if (nachname) {
+      nachname = nachname.charAt(0) + ".";
+    }
+
+    if (nachname || vorname) {
+      students.push({
+        name: `${vorname} ${nachname}`.trim(),
+        email: email || undefined
+      });
+    }
+  }
+  return students;
+}
+
+function processStudents(parsedStudents: any[]) {
+  let maxIndex = 0;
+  for (const s of parsedStudents) {
+    if (s.listIndex !== undefined && s.listIndex !== null && !isNaN(Number(s.listIndex)) && String(s.listIndex).trim() !== "") {
+      maxIndex = Math.max(maxIndex, Number(s.listIndex));
+    }
+  }
+
+  return parsedStudents.map((s) => {
+    if (s.listIndex === undefined || s.listIndex === null || String(s.listIndex).trim() === "") {
+      maxIndex++;
+      s.listIndex = String(maxIndex);
+    } else {
+      s.listIndex = String(s.listIndex);
+    }
+
+    if (s.name && typeof s.name === "string") {
+      const parts = s.name.trim().split(" ");
+      if (parts.length > 1) {
+        const lastName = parts.pop();
+        if (lastName && !lastName.endsWith(".")) {
+          s.name = `${parts.join(" ")} ${lastName.charAt(0)}.`; 
+        }
+      }
+    }
+
+    return s;
+  });
+}
+
 export default function Students() {
   const { classes } = useLoaderData() as { classes: Class[] };
 
@@ -57,10 +127,19 @@ export default function Students() {
     const reader: FileReader = new FileReader();
     reader.onload = async (e: ProgressEvent<FileReader>): Promise<void> => {
       if (!e.target) return;
-      const data: Uint8Array = new Uint8Array(e.target.result as ArrayBuffer);
-      const workbook: XLSX.WorkBook = XLSX.read(data, { type: "array" });
-      const sheet: XLSX.WorkSheet = workbook.Sheets[workbook.SheetNames[0]];
-      const students: unknown[] = XLSX.utils.sheet_to_json(sheet);
+      
+      let students: unknown[] = [];
+      if (file.name.endsWith(".docx")) {
+        const result = await mammoth.convertToHtml({ arrayBuffer: e.target.result as ArrayBuffer });
+        students = parseDocxHtml(result.value);
+      } else {
+        const data: Uint8Array = new Uint8Array(e.target.result as ArrayBuffer);
+        const workbook: XLSX.WorkBook = XLSX.read(data, { type: "array" });
+        const sheet: XLSX.WorkSheet = workbook.Sheets[workbook.SheetNames[0]];
+        students = XLSX.utils.sheet_to_json(sheet);
+      }
+      
+      students = processStudents(students);
       setNewClass((cl: Class) => ({ ...cl, students: students as Student[] }));
     };
     reader.readAsArrayBuffer(file);
@@ -76,10 +155,19 @@ export default function Students() {
     const reader: FileReader = new FileReader();
     reader.onload = async (e: ProgressEvent<FileReader>): Promise<void> => {
       if (!e.target) return;
-      const data: Uint8Array = new Uint8Array(e.target.result as ArrayBuffer);
-      const workbook: XLSX.WorkBook = XLSX.read(data, { type: "array" });
-      const sheet: XLSX.WorkSheet = workbook.Sheets[workbook.SheetNames[0]];
-      const students: unknown[] = XLSX.utils.sheet_to_json(sheet);
+      
+      let students: unknown[] = [];
+      if (file.name.endsWith(".docx")) {
+        const result = await mammoth.convertToHtml({ arrayBuffer: e.target.result as ArrayBuffer });
+        students = parseDocxHtml(result.value);
+      } else {
+        const data: Uint8Array = new Uint8Array(e.target.result as ArrayBuffer);
+        const workbook: XLSX.WorkBook = XLSX.read(data, { type: "array" });
+        const sheet: XLSX.WorkSheet = workbook.Sheets[workbook.SheetNames[0]];
+        students = XLSX.utils.sheet_to_json(sheet);
+      }
+      
+      students = processStudents(students);
       setUpdatedStudents(JSON.stringify(students, null, 2));
       if (classId) {
         updateClass(classId, { students: students as Student[] }, true);
@@ -325,11 +413,11 @@ export default function Students() {
               type="file"
               ref={fileInputRef}
               onChange={updateStudents}
-              accept=".xlsx"
+              accept=".xlsx,.docx"
               className="no-display"
             />
             <mdui-tooltip
-              content="Bitte stellen Sie sicher, dass die Datei im .xlsx-Format vorliegt und das Format wie folgt ist: 1. Zeile — name | listIndex | email (optional) als Überschrift, danach für jede Zeile die individuellen Daten. Die Reihenfolge der Spalten ist nicht relevant. Es wird immer nur das erste Tabellenblatt gelesen."
+              content="Bitte stellen Sie sicher, dass die Datei im .xlsx oder .docx-Format vorliegt. Bei .xlsx: Überschriften 'name', 'listIndex' (optional), 'email' (optional). Bei .docx: Eine Tabelle mit den Spalten 'Nachname', 'Vorname', 'E-Mail-Adresse' (optional). Der listIndex wird automatisch berechnet, falls er fehlt."
               headline="Hinweis"
               variant="rich"
             >
@@ -610,11 +698,11 @@ export default function Students() {
                 type="file"
                 ref={fileInputRef}
                 onChange={uploadStudents}
-                accept=".xlsx"
+                accept=".xlsx,.docx"
                 className="no-display"
               />
               <mdui-tooltip
-                content="Bitte stellen Sie sicher, dass die Datei im .xlsx-Format vorliegt und das Format wie folgt ist: 1. Zeile — name | listIndex | email (optional) als Überschrift, danach für jede Zeile die individuellen Daten. Die Reihenfolge der Spalten ist nicht relevant. Es wird immer nur das erste Tabellenblatt gelesen."
+                content="Bitte stellen Sie sicher, dass die Datei im .xlsx oder .docx-Format vorliegt. Bei .xlsx: Überschriften 'name', 'listIndex' (optional), 'email' (optional). Bei .docx: Eine Tabelle mit den Spalten 'Nachname', 'Vorname', 'E-Mail-Adresse' (optional). Der listIndex wird automatisch berechnet, falls er fehlt."
                 headline="Hinweis"
                 variant="rich"
               >

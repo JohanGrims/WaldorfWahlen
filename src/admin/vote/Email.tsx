@@ -629,11 +629,12 @@ export default function Email() {
                   description: JSON.stringify(response.data, null, 2),
                 }),
             });
-          } else {
-            setProgress((prev) => prev + 1);
           }
 
           setProgress((prev) => prev + 1);
+
+          // Rate limit: 1 email every 2 seconds
+          await new Promise((resolve) => setTimeout(resolve, 2000));
         }
       }
 
