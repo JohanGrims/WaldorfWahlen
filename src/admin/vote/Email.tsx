@@ -371,6 +371,7 @@ export default function Email() {
   const [customBody, setCustomBody] = React.useState<string>("");
 
   const [sending, setSending] = React.useState<boolean>(false);
+  const [sendLogs, setSendLogs] = React.useState<{time: string; message: string; type: "info" | "error" | "success"}[]>([]);
 
   React.useEffect(() => {
     async function loadClasses() {
@@ -533,6 +534,7 @@ export default function Email() {
 
   const sendEmails = async () => {
     setStep("sending");
+    setSendLogs([]);
     const emailList = getEmailList();
 
     if (!emailList.trim()) {
@@ -603,6 +605,10 @@ export default function Email() {
             `Sending email to ${email} with variables:`,
             personalVariables
           );
+          setSendLogs((prev) => [
+            ...prev,
+            { time: new Date().toLocaleTimeString("de-DE"), message: `Sende an ${email}...`, type: "info" }
+          ]);
 
           const response = await httpsCallable(
             functions,
@@ -617,6 +623,10 @@ export default function Email() {
           });
 
           if ((response.data as any).error) {
+            setSendLogs((prev) => [
+              ...prev,
+              { time: new Date().toLocaleTimeString("de-DE"), message: `Fehler bei ${email}: ${(response.data as any).error}`, type: "error" }
+            ]);
             snackbar({
               message: `Fehler beim Senden an ${email}: ${
                 (response.data as any).error
@@ -629,6 +639,11 @@ export default function Email() {
                   description: JSON.stringify(response.data, null, 2),
                 }),
             });
+          } else {
+            setSendLogs((prev) => [
+              ...prev,
+              { time: new Date().toLocaleTimeString("de-DE"), message: `Erfolgreich an ${email} gesendet.`, type: "success" }
+            ]);
           }
 
           setProgress((prev) => prev + 1);
@@ -639,13 +654,18 @@ export default function Email() {
       }
 
       snackbar({
-        message: `E-Mails erfolgreich an ${emails.length} Empfänger gesendet!`,
+        message: `E-Mail-Versand abgeschlossen (${emails.length} Empfänger)!`,
       });
-      setProgress(0);
-      setStep("select");
-      setSelectedStudents(new Set());
+      setSendLogs((prev) => [
+        ...prev,
+        { time: new Date().toLocaleTimeString("de-DE"), message: "Versand abgeschlossen.", type: "success" }
+      ]);
     } catch (error) {
       console.error("Error sending emails:", error);
+      setSendLogs((prev) => [
+        ...prev,
+        { time: new Date().toLocaleTimeString("de-DE"), message: `Abbruch durch Fehler: ${error instanceof Error ? error.message : "Unbekannt"}`, type: "error" }
+      ]);
       snackbar({
         message: `Fehler beim Senden: ${
           error instanceof Error ? error.message : "Unbekannter Fehler"
@@ -1153,6 +1173,11 @@ export default function Email() {
   // Step 3: Send Emails
   if (step === "send") {
     const emailList = getEmailList();
+    const emailCount = emailList
+      .split(", ")
+      .filter((email) => email.trim()).length;
+    const estimatedMinutes = Math.ceil((emailCount * 2) / 30) / 2;
+    const estimatedMinutesStr = estimatedMinutes.toString().replace(".", ",");
 
     return (
       <div className="mdui-prose">
@@ -1263,6 +1288,30 @@ export default function Email() {
             Test-E-Mail senden
           </mdui-button>
         </div>
+
+        {/* Warning notice before sending */}
+        <div
+          style={{
+            marginTop: "24px",
+            display: "flex",
+            alignItems: "center",
+            gap: "12px",
+            padding: "16px",
+            backgroundColor: "var(--mdui-color-warning-container)",
+            color: "var(--mdui-color-on-warning-container)",
+            borderRadius: "8px",
+            marginBottom: "80px",
+          }}
+        >
+          <mdui-icon name="warning" style={{ fontSize: "24px" }}></mdui-icon>
+          <div>
+            <strong>Wichtiger Hinweis vor dem Senden:</strong>
+            <br />
+            Der Sendevorgang wird ca. <strong>{estimatedMinutesStr} Minute{estimatedMinutes !== 1 ? "n" : ""}</strong> dauern.
+            Bitte stellen Sie sicher, dass Sie den Tab nach dem Klick auf "Senden" für diese Zeit im Vordergrund offen lassen, da der Vorgang sonst durch den Browser pausiert oder abgebrochen wird.
+          </div>
+        </div>
+
         {/* Send Action */}
         <div
           style={{
@@ -1293,41 +1342,81 @@ export default function Email() {
     const emailCount = getEmailList()
       .split(", ")
       .filter((email) => email.trim()).length;
+      
+    const isFinished = !sending && sendLogs.length > 0;
+
     return (
       <div className="mdui-prose">
-        <h2>E-Mails werden gesendet...</h2>
+        <h2>{isFinished ? (progress === emailCount ? "Versand abgeschlossen" : "Versand abgebrochen") : "E-Mails werden gesendet..."}</h2>
 
         {/* Warning notice */}
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "12px",
-            padding: "16px",
-            backgroundColor: "var(--mdui-color-warning-container)",
-            color: "var(--mdui-color-on-warning-container)",
-            borderRadius: "8px",
-            marginBottom: "16px",
-          }}
-        >
-          <mdui-icon name="warning" style={{ fontSize: "24px" }}></mdui-icon>
-          <div>
-            <strong>Wichtiger Hinweis:</strong>
-            <br />
-            Schließen Sie diesen Tab nicht und navigieren Sie nicht weg, bis
-            alle E-Mails gesendet wurden. Der Sendevorgang wird sonst
-            unterbrochen.
+        {!isFinished && (
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "12px",
+              padding: "16px",
+              backgroundColor: "var(--mdui-color-warning-container)",
+              color: "var(--mdui-color-on-warning-container)",
+              borderRadius: "8px",
+              marginBottom: "16px",
+            }}
+          >
+            <mdui-icon name="warning" style={{ fontSize: "24px" }}></mdui-icon>
+            <div>
+              <strong>Wichtiger Hinweis:</strong>
+              <br />
+              Schließen Sie diesen Tab nicht und navigieren Sie nicht weg, bis
+              alle E-Mails gesendet wurden. Der Sendevorgang wird sonst
+              unterbrochen.
+            </div>
           </div>
-        </div>
+        )}
 
         <mdui-linear-progress
           value={progress}
           max={emailCount}
         ></mdui-linear-progress>
         <p>
-          Bitte warten Sie, während die E-Mails gesendet werden. ({progress} /{" "}
-          {emailCount})
+          {isFinished 
+            ? progress === emailCount 
+              ? `Alle ${emailCount} E-Mails wurden erfolgreich verarbeitet.`
+              : `Versand nach ${progress} von ${emailCount} E-Mails abgebrochen.`
+            : `Bitte warten Sie, während die E-Mails gesendet werden. (${progress} / ${emailCount})`
+          }
         </p>
+
+        {/* Logs */}
+        <div style={{ marginTop: "24px", background: "var(--mdui-color-surface-container)", borderRadius: "8px", padding: "16px", maxHeight: "400px", overflowY: "auto" }}>
+          <h3 style={{ marginTop: 0 }}>Protokoll</h3>
+          {sendLogs.map((log, index) => (
+            <div key={index} style={{ 
+              marginBottom: "8px", 
+              fontFamily: "monospace", 
+              fontSize: "14px",
+              color: log.type === "error" ? "var(--mdui-color-error)" : log.type === "success" ? "var(--mdui-color-tertiary)" : "inherit"
+            }}>
+              <span style={{ opacity: 0.7 }}>[{log.time}]</span> {log.message}
+            </div>
+          ))}
+          {sendLogs.length === 0 && <span style={{ opacity: 0.7 }}>Noch keine Einträge...</span>}
+        </div>
+
+        {isFinished && (
+          <div style={{ marginTop: "24px", display: "flex", justifyContent: "flex-end" }}>
+            <mdui-button 
+              variant="filled" 
+              onClick={() => {
+                setProgress(0);
+                setStep("select");
+                setSelectedStudents(new Set());
+              }}
+            >
+              Zurück zur Übersicht
+            </mdui-button>
+          </div>
+        )}
       </div>
     );
   }
