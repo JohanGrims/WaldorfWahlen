@@ -242,7 +242,7 @@ def assign(req: https_fn.CallableRequest) -> dict:
                 )[2] * x[i, student_preferences[i][2]]
             )
             for i in range(num_participants)
-        ) + pulp.lpSum(10 * o[j] for j in range(num_courses))
+        ) + pulp.lpSum(8 * o[j] for j in range(num_courses))
         
         # Constraints
         for i in range(num_participants):
