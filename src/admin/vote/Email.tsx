@@ -464,7 +464,8 @@ export default function Email() {
     classes.forEach((cls) => {
       cls.students.forEach((student) => {
         const studentKey = `${cls.grade}-${student.listIndex}`;
-        if (student.email && !participantKeys.has(studentKey)) {
+        const isLeader = options.some(opt => opt.leaders?.includes(studentKey));
+        if (student.email && !participantKeys.has(studentKey) && !isLeader) {
           newSelected.add(`${cls.id}-${student.listIndex}`);
         }
       });
@@ -985,6 +986,7 @@ export default function Email() {
                         const hasVoted = participantKeys.has(
                           `${cls.grade}-${student.listIndex}`
                         );
+                        const isLeader = options.some(opt => opt.leaders?.includes(`${cls.grade}-${student.listIndex}`));
 
                         return (
                           <mdui-list-item
@@ -1023,6 +1025,17 @@ export default function Email() {
                                   >
                                     <mdui-icon slot="icon" name="how_to_vote" />
                                     Hat gewählt
+                                  </mdui-chip>
+                                ) : isLeader ? (
+                                  <mdui-chip
+                                    disabled
+                                    style={{
+                                      background:
+                                        "var(--mdui-color-secondary-container)",
+                                    }}
+                                  >
+                                    <mdui-icon slot="icon" name="star" />
+                                    Leitend
                                   </mdui-chip>
                                 ) : (
                                   <mdui-chip

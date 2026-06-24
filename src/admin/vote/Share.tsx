@@ -6,13 +6,64 @@ import { Vote } from "../../types";
 import jsPDF from "jspdf";
 import { formatBerlinTimestamp } from "../../utils/date";
 import { snackbar } from "mdui";
-import { auth } from "../../firebase";
+import { auth, db } from "../../firebase";
+import { collection, getDocs, DocumentData } from "firebase/firestore";
 import { Canvg } from "canvg";
+
+interface StudentData extends DocumentData {
+  name: string;
+  listIndex: string;
+  email?: string;
+}
+
+interface ClassData extends DocumentData {
+  id: string;
+  grade: number;
+  students: StudentData[];
+}
 
 export default function Share() {
   const { id } = useParams<{ id: string }>();
   const { vote } = useLoaderData() as { vote: Vote };
   const [allowResubmission, setAllowResubmission] = React.useState(false);
+
+  const [classes, setClasses] = React.useState<ClassData[]>([]);
+  const [search, setSearch] = React.useState("");
+
+  React.useEffect(() => {
+    async function loadClasses() {
+      try {
+        const classSnapshot = await getDocs(
+          collection(db, "schools/SCHOOLID/class")
+        );
+        const classData = classSnapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        })) as ClassData[];
+        setClasses(classData);
+      } catch (error) {
+        console.error("Error loading classes:", error);
+      }
+    }
+
+    loadClasses();
+  }, []);
+
+  const filteredStudents = React.useMemo(() => {
+    if (!search.trim()) return [];
+    const query = search.toLowerCase();
+    const results: (StudentData & { grade: number; classId: string })[] = [];
+    
+    for (const cls of classes) {
+      if (!cls.students) continue;
+      for (const student of cls.students) {
+        if (student.name.toLowerCase().includes(query)) {
+          results.push({ ...student, grade: cls.grade, classId: cls.id });
+        }
+      }
+    }
+    return results.slice(0, 10); // Limit to 10 results
+  }, [search, classes]);
 
   // Styles grouped for readability
   const styles: { [k: string]: React.CSSProperties } = {
@@ -122,11 +173,11 @@ export default function Share() {
     if (vote.description) {
       doc.setFontSize(16);
       doc.setTextColor(100, 100, 100);
-      doc.text(vote.description, pageWidth / 2, y, {
+      const lines = doc.splitTextToSize(vote.description, pageWidth - 48);
+      doc.text(lines, pageWidth / 2, y, {
         align: "center",
-        maxWidth: pageWidth - 48,
       });
-      y += 18;
+      y += (lines.length * 8) + 8;
     }
 
     if (vote.startTime && vote.endTime) {
@@ -197,24 +248,32 @@ export default function Share() {
   }, [vote, url, formatTs]);
 
   return (
-    <div style={styles.container}>
-      <h2 style={styles.header}>{vote.title || "Wahl teilen"}</h2>
-      {vote.description && <p style={styles.subtitle}>{vote.description}</p>}
+    <div style={{ maxWidth: 1000, margin: "0 auto", padding: 28 }}>
+      <h2 style={{ textAlign: "center", marginBottom: 8, fontSize: "2rem" }}>{vote.title || "Wahl teilen"}</h2>
+      {vote.description && <p style={{ textAlign: "center", color: "rgba(var(--mdui-color-on-surface), 0.7)", marginBottom: 16, whiteSpace: "pre-wrap", maxWidth: 600, margin: "0 auto 16px auto" }}>{vote.description}</p>}
       {vote.startTime && vote.endTime && (
-        <p style={styles.date}>
-          Abgabe vom: <b>{formatTs(vote.startTime)}</b> bis{" "}
-          <b>{formatTs(vote.endTime)}</b>
+        <p style={{ textAlign: "center", color: "rgba(var(--mdui-color-primary), 1)", marginBottom: 32 }}>
+          Abgabe: <b>{formatTs(vote.startTime)}</b> bis <b>{formatTs(vote.endTime)}</b>
         </p>
       )}
 
-      <div style={styles.centerCol}>
-        <div style={styles.qrBox}>
-          <QRCode id="qr-svg" value={url} size={200} />
-        </div>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(400px, 1fr))", gap: "24px" }}>
+        
+        {/* General Share Card */}
+        <mdui-card variant="filled" style={{ padding: "24px", display: "flex", flexDirection: "column", gap: "20px" }}>
+          <div>
+            <h3 style={{ margin: "0 0 4px 0" }}>Allgemeiner Wahl-Link</h3>
+            <p style={{ margin: 0, fontSize: "0.9rem", color: "rgba(var(--mdui-color-on-surface), 0.6)" }}>
+              Teilen Sie diesen Link mit allen Schülern, die selbstständig ihre Daten eingeben sollen.
+            </p>
+          </div>
 
-        <div style={styles.linkRow}>
+          <div style={{ display: "flex", justifyContent: "center", padding: "16px", background: "white", borderRadius: "12px", alignSelf: "center", boxShadow: "0 2px 8px rgba(0,0,0,0.05)" }}>
+            <QRCode id="qr-svg" value={url} size={180} />
+          </div>
+          
           <mdui-text-field
-            label="Wahl-Link"
+            label="Link kopieren"
             value={url}
             readonly
             style={{ width: "100%" }}
@@ -225,52 +284,93 @@ export default function Share() {
               onClick={() => copyText(url, "Link kopiert")}
             />
           </mdui-text-field>
-        </div>
 
-        <div style={styles.buttonsRow}>
-          <mdui-button
-            icon="image"
-            style={styles.actionButton}
-            onClick={downloadQRCodePNG}
-          >
-            QR-Code
-          </mdui-button>
-
-          <mdui-button
-            icon="picture_as_pdf"
-            style={styles.actionButton}
-            onClick={handleExportPDF}
-          >
-            PDF
-          </mdui-button>
-
-          <mdui-button
-            icon="share"
-            style={styles.actionButton}
-            onClick={() => {
+          <div style={{ display: "flex", gap: "12px" }}>
+            <mdui-button variant="tonal" icon="image" style={{ flex: 1 }} onClick={downloadQRCodePNG}>QR PNG</mdui-button>
+            <mdui-button variant="tonal" icon="picture_as_pdf" style={{ flex: 1 }} onClick={handleExportPDF}>Aushang PDF</mdui-button>
+            <mdui-button variant="filled" icon="share" style={{ flex: 1 }} onClick={() => {
               if (navigator.share) {
                 navigator.share({ title: "Wahl", text: url });
               } else {
-                copyText(url, "Link kopiert (Teilen nicht unterstützt)");
+                copyText(url, "Link kopiert");
               }
-            }}
-          >
-            Teilen
-          </mdui-button>
-        </div>
+            }}>Teilen</mdui-button>
+          </div>
 
-        <div style={styles.switchRow}>
-          <mdui-switch
-            checked={allowResubmission}
-            onChange={(e) =>
-              setAllowResubmission((e.target as HTMLInputElement).checked)
-            }
-            style={{ fontSize: 18 }}
-          />
-          <span style={{ fontWeight: 500 }}>
-            Nutzern erlauben, mehrfach eine Wahl abzugeben
-          </span>
-        </div>
+          <label style={{ display: "flex", alignItems: "center", gap: "12px", cursor: "pointer", marginTop: "auto", paddingTop: "12px", borderTop: "1px solid rgba(var(--mdui-color-outline), 0.2)" }}>
+            <mdui-switch
+              checked={allowResubmission}
+              onChange={(e) => setAllowResubmission((e.target as HTMLInputElement).checked)}
+            />
+            <span style={{ fontSize: "0.95rem" }}>Mehrfache Abgabe pro Browser erlauben</span>
+          </label>
+        </mdui-card>
+
+        {/* Personalized Links Card */}
+        <mdui-card variant="filled" style={{ padding: "24px", display: "flex", flexDirection: "column", gap: "16px" }}>
+          <div>
+            <h3 style={{ margin: "0 0 4px 0" }}>Personalisierte Links</h3>
+            <p style={{ margin: 0, fontSize: "0.9rem", color: "rgba(var(--mdui-color-on-surface), 0.6)" }}>
+              Suchen Sie nach einem Schüler, um einen Link zu erstellen, bei dem Name und Klasse bereits ausgefüllt sind.
+            </p>
+          </div>
+          
+          <mdui-text-field
+            icon="search"
+            placeholder="Name eingeben..."
+            value={search}
+            onInput={(e: any) => setSearch(e.target.value)}
+            style={{ width: "100%" }}
+            clearable
+          ></mdui-text-field>
+
+          {search.trim() && filteredStudents.length > 0 && (
+            <mdui-list style={{ width: "100%", background: "transparent", flex: 1, overflowY: "auto", minHeight: 0, maxHeight: "350px" }}>
+              {filteredStudents.map((student) => {
+                const studentUrl = `${window.location.origin}/v/${id}?name=${encodeURIComponent(student.name)}&grade=${student.grade}&listIndex=${student.listIndex}`;
+                return (
+                  <mdui-list-item
+                    key={`${student.grade}-${student.listIndex}`}
+                    headline={student.name}
+                    description={`Klasse ${student.grade}`}
+                    rounded
+                  >
+                    <div slot="end-icon" style={{ display: "flex", gap: "4px" }}>
+                      <mdui-button-icon
+                        icon="content_copy"
+                        onClick={() => copyText(studentUrl, `Link für ${student.name} kopiert`)}
+                      />
+                      <mdui-button-icon
+                        icon="share"
+                        onClick={() => {
+                          if (navigator.share) {
+                            navigator.share({ title: `Wahl-Link für ${student.name}`, text: studentUrl });
+                          } else {
+                            copyText(studentUrl, `Link für ${student.name} kopiert`);
+                          }
+                        }}
+                      />
+                    </div>
+                  </mdui-list-item>
+                );
+              })}
+            </mdui-list>
+          )}
+          
+          {search.trim() && filteredStudents.length === 0 && (
+            <div style={{ padding: "32px 0", textAlign: "center", color: "rgba(var(--mdui-color-on-surface), 0.5)" }}>
+              <mdui-icon name="person_search" style={{ fontSize: "3rem", marginBottom: "8px" }}></mdui-icon>
+              <div>Keine Schüler gefunden.</div>
+            </div>
+          )}
+
+          {!search.trim() && (
+            <div style={{ padding: "32px 0", textAlign: "center", color: "rgba(var(--mdui-color-on-surface), 0.3)", marginTop: "auto", marginBottom: "auto" }}>
+              <mdui-icon name="search" style={{ fontSize: "4rem", marginBottom: "8px" }}></mdui-icon>
+              <div>Tippen Sie einen Namen ein, um zu suchen.</div>
+            </div>
+          )}
+        </mdui-card>
       </div>
     </div>
   );

@@ -1,4 +1,4 @@
-import { addDoc, collection, doc, setDoc, Timestamp } from "firebase/firestore";
+import { addDoc, collection, doc, setDoc, Timestamp, getDocs } from "firebase/firestore";
 import { alert, confirm, prompt, snackbar } from "mdui";
 import { parseBerlinDateTime, formatBerlinDate, tryParseToBerlinDatetimeLocal } from "../utils/date";
 import React from "react";
@@ -28,6 +28,7 @@ interface OptionData {
   max: number;
   teacher: string;
   description: string;
+  leaders?: string[];
 }
 
 interface ProposeFieldCardProps {
@@ -178,6 +179,39 @@ export default function NewVote() {
   const [max, setMax] = React.useState<string | number>("");
   const [teacher, setTeacher] = React.useState<string>("");
   const [optionDescription, setOptionDescription] = React.useState<string>("");
+  const [leaders, setLeaders] = React.useState<string[]>([]);
+
+  const [activeTab, setActiveTab] = React.useState<string>("general");
+  const [optionDialogOpen, setOptionDialogOpen] = React.useState(false);
+  const [editingOptionIndex, setEditingOptionIndex] = React.useState<number | null>(null);
+
+  const [classes, setClasses] = React.useState<any[]>([]);
+  const [leaderSearchQuery, setLeaderSearchQuery] = React.useState<string>("");
+
+  const toggleLeader = (classGrade: number, listIndex: string) => {
+    const key = `${classGrade}-${listIndex}`;
+    setLeaders((prev) =>
+      prev.includes(key) ? prev.filter((l) => l !== key) : [...prev, key]
+    );
+  };
+
+  React.useEffect(() => {
+    async function loadClasses() {
+      try {
+        const classSnapshot = await getDocs(
+          collection(db, "schools/SCHOOLID/class")
+        );
+        const classData = classSnapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+        setClasses(classData);
+      } catch (error) {
+        console.error("Error loading classes:", error);
+      }
+    }
+    loadClasses();
+  }, []);
 
   // Custom proposal fields
   const [proposeFields, setProposeFields] = React.useState<ProposeField[]>([]);
@@ -740,27 +774,53 @@ export default function NewVote() {
     });
   }
 
-  function addOption() {
-    setOptions((options) => [
-      ...options,
-      {
-        title: name,
-        max: max as number,
-        teacher: teacher,
-        description: optionDescription,
-      },
-    ]);
+  function openNewOptionDialog() {
+    setEditingOptionIndex(null);
     setName("");
     setTeacher("");
     setOptionDescription("");
     setMax("");
+    setLeaders([]);
+    setOptionDialogOpen(true);
   }
 
-  function editOption(index: number) {
+  function openEditOptionDialog(index: number) {
+    setEditingOptionIndex(index);
     setName(options[index].title);
     setTeacher(options[index].teacher);
     setOptionDescription(options[index].description);
     setMax(options[index].max);
+    setLeaders(options[index].leaders || []);
+    setOptionDialogOpen(true);
+  }
+
+  function saveOption() {
+    if (editingOptionIndex !== null) {
+      const newOptions = [...options];
+      newOptions[editingOptionIndex] = {
+        title: name,
+        max: max as number,
+        teacher: teacher,
+        description: optionDescription,
+        leaders: leaders,
+      };
+      setOptions(newOptions);
+    } else {
+      setOptions((options) => [
+        ...options,
+        {
+          title: name,
+          max: max as number,
+          teacher: teacher,
+          description: optionDescription,
+          leaders: leaders,
+        },
+      ]);
+    }
+    setOptionDialogOpen(false);
+  }
+
+  function deleteOption(index: number) {
     setOptions((options) => options.filter((_, i) => i !== index));
   }
 
@@ -810,6 +870,7 @@ export default function NewVote() {
               max: e.max,
               teacher: e.teacher,
               description: e.description,
+              leaders: e.leaders || [],
             }
           );
         });
@@ -915,9 +976,7 @@ export default function NewVote() {
   return (
     <div className="mdui-prose">
       <title>Neue Wahl - WaldorfWahlen</title>
-      <h2>Neue Wahl</h2>
-      <p />
-      <mdui-card
+      <div
         style={{
           position: "sticky",
           top: "0px",
@@ -925,13 +984,11 @@ export default function NewVote() {
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
-          padding: "5px",
-          borderRadius: "0px",
+          padding: "10px 0",
+          backgroundColor: "var(--mdui-color-background)",
         }}
       >
-        <div>
-          Wahl {title ? `"${title}"` : "erstellen"} ({id}){" "}
-        </div>
+        <h2 style={{ margin: "0px" }}>Wahl {title ? `"${title}"` : "erstellen"}</h2>
         <div>
           {isChanged() ? (
             <mdui-button-icon
@@ -997,9 +1054,15 @@ export default function NewVote() {
             </mdui-button>
           )}
         </div>
-      </mdui-card>
+      </div>
 
-      <p />
+      <mdui-tabs value={activeTab} onTabChange={(e: any) => setActiveTab(e.target.value)}>
+        <mdui-tab value="general">Allgemein</mdui-tab>
+        <mdui-tab value="options">Optionen ({options.length})</mdui-tab>
+        <mdui-tab value="advanced">Erweitert</mdui-tab>
+
+        <mdui-tab-panel slot="panel" value="general">
+          <p />
       <mdui-text-field
         label="Titel"
         placeholder="Schülerprojektwoche 2024"
@@ -1171,253 +1234,376 @@ export default function NewVote() {
       <mdui-divider></mdui-divider>
       <p />
 
-      <div className="flex-gap">
-        <mdui-card
-          variant={proposals ? "outlined" : "filled"}
-          style={{ width: "100%", padding: "20px" }}
-          clickable
-          onClick={() => setProposals(false)}
-        >
-          <div
-            className="mdui-prose"
-            style={{ width: "100%", userSelect: "none" }}
-          >
-            <div
-              style={{
-                display: "flex",
-                textWrap: "nowrap",
-                gap: "10px",
-              }}
-            >
-              <h2>Optionen anlegen</h2>
-              <mdui-icon name="add"></mdui-icon>
-            </div>
-            Legen Sie die Optionen manuell an.
-          </div>
-        </mdui-card>
-        <mdui-card
-          variant={proposals ? "filled" : "outlined"}
-          style={{ width: "100%", padding: "20px" }}
-          clickable
-          onClick={() => setProposals(true)}
-        >
-          <div
-            className="mdui-prose"
-            style={{ width: "100%", userSelect: "none" }}
-          >
-            <div
-              style={{
-                display: "flex",
-                textWrap: "nowrap",
-                gap: "10px",
-              }}
-            >
-              <h2>Link teilen</h2>
-              <mdui-icon name="share"></mdui-icon>
-            </div>
-            Lassen Sie die Projektanbietenden ihre Vorschläge eintragen.
-          </div>
-        </mdui-card>
-      </div>
+      </mdui-tab-panel>
 
-      <p />
-      {!proposals && (
-        <div className="options-container">
-          <div className="options-list">
-            {options.length === 0 && (
-              <mdui-card class="option-preview" disabled>
-                <b>Keine Optionen</b>
-                <div className="description">
-                  Fügen Sie rechts eine neue Option hinzu.
-                </div>
-              </mdui-card>
-            )}
-            {options.map((e, i) => (
-              <mdui-card
-                key={i}
-                class="option-preview"
-                clickable
-                style={{
-                  cursor: "pointer",
-                }}
-                variant={"outlined"}
-                onClick={() => {
-                  editOption(i);
-                }}
-              >
-                <b>{e.title}</b>
-                <div className="teacher">{e.teacher}</div>
-                <div className="description">{e.description}</div>
-                <div className="max">max. {e.max} SchülerInnen</div>
-              </mdui-card>
-            ))}
-          </div>
-          <div className="new-option">
-            <mdui-text-field
-              label="Titel"
-              placeholder="Programmieren: KI"
-              maxlength={25}
-              counter
-              value={name}
-              onInput={(e: React.ChangeEvent<HTMLInputElement>) =>
-                setName(e.target.value)
-              }
-            ></mdui-text-field>
-            <mdui-text-field
-              label="max. SchülerInnen"
-              type="number"
-              placeholder="15"
-              min={1}
-              value={String(max)}
-              onInput={(e: React.ChangeEvent<HTMLInputElement>) =>
-                setMax(parseInt(e.target.value))
-              }
-            ></mdui-text-field>
-            <p />
-            <br />
-            <mdui-text-field
-              label="Lehrer (optional)"
-              placeholder="Hr. Mustermann"
-              maxlength={25}
-              counter
-              value={teacher}
-              onInput={(e: React.ChangeEvent<HTMLInputElement>) =>
-                setTeacher(e.target.value)
-              }
-            ></mdui-text-field>
-            <mdui-text-field
-              label="Beschreibung (optional)"
-              placeholder="Was ist Programmieren? Was ist KI? Diesen Themen wollen wir uns in dieser Projektwoche nähern."
-              rows={3}
-              maxlength={100}
-              counter
-              value={optionDescription}
-              onInput={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
-                setOptionDescription(e.target.value)
-              }
-            ></mdui-text-field>
-            {addOptionDisabled() ? (
-              <mdui-button
-                variant="tonal"
-                icon="add"
-                style={{ width: "100%" }}
-                onClick={addOption}
-                disabled
-              >
-                Hinzufügen
-              </mdui-button>
-            ) : (
-              <mdui-button
-                variant="tonal"
-                icon="add"
-                style={{ width: "100%" }}
-                onClick={addOption}
-              >
-                Hinzufügen
-              </mdui-button>
-            )}
-          </div>
-        </div>
-      )}
-
-      {proposals && (
-        <div>
+      <mdui-tab-panel slot="panel" value="options">
+        <p />
+        <div className="flex-gap">
           <mdui-card
-            variant="filled"
-            style={{ width: "100%", padding: "20px", marginBottom: "20px" }}
-          >
-            <div className="mdui-prose">
-              <h3>Dialog-Texte anpassen</h3>
-              <p>
-                Passen Sie die Texte in den Dialogen auf der Vorschlagsseite an.
-              </p>
-
-              <mdui-text-field
-                label="Willkommen-Überschrift"
-                value={proposeTexts.welcomeHeadline}
-                onInput={(e: React.ChangeEvent<HTMLInputElement>) =>
-                  setProposeTexts({
-                    ...proposeTexts,
-                    welcomeHeadline: e.target.value,
-                  })
-                }
-                maxlength={50}
-                counter
-              />
-              <mdui-text-field
-                label="Willkommen-Beschreibung"
-                rows={3}
-                value={proposeTexts.welcomeDescription}
-                onInput={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
-                  setProposeTexts({
-                    ...proposeTexts,
-                    welcomeDescription: e.target.value,
-                  })
-                }
-                maxlength={500}
-                counter
-              />
-              <mdui-text-field
-                label="Hinweis-Überschrift"
-                value={proposeTexts.hintHeadline}
-                onInput={(e: React.ChangeEvent<HTMLInputElement>) =>
-                  setProposeTexts({
-                    ...proposeTexts,
-                    hintHeadline: e.target.value,
-                  })
-                }
-                maxlength={50}
-                counter
-              />
-              <mdui-text-field
-                label="Hinweis-Beschreibung"
-                rows={3}
-                value={proposeTexts.hintDescription}
-                onInput={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
-                  setProposeTexts({
-                    ...proposeTexts,
-                    hintDescription: e.target.value,
-                  })
-                }
-                maxlength={500}
-                counter
-              />
-            </div>
-          </mdui-card>
-
-          <mdui-card
-            variant="filled"
+            variant={proposals ? "outlined" : "filled"}
             style={{ width: "100%", padding: "20px" }}
+            clickable
+            onClick={() => setProposals(false)}
           >
-            <div className="mdui-prose">
-              <h3>Zusätzliche Felder für Vorschläge</h3>
-              <p>
-                Fügen Sie zusätzliche Felder hinzu, die beim Einreichen von
-                Vorschlägen ausgefüllt werden sollen.
-              </p>
-
-              {proposeFields.map((field, index) => (
-                <ProposeFieldCard
-                  key={field.id}
-                  field={field}
-                  index={index}
-                  editProposeField={editProposeField}
-                  removeProposeField={removeProposeField}
-                />
-              ))}
-
-              <mdui-button
-                icon="add"
-                variant="outlined"
-                onClick={addProposeField}
-                style={{ width: "100%" }}
+            <div
+              className="mdui-prose"
+              style={{ width: "100%", userSelect: "none" }}
+            >
+              <div
+                style={{
+                  display: "flex",
+                  textWrap: "nowrap",
+                  gap: "10px",
+                }}
               >
-                Neues Feld hinzufügen
-              </mdui-button>
+                <h2>Optionen anlegen</h2>
+                <mdui-icon name="add"></mdui-icon>
+              </div>
+              Legen Sie die Optionen manuell an.
+            </div>
+          </mdui-card>
+          <mdui-card
+            variant={proposals ? "filled" : "outlined"}
+            style={{ width: "100%", padding: "20px" }}
+            clickable
+            onClick={() => setProposals(true)}
+          >
+            <div
+              className="mdui-prose"
+              style={{ width: "100%", userSelect: "none" }}
+            >
+              <div
+                style={{
+                  display: "flex",
+                  textWrap: "nowrap",
+                  gap: "10px",
+                }}
+              >
+                <h2>Link teilen</h2>
+                <mdui-icon name="share"></mdui-icon>
+              </div>
+              Lassen Sie die Projektanbietenden ihre Vorschläge eintragen.
             </div>
           </mdui-card>
         </div>
-      )}
+
+        <p />
+        {!proposals && (
+          <div>
+            <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: "16px" }}>
+              <mdui-button icon="add" onClick={openNewOptionDialog}>Neue Option hinzufügen</mdui-button>
+            </div>
+            <div className="options-grid">
+              {options.length === 0 && (
+                <mdui-card class="option-preview" disabled style={{ padding: "20px" }}>
+                  <b>Keine Optionen</b>
+                  <div className="description">
+                    Fügen Sie eine neue Option hinzu.
+                  </div>
+                </mdui-card>
+              )}
+              {options.map((e, i) => (
+                <mdui-card
+                  key={i}
+                  class="option-preview"
+                  clickable
+                  style={{
+                    cursor: "pointer",
+                    padding: "20px"
+                  }}
+                  variant={"outlined"}
+                  onClick={() => openEditOptionDialog(i)}
+                >
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                    <div>
+                      <b>{e.title}</b>
+                      <div className="teacher">{e.teacher}</div>
+                      <div className="description">{e.description}</div>
+                      <div className="max">max. {e.max} SchülerInnen</div>
+                      {e.leaders && e.leaders.length > 0 && (
+                        <div style={{ display: "flex", flexWrap: "wrap", gap: "4px", marginTop: "8px" }}>
+                          {e.leaders.map((l: string) => {
+                            const [gradeStr, listIndex] = l.split("-");
+                            const grade = Number(gradeStr);
+                            const cls = classes.find(c => c.grade === grade);
+                            const student = cls?.students?.find((s: any) => s.listIndex === listIndex);
+                            return (
+                              <mdui-chip key={l}>
+                                {student ? student.name : l}
+                              </mdui-chip>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                    <mdui-tooltip content="Option löschen">
+                      <mdui-button-icon
+                        icon="delete"
+                        style={{ color: "var(--mdui-color-error)" }}
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          deleteOption(i);
+                        }}
+                      />
+                    </mdui-tooltip>
+                  </div>
+                </mdui-card>
+              ))}
+            </div>
+          </div>
+        )}
+      </mdui-tab-panel>
+
+      <mdui-tab-panel slot="panel" value="advanced">
+        <p />
+        <mdui-card variant="filled" style={{ width: "100%", padding: "20px" }}>
+          <div className="mdui-prose">
+            <h3>Zusätzliche Felder (Anmeldung)</h3>
+            <p>
+              Diese Felder werden von den SchülerInnen bei der Wahlbuchung ausgefüllt.
+            </p>
+            {extraFields.map((field, index) => (
+              <div
+                key={index}
+                style={{
+                  display: "flex",
+                  gap: "10px",
+                  alignItems: "center",
+                  marginBottom: "10px",
+                }}
+              >
+                <mdui-text-field
+                  value={field}
+                  onInput={(e: React.ChangeEvent<HTMLInputElement>) =>
+                    editExtraField(index, e.target.value)
+                  }
+                  placeholder="Feldname (z.B. Telefonnummer)"
+                  style={{ flex: 1 }}
+                />
+                <mdui-button-icon
+                  icon="delete"
+                  onClick={() => removeExtraField(index)}
+                  style={{ color: "var(--mdui-color-error)" }}
+                />
+              </div>
+            ))}
+            <mdui-button icon="add" variant="outlined" onClick={() => setExtraFields([...extraFields, ""])}>
+              Neues Feld
+            </mdui-button>
+          </div>
+        </mdui-card>
+        
+        {proposals && (
+          <div style={{ marginTop: "20px" }}>
+            <mdui-card
+              variant="filled"
+              style={{ width: "100%", padding: "20px", marginBottom: "20px" }}
+            >
+              <div className="mdui-prose">
+                <h3>Dialog-Texte anpassen</h3>
+                <p>
+                  Passen Sie die Texte in den Dialogen auf der Vorschlagsseite an.
+                </p>
+
+                <mdui-text-field
+                  label="Willkommen-Überschrift"
+                  value={proposeTexts.welcomeHeadline}
+                  onInput={(e: React.ChangeEvent<HTMLInputElement>) =>
+                    setProposeTexts({
+                      ...proposeTexts,
+                      welcomeHeadline: e.target.value,
+                    })
+                  }
+                  maxlength={50}
+                  counter
+                />
+                <mdui-text-field
+                  label="Willkommen-Beschreibung"
+                  rows={3}
+                  value={proposeTexts.welcomeDescription}
+                  onInput={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
+                    setProposeTexts({
+                      ...proposeTexts,
+                      welcomeDescription: e.target.value,
+                    })
+                  }
+                  maxlength={500}
+                  counter
+                />
+                <mdui-text-field
+                  label="Hinweis-Überschrift"
+                  value={proposeTexts.hintHeadline}
+                  onInput={(e: React.ChangeEvent<HTMLInputElement>) =>
+                    setProposeTexts({
+                      ...proposeTexts,
+                      hintHeadline: e.target.value,
+                    })
+                  }
+                  maxlength={50}
+                  counter
+                />
+                <mdui-text-field
+                  label="Hinweis-Beschreibung"
+                  rows={3}
+                  value={proposeTexts.hintDescription}
+                  onInput={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
+                    setProposeTexts({
+                      ...proposeTexts,
+                      hintDescription: e.target.value,
+                    })
+                  }
+                  maxlength={500}
+                  counter
+                />
+              </div>
+            </mdui-card>
+
+            <mdui-card
+              variant="filled"
+              style={{ width: "100%", padding: "20px" }}
+            >
+              <div className="mdui-prose">
+                <h3>Zusätzliche Felder für Vorschläge</h3>
+                <p>
+                  Fügen Sie zusätzliche Felder hinzu, die beim Einreichen von
+                  Vorschlägen ausgefüllt werden sollen.
+                </p>
+
+                {proposeFields.map((field, index) => (
+                  <ProposeFieldCard
+                    key={field.id}
+                    field={field}
+                    index={index}
+                    editProposeField={editProposeField}
+                    removeProposeField={removeProposeField}
+                  />
+                ))}
+
+                <mdui-button
+                  icon="add"
+                  variant="outlined"
+                  onClick={addProposeField}
+                  style={{ width: "100%" }}
+                >
+                  Neues Feld hinzufügen
+                </mdui-button>
+              </div>
+            </mdui-card>
+          </div>
+        )}
+      </mdui-tab-panel>
+      </mdui-tabs>
+
+      <mdui-dialog
+        class="wide-dialog"
+        open={optionDialogOpen}
+        onOpenChange={(e: any) => setOptionDialogOpen(e.target.open)}
+        headline={editingOptionIndex !== null ? "Option bearbeiten" : "Neue Option"}
+        closeOnOverlayClick
+      >
+        <div style={{ display: "flex", flexDirection: "column", gap: "16px", padding: "8px 0" }}>
+          <mdui-text-field
+            label="Titel"
+            placeholder="Programmieren: KI"
+            maxlength={25}
+            counter
+            value={name}
+            onInput={(e: React.ChangeEvent<HTMLInputElement>) => setName(e.target.value)}
+          ></mdui-text-field>
+          <mdui-text-field
+            label="max. SchülerInnen"
+            type="number"
+            placeholder="15"
+            min={1}
+            value={String(max)}
+            onInput={(e: React.ChangeEvent<HTMLInputElement>) => setMax(parseInt(e.target.value))}
+          ></mdui-text-field>
+          <mdui-text-field
+            label="Lehrer (optional)"
+            placeholder="Hr. Mustermann"
+            maxlength={25}
+            counter
+            value={teacher}
+            onInput={(e: React.ChangeEvent<HTMLInputElement>) => setTeacher(e.target.value)}
+          ></mdui-text-field>
+          <mdui-text-field
+            label="Beschreibung (optional)"
+            placeholder="Was ist Programmieren? Was ist KI?"
+            rows={3}
+            maxlength={100}
+            counter
+            value={optionDescription}
+            onInput={(e: React.ChangeEvent<HTMLTextAreaElement>) => setOptionDescription(e.target.value)}
+          ></mdui-text-field>
+
+          {/* Leaders Selection */}
+          <div style={{ marginTop: "8px", borderTop: "1px solid var(--mdui-color-outline-variant)", paddingTop: "16px" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
+              <span style={{ fontSize: "16px", fontWeight: "bold" }}>
+                Projektleiter auswählen ({leaders.length} zugewiesen)
+              </span>
+            </div>
+
+            {leaders.length > 0 && (
+              <div style={{ display: "flex", flexWrap: "wrap", gap: "4px", marginBottom: "12px" }}>
+                {leaders.map(l => {
+                  const [gradeStr, listIndex] = l.split("-");
+                  const grade = Number(gradeStr);
+                  const cls = classes.find(c => c.grade === grade);
+                  const student = cls?.students?.find((s: any) => s.listIndex === listIndex);
+                  return (
+                    <mdui-chip key={l} deletable onClick={() => toggleLeader(grade, listIndex)}>
+                      {student ? student.name : l} (Klasse {grade})
+                    </mdui-chip>
+                  );
+                })}
+              </div>
+            )}
+            
+            <mdui-text-field
+              icon="search"
+              placeholder="Schüler suchen..."
+              value={leaderSearchQuery}
+              onInput={(e: any) => setLeaderSearchQuery(e.target.value)}
+              clearable
+            ></mdui-text-field>
+
+            {leaderSearchQuery && leaderSearchQuery.length > 1 && (
+              <div style={{ maxHeight: "200px", overflowY: "auto", marginTop: "12px", display: "flex", flexWrap: "wrap", gap: "8px", alignContent: "flex-start" }}>
+                {classes && classes.flatMap(c => 
+                  c.students
+                    .filter(s => s.name.toLowerCase().includes(leaderSearchQuery.toLowerCase()))
+                    .map(s => {
+                      const key = `${c.grade}-${s.listIndex}`;
+                      const isSelected = leaders.includes(key);
+                      if (isSelected) return null;
+                      return (
+                        <mdui-chip
+                          key={key}
+                          selectable
+                          onClick={() => {
+                            toggleLeader(c.grade, s.listIndex);
+                            setLeaderSearchQuery("");
+                          }}
+                        >
+                          {s.name} (Kl. {c.grade})
+                        </mdui-chip>
+                      );
+                    })
+                )}
+                {classes.flatMap(c => c.students.filter(s => s.name.toLowerCase().includes(leaderSearchQuery.toLowerCase()) && !leaders.includes(`${c.grade}-${s.listIndex}`))).length === 0 && (
+                  <span style={{ color: "var(--mdui-color-on-surface-variant)", fontSize: "14px", marginTop: "4px" }}>
+                    Keine weiteren Schüler gefunden.
+                  </span>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+        <mdui-button slot="action" variant="text" onClick={() => setOptionDialogOpen(false)}>Abbrechen</mdui-button>
+        <mdui-button slot="action" variant="tonal" onClick={saveOption} disabled={addOptionDisabled()}>Übernehmen</mdui-button>
+      </mdui-dialog>
+
     </div>
   );
 }

@@ -33,45 +33,116 @@ export default function ProjectView({
 
     return (
       <div key={option.id} style={{ marginBottom: "24px" }}>
-        <div className="mdui-table" style={{ width: "100%" }}>
-          <table>
-            <thead>
-              <tr>
-                <th><b>Name</b></th>
-                <th><b>Klasse</b></th>
-                <th><b>Punkte</b></th>
-                {Array.from({ length: vote.selectCount }, (_, i) => i + 1).map((i) => (
-                  <th key={i}><b>Wahl {i}</b></th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {sortedResults
-                .filter(([, value]) => value === option.id)
-                .map(([key, value]) => {
-                  const choice = choices.find((c) => c.id === key)!;
-                  return (
-                    <tr key={key}>
+        <div style={{ padding: "10px" }}>
+          <div className="mdui-table" style={{ width: "100%" }}>
+            <table>
+              <thead>
+                <tr>
+                  <th><b>Name</b></th>
+                  <th><b>Klasse</b></th>
+                  <th><b>Punkte</b></th>
+                  {Array.from({ length: vote.selectCount }, (_, i) => i + 1).map((i) => (
+                    <th key={i}><b>Wahl {i}</b></th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {sortedResults
+                  .filter(([, value]) => value === option.id)
+                  .map(([key, value]) => {
+                    const choice = choices.find((c) => c.id === key)!;
+                    return (
+                      <tr key={key}>
+                        <td>{choice.name}</td>
+                        <td>{choice.grade}</td>
+                        <td>
+                          {choicePoints[key] ? `[${choicePoints[key].join(", ")}]` : "[1, 2, 4]"}
+                        </td>
+                        {(choice.selected || []).map((selected, i) => {
+                          const isAssigned = selected === value;
+                          return (
+                            <td
+                              key={i}
+                              style={{
+                                cursor: !isAssigned ? "pointer" : "default",
+                                textDecoration: !isAssigned ? "underline" : "none",
+                                color: !isAssigned ? "rgb(var(--mdui-color-primary))" : "inherit",
+                                whiteSpace: "nowrap"
+                              }}
+                              onClick={() => {
+                                if (isAssigned) return;
+                                const newResults = { ...results };
+                                newResults[key] = selected;
+                                setResults(newResults);
+                                const previousResults = { ...results };
+                                snackbar({
+                                  message: "Änderung rückgängig machen",
+                                  action: "Rückgängig",
+                                  onActionClick: () => setResults(previousResults),
+                                });
+                              }}
+                            >
+                              {isAssigned ? "✓" : (
+                                `${options.find((o) => o.id === selected)?.title || selected} (${
+                                  Object.values(results).filter((val) => val === selected).length
+                                }/${options.find((o) => o.id === selected)?.max || "?"})`
+                              )}
+                            </td>
+                          );
+                        })}
+                      </tr>
+                    );
+                  })}
+                {assignedCount === 0 && (
+                  <tr>
+                    <td colSpan={vote.selectCount + 3} style={{ textAlign: "center", color: "gray" }}>
+                      Keine Zuweisungen
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <h2 style={{ color: "gray", marginTop: "40px", fontSize: "1.2rem" }}>Alle Wähler</h2>
+        <div style={{ padding: "10px" }}>
+          <div className="mdui-table" style={{ width: "100%", color: "gray" }}>
+            <table>
+              <thead>
+                <tr>
+                  <th><b>Name</b></th>
+                  <th><b>Klasse</b></th>
+                  <th><b>#</b></th>
+                  {Array.from({ length: vote.selectCount }, (_, i) => i + 1).map((i) => (
+                    <th key={i}><b>Wahl {i}</b></th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {choices
+                  .filter((choice) => (choice.selected || []).includes(option.id))
+                  .sort((a, b) => a.name.localeCompare(b.name))
+                  .map((choice, i) => (
+                    <tr key={i}>
                       <td>{choice.name}</td>
                       <td>{choice.grade}</td>
-                      <td>
-                        {choicePoints[key] ? `[${choicePoints[key].join(", ")}]` : "[1, 2, 4]"}
-                      </td>
+                      <td>{choice.listIndex}</td>
                       {(choice.selected || []).map((selected, i) => {
-                        const isAssigned = selected === value;
+                        const isAssigned = results[choice.id] === selected;
                         return (
                           <td
                             key={i}
                             style={{
                               cursor: !isAssigned ? "pointer" : "default",
                               textDecoration: !isAssigned ? "underline" : "none",
-                              color: !isAssigned ? "rgb(var(--mdui-color-primary))" : "inherit",
+                              color: !isAssigned ? "rgb(var(--mdui-color-tertiary))" : "inherit",
                               whiteSpace: "nowrap"
                             }}
                             onClick={() => {
                               if (isAssigned) return;
                               const newResults = { ...results };
-                              newResults[key] = selected;
+                              newResults[choice.id] = selected;
                               setResults(newResults);
                               const previousResults = { ...results };
                               snackbar({
@@ -81,89 +152,22 @@ export default function ProjectView({
                               });
                             }}
                           >
-                            {isAssigned ? "✓" : (
-                              `${options.find((o) => o.id === selected)?.title || selected} (${
-                                Object.values(results).filter((val) => val === selected).length
-                              }/${options.find((o) => o.id === selected)?.max || "?"})`
-                            )}
+                            {options.find((o) => o.id === selected)?.title || selected}
+                            {isAssigned &&
+                              ` (${Object.values(results).filter((val) => val === selected).length}/${options.find((o) => o.id === selected)?.max || "?"}) ✓`}
                           </td>
                         );
                       })}
                     </tr>
-                  );
-                })}
-              {assignedCount === 0 && (
-                <tr>
-                  <td colSpan={vote.selectCount + 3} style={{ textAlign: "center", color: "gray" }}>
-                    Keine Zuweisungen
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-
-        <h2 style={{ color: "gray", marginTop: "40px", fontSize: "1.2rem" }}>Alle Wähler</h2>
-        <div className="mdui-table" style={{ width: "100%", color: "gray" }}>
-          <table>
-            <thead>
-              <tr>
-                <th><b>Name</b></th>
-                <th><b>Klasse</b></th>
-                <th><b>#</b></th>
-                {Array.from({ length: vote.selectCount }, (_, i) => i + 1).map((i) => (
-                  <th key={i}><b>Wahl {i}</b></th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {choices
-                .filter((choice) => (choice.selected || []).includes(option.id))
-                .sort((a, b) => a.name.localeCompare(b.name))
-                .map((choice, i) => (
-                  <tr key={i}>
-                    <td>{choice.name}</td>
-                    <td>{choice.grade}</td>
-                    <td>{choice.listIndex}</td>
-                    {(choice.selected || []).map((selected, i) => {
-                      const isAssigned = results[choice.id] === selected;
-                      return (
-                        <td
-                          key={i}
-                          style={{
-                            cursor: !isAssigned ? "pointer" : "default",
-                            textDecoration: !isAssigned ? "underline" : "none",
-                            color: !isAssigned ? "rgb(var(--mdui-color-tertiary))" : "inherit",
-                            whiteSpace: "nowrap"
-                          }}
-                          onClick={() => {
-                            if (isAssigned) return;
-                            const newResults = { ...results };
-                            newResults[choice.id] = selected;
-                            setResults(newResults);
-                            const previousResults = { ...results };
-                            snackbar({
-                              message: "Änderung rückgängig machen",
-                              action: "Rückgängig",
-                              onActionClick: () => setResults(previousResults),
-                            });
-                          }}
-                        >
-                          {options.find((o) => o.id === selected)?.title || selected}
-                          {isAssigned &&
-                            ` (${Object.values(results).filter((val) => val === selected).length}/${options.find((o) => o.id === selected)?.max || "?"}) ✓`}
-                        </td>
-                      );
-                    })}
+                  ))}
+                {choices.filter((choice) => (choice.selected || []).includes(option.id)).length === 0 && (
+                  <tr>
+                    <td colSpan={vote.selectCount + 3} style={{ textAlign: "center", fontStyle: "italic", padding: "16px" }}>Keine Wähler gefunden.</td>
                   </tr>
-                ))}
-              {choices.filter((choice) => (choice.selected || []).includes(option.id)).length === 0 && (
-                <tr>
-                  <td colSpan={vote.selectCount + 3} style={{ textAlign: "center", fontStyle: "italic", padding: "16px" }}>Keine Wähler gefunden.</td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     );

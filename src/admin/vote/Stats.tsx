@@ -11,7 +11,7 @@ import {
   PointElement,
   LineElement,
 } from "chart.js";
-import { Bar, Pie, Line } from "react-chartjs-2";
+import { Bar, Pie, Doughnut, Line } from "react-chartjs-2";
 import {
   collection,
   doc,
@@ -178,9 +178,10 @@ export default function Stats() {
         {
           label: "Anzahl Teilnehmer",
           data: sortedGrades.map(([, count]) => count),
-          backgroundColor: "rgb(25, 118, 210)",
-          borderColor: "rgb(25, 118, 210)",
+          backgroundColor: "rgba(33, 150, 243, 0.8)",
+          borderColor: "rgb(33, 150, 243)",
           borderWidth: 1,
+          borderRadius: 6,
         },
       ],
     };
@@ -257,21 +258,22 @@ export default function Stats() {
 
     const datasets = [];
     const colors = [
-      "rgb(76, 175, 80)", // Green for 1st choice
-      "rgb(255, 152, 0)", // Orange for 2nd choice
-      "rgb(244, 67, 54)", // Red for 3rd choice
-      "rgb(156, 39, 176)", // Purple for 4th choice
-      "rgb(33, 150, 243)", // Blue for 5th choice
-      "rgb(96, 125, 139)", // Blue Grey for 6th choice
+      "rgba(76, 175, 80, 0.85)", // Green for 1st choice
+      "rgba(255, 152, 0, 0.85)", // Orange for 2nd choice
+      "rgba(244, 67, 54, 0.85)", // Red for 3rd choice
+      "rgba(156, 39, 176, 0.85)", // Purple for 4th choice
+      "rgba(33, 150, 243, 0.85)", // Blue for 5th choice
+      "rgba(96, 125, 139, 0.85)", // Blue Grey for 6th choice
     ];
 
     for (let i = 0; i < vote.selectCount; i++) {
       datasets.push({
         label: `${i + 1}. Priorität`,
         data: optionsWithAssignments.map(([, stats]) => stats[i]),
-        backgroundColor: colors[i] || "rgb(158, 158, 158)",
-        borderColor: colors[i] || "rgb(158, 158, 158)",
+        backgroundColor: colors[i] || "rgba(158, 158, 158, 0.85)",
+        borderColor: colors[i] ? colors[i].replace("0.85", "1") : "rgb(158, 158, 158)",
         borderWidth: 1,
+        borderRadius: 4,
       });
     }
 
@@ -316,14 +318,15 @@ export default function Stats() {
         {
           data: assignmentCounts,
           backgroundColor: [
-            "rgb(76, 175, 80)", // Green
-            "rgb(255, 152, 0)", // Orange
-            "rgb(244, 67, 54)", // Red
-            "rgb(156, 39, 176)", // Purple
-            "rgb(33, 150, 243)", // Blue
-            "rgb(96, 125, 139)", // Blue Grey
+            "rgba(76, 175, 80, 0.85)", // Green
+            "rgba(255, 152, 0, 0.85)", // Orange
+            "rgba(244, 67, 54, 0.85)", // Red
+            "rgba(156, 39, 176, 0.85)", // Purple
+            "rgba(33, 150, 243, 0.85)", // Blue
+            "rgba(96, 125, 139, 0.85)", // Blue Grey
           ],
-          borderWidth: 1,
+          borderColor: "#ffffff",
+          borderWidth: 2,
         },
       ],
     };
@@ -401,36 +404,38 @@ export default function Stats() {
       legend: {
         display: true,
         position: "bottom" as const,
+        labels: { usePointStyle: true, padding: 20 },
+      },
+      tooltip: {
+        usePointStyle: true,
+        backgroundColor: "rgba(255, 255, 255, 0.95)",
+        titleColor: "#333",
+        bodyColor: "#666",
+        borderColor: "#ddd",
+        borderWidth: 1,
+        padding: 12,
+        boxPadding: 6,
       },
     },
     scales: {
+      x: { grid: { display: false } },
       y: {
         beginAtZero: true,
-        ticks: {
-          stepSize: 1,
-        },
+        grid: { color: "rgba(0,0,0,0.05)" },
+        ticks: { stepSize: 1 },
       },
     },
   };
 
   const stackedBarOptions = {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: {
-        position: "bottom" as const,
-      },
-    },
+    ...chartOptions,
     scales: {
-      x: {
-        stacked: true,
-      },
+      x: { stacked: true, grid: { display: false } },
       y: {
         stacked: true,
         beginAtZero: true,
-        ticks: {
-          stepSize: 1,
-        },
+        grid: { color: "rgba(0,0,0,0.05)" },
+        ticks: { stepSize: 1 },
       },
     },
   };
@@ -438,10 +443,13 @@ export default function Stats() {
   const pieChartOptions = {
     responsive: true,
     maintainAspectRatio: false,
+    cutout: "60%",
     plugins: {
       legend: {
         position: "bottom" as const,
+        labels: { usePointStyle: true, padding: 20 },
       },
+      tooltip: chartOptions.plugins.tooltip,
     },
   };
 
@@ -455,9 +463,9 @@ export default function Stats() {
     const metrics = ["satisfaction", "excitement", "easeOfProcess"];
     const metricLabels = ["Zufriedenheit", "Vorfreude", "Einfachheit"];
     const colors = [
-      "rgb(76, 175, 80)",
-      "rgb(255, 152, 0)",
-      "rgb(33, 150, 243)",
+      "rgba(76, 175, 80, 0.85)",
+      "rgba(255, 152, 0, 0.85)",
+      "rgba(33, 150, 243, 0.85)",
     ];
 
     const datasets = metrics.map((metric, index) => {
@@ -471,8 +479,9 @@ export default function Stats() {
         label: metricLabels[index],
         data: distribution,
         backgroundColor: colors[index],
-        borderColor: colors[index],
+        borderColor: colors[index].replace("0.85", "1"),
         borderWidth: 1,
+        borderRadius: 4,
       };
     });
 
@@ -499,16 +508,17 @@ export default function Stats() {
           label: "Durchschnittsbewertung",
           data: averages,
           backgroundColor: [
-            "rgb(76, 175, 80)",
-            "rgb(255, 152, 0)",
-            "rgb(33, 150, 243)",
+            "rgba(76, 175, 80, 0.85)",
+            "rgba(255, 152, 0, 0.85)",
+            "rgba(33, 150, 243, 0.85)",
           ],
           borderColor: [
-            "rgb(76, 175, 80)",
-            "rgb(255, 152, 0)",
-            "rgb(33, 150, 243)",
+            "rgba(76, 175, 80, 1)",
+            "rgba(255, 152, 0, 1)",
+            "rgba(33, 150, 243, 1)",
           ],
           borderWidth: 1,
+          borderRadius: 6,
         },
       ],
     };
@@ -531,92 +541,48 @@ export default function Stats() {
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
+          gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))",
           gap: "16px",
           marginBottom: "30px",
         }}
       >
-        {[
-          {
-            icon: "how_to_vote",
-            label: "Teilnehmer",
-            value: `${stats.totalParticipants}`,
-            description: "Eingegangene Wahlen",
-          },
-          {
-            icon: "assignment_turned_in",
-            label: "Zuteilungsrate",
-            value: `${stats.participationRate}%`,
-            description: `${stats.totalAssigned} zugewiesen, ${stats.unassigned} offen`,
-          },
-          {
-            icon: "thumb_up",
-            label: "Erstwunsch-Erfolg",
-            value: `${stats.firstChoiceSuccess}%`,
-            description: "Erhielten ihr erstes Wahlziel",
-          },
-          ...(stats.avgFeedback
-            ? [
-                {
-                  icon: "star",
-                  label: "Feedback",
-                  value: `${stats.avgFeedback}/5`,
-                  description: `${stats.feedbackCount} Antworten (${Math.round(
-                    (stats.feedbackCount / stats.totalParticipants) * 100
-                  )}%)`,
-                },
-              ]
-            : []),
-        ].map((stat, index) => (
-          <mdui-card
-            key={index}
-            variant="outlined"
-            style={{
-              padding: "16px",
-              textAlign: "center",
-              minHeight: "120px",
-              display: "flex",
-              flexDirection: "column",
-              justifyContent: "center",
-            }}
-          >
-            <mdui-icon
-              name={stat.icon}
-              style={{
-                fontSize: "2rem",
-                marginBottom: "8px",
-                color: "rgba(var(--mdui-color-primary), 1)",
-              }}
-            ></mdui-icon>
-            <h3
-              style={{
-                margin: "0 0 4px 0",
-                fontSize: "1.5rem",
-                lineHeight: "1.2",
-              }}
-            >
-              {stat.value}
-            </h3>
-            <p
-              style={{
-                margin: "0 0 4px 0",
-                fontWeight: "500",
-                fontSize: "0.9rem",
-              }}
-            >
-              {stat.label}
-            </p>
-            <p
-              style={{
-                margin: 0,
-                fontSize: "0.75rem",
-                color: "rgba(var(--mdui-color-on-surface), 0.6)",
-              }}
-            >
-              {stat.description}
-            </p>
+        <mdui-card variant="filled" style={{ padding: "20px" }}>
+          <div style={{ fontSize: "1.2em", fontWeight: "bold", display: "flex", alignItems: "center", gap: 8 }}>
+            <mdui-icon style={{ color: "rgba(var(--mdui-color-primary), 1)" }}>how_to_vote</mdui-icon>
+            Teilnehmer
+          </div>
+          <div style={{ fontSize: "2.5em", color: "rgb(var(--mdui-color-primary))" }}>{stats.totalParticipants}</div>
+          <div style={{ color: "gray", fontSize: "0.9em" }}>Eingegangene Wahlen</div>
+        </mdui-card>
+
+        <mdui-card variant="filled" style={{ padding: "20px" }}>
+          <div style={{ fontSize: "1.2em", fontWeight: "bold", display: "flex", alignItems: "center", gap: 8 }}>
+            <mdui-icon style={{ color: "rgba(var(--mdui-color-primary), 1)" }}>assignment_turned_in</mdui-icon>
+            Zuteilungsrate
+          </div>
+          <div style={{ fontSize: "2.5em", color: "rgb(var(--mdui-color-primary))" }}>{stats.participationRate}%</div>
+          <div style={{ color: "gray", fontSize: "0.9em" }}>{stats.totalAssigned} zugewiesen, {stats.unassigned} offen</div>
+        </mdui-card>
+
+        <mdui-card variant="filled" style={{ padding: "20px" }}>
+          <div style={{ fontSize: "1.2em", fontWeight: "bold", display: "flex", alignItems: "center", gap: 8 }}>
+            <mdui-icon style={{ color: "rgba(var(--mdui-color-primary), 1)" }}>thumb_up</mdui-icon>
+            Erstwunsch-Erfolg
+          </div>
+          <div style={{ fontSize: "2.5em", color: "rgb(var(--mdui-color-primary))" }}>{stats.firstChoiceSuccess}%</div>
+          <div style={{ color: "gray", fontSize: "0.9em" }}>Erhielten ihr erstes Wahlziel</div>
+        </mdui-card>
+
+        {stats.avgFeedback && (
+          <mdui-card variant="filled" style={{ padding: "20px" }}>
+            <div style={{ fontSize: "1.2em", fontWeight: "bold", display: "flex", alignItems: "center", gap: 8 }}>
+              <mdui-icon style={{ color: "rgba(var(--mdui-color-primary), 1)" }}>star</mdui-icon>
+              Feedback
+            </div>
+            <div style={{ fontSize: "2.5em", color: "rgb(var(--mdui-color-primary))" }}>{stats.avgFeedback}</div>
+            <div style={{ color: "gray", fontSize: "0.9em" }}>{stats.feedbackCount} Antworten ({Math.round((stats.feedbackCount / stats.totalParticipants) * 100)}%)</div>
           </mdui-card>
-        ))}
+        )}
       </div>
 
       {/* Main Charts - Consolidated */}
@@ -663,7 +629,7 @@ export default function Stats() {
               />
             </div>
             <div ref={assignmentStatsRef} style={{ height: "300px" }}>
-              <Pie data={getAssignmentStatsData()} options={pieChartOptions} />
+              <Doughnut data={getAssignmentStatsData()} options={pieChartOptions} />
             </div>
           </mdui-card>
         )}
@@ -892,7 +858,7 @@ export default function Stats() {
             Rücklaufquote)
           </p>
 
-          {/* Combined Feedback Charts */}
+
           <div
             style={{
               display: "grid",

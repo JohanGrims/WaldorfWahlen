@@ -4,6 +4,7 @@ export type Option = {
   teacher: string;
   max: number;
   description: string;
+  leaders?: string[];
 };
 
 export type Choice = {

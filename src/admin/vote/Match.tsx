@@ -34,9 +34,10 @@ interface DuplicateStudent {
 }
 
 export default function Match() {
-  const { choices, classes } = useLoaderData() as {
+  const { choices, classes, options } = useLoaderData() as {
     classes: Class[];
     choices: any[];
+    options: any[];
   };
 
   const { id } = useParams();
@@ -336,8 +337,10 @@ export default function Match() {
             Number(choice.listIndex) === Number(student.listIndex) &&
             Number(choice.grade) === Number(classItem.grade)
         );
+        // Check if this student is a project leader
+        const isLeader = options.some(opt => opt.leaders?.includes(`${classItem.grade}-${student.listIndex}`));
 
-        if (!hasVoted) {
+        if (!hasVoted && !isLeader) {
           result.push({
             student,
             className: classItem.grade,
@@ -352,7 +355,7 @@ export default function Match() {
       }
       return a.className - b.className;
     });
-  }, [choices, sortedClasses]);
+  }, [choices, sortedClasses, options]);
 
   // Filter non-voters by selected grade
   const filteredNonVoters = React.useMemo(() => {
@@ -768,7 +771,9 @@ export default function Match() {
                       </tr>
                     </thead>
                     <tbody>
-                      {c.students.map((s) => (
+                      {c.students.map((s) => {
+                        const isLeader = options.some(opt => opt.leaders?.includes(`${c.grade}-${s.listIndex}`));
+                        return (
                         <tr key={s.listIndex}>
                           <td>{s.name}</td>
                           <td>{s.listIndex}</td>
@@ -802,12 +807,16 @@ export default function Match() {
                                 choice.listIndex == s.listIndex &&
                                 choice.grade == c.grade
                             ).length < 1 && (
-                              <Link
-                                to={`../add?name=${s.name}&grade=${c.grade}&listIndex=${s.listIndex}`}
-                                style={{ color: "rgb(255, 100, 100)" }}
-                              >
-                                (Erstellen)
-                              </Link>
+                              isLeader ? (
+                                <span style={{ color: "gray", fontStyle: "italic" }}>(Leitend)</span>
+                              ) : (
+                                <Link
+                                  to={`../add?name=${s.name}&grade=${c.grade}&listIndex=${s.listIndex}`}
+                                  style={{ color: "rgb(255, 100, 100)" }}
+                                >
+                                  (Erstellen)
+                                </Link>
+                              )
                             )}
 
                             {(() => {
@@ -865,7 +874,8 @@ export default function Match() {
                             })()}
                           </td>
                         </tr>
-                      ))}
+                        );
+                      })}
                       {orphanedChoices
                         .filter((choice) => Number(choice.grade) === Number(c.grade))
                         .map((choice) => (
@@ -1082,8 +1092,12 @@ Match.loader = async function loader({ params }: LoaderFunctionArgs) {
   const classes = await getDocs(collection(db, `/schools/SCHOOLID/class`));
   const classData = classes.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
 
+  const options = await getDocs(collection(db, `schools/SCHOOLID/votes/${id}/options`));
+  const optionData = options.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+
   return {
     choices: choiceData,
     classes: classData,
+    options: optionData,
   };
 };

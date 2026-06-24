@@ -42,7 +42,8 @@ export default function Add() {
           choices.find(
             (choice) =>
               choice.listIndex == s.listIndex && choice.grade == c.grade
-          ) === undefined
+          ) === undefined &&
+          !options.some((opt) => opt.leaders?.includes(`${c.grade}-${s.listIndex}`))
         ) {
           newSuggestedStudents.push({
             name: s.name,
