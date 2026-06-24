@@ -184,7 +184,7 @@ export default function Match() {
           // Check for all students with matching names in the same class
           classItem.students.forEach((potentialMatch) => {
             // Skip the current student
-            if (potentialMatch.listIndex === student.listIndex) {
+            if (potentialMatch.listIndex == student.listIndex) {
               return;
             }
 

@@ -98,8 +98,8 @@ export default function Add() {
     setSaving(true);
     addDoc(collection(db, `schools/SCHOOLID/votes/${vote.id}/choices`), {
       name,
-      grade,
-      listIndex,
+      grade: Number(grade),
+      listIndex: Number(listIndex),
       selected,
       extraFields: [],
       version: 2,

@@ -70,9 +70,9 @@ function processStudents(parsedStudents: any[]) {
   return parsedStudents.map((s) => {
     if (s.listIndex === undefined || s.listIndex === null || String(s.listIndex).trim() === "") {
       maxIndex++;
-      s.listIndex = String(maxIndex);
+      s.listIndex = maxIndex;
     } else {
-      s.listIndex = String(s.listIndex);
+      s.listIndex = Number(s.listIndex);
     }
 
     if (s.name && typeof s.name === "string") {
@@ -300,7 +300,7 @@ export default function Students() {
 
     const newStudent: Student = {
       name,
-      listIndex,
+      listIndex: Number(listIndex),
       ...(email && { email }),
     };
     const updatedStudents = [...currentClass.students, newStudent];
@@ -465,7 +465,7 @@ export default function Students() {
               const email = formData.get("email") as string;
               const updatedStudent: Student = {
                 name: formData.get("name") as string,
-                listIndex: formData.get("listIndex") as string,
+                listIndex: Number(formData.get("listIndex")),
                 ...(email && email.trim() !== ""
                   ? { email: email.trim() }
                   : {}),

@@ -188,7 +188,7 @@ export default function NewVote() {
   const [classes, setClasses] = React.useState<any[]>([]);
   const [leaderSearchQuery, setLeaderSearchQuery] = React.useState<string>("");
 
-  const toggleLeader = (classGrade: number, listIndex: string) => {
+  const toggleLeader = (classGrade: number, listIndex: string | number) => {
     const key = `${classGrade}-${listIndex}`;
     setLeaders((prev) =>
       prev.includes(key) ? prev.filter((l) => l !== key) : [...prev, key]
@@ -1326,7 +1326,7 @@ export default function NewVote() {
                             const [gradeStr, listIndex] = l.split("-");
                             const grade = Number(gradeStr);
                             const cls = classes.find(c => c.grade === grade);
-                            const student = cls?.students?.find((s: any) => s.listIndex === listIndex);
+                            const student = cls?.students?.find((s: any) => String(s.listIndex) === listIndex);
                             return (
                               <mdui-chip key={l}>
                                 {student ? student.name : l}
@@ -1550,7 +1550,7 @@ export default function NewVote() {
                   const [gradeStr, listIndex] = l.split("-");
                   const grade = Number(gradeStr);
                   const cls = classes.find(c => c.grade === grade);
-                  const student = cls?.students?.find((s: any) => s.listIndex === listIndex);
+                  const student = cls?.students?.find((s: any) => String(s.listIndex) === listIndex);
                   return (
                     <mdui-chip key={l} deletable onClick={() => toggleLeader(grade, listIndex)}>
                       {student ? student.name : l} (Klasse {grade})

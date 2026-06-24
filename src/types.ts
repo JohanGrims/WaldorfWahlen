@@ -13,7 +13,7 @@ export type Choice = {
   grade: number;
   selected: string[];
   extraFields: any[];
-  listIndex: string;
+  listIndex: number;
 };
 
 export type Vote = {
@@ -29,7 +29,7 @@ export type Vote = {
 };
 
 export type Student = {
-  listIndex: string;
+  listIndex: number;
   name: string;
   email?: string;
 };
