@@ -1,6 +1,7 @@
-import { collection, getDocs } from "firebase/firestore";
+import { collection, getDocs, doc, updateDoc } from "firebase/firestore";
 import React from "react";
-import { Link, LoaderFunctionArgs, useLoaderData } from "react-router-dom";
+import { Link, LoaderFunctionArgs, useLoaderData, useParams, useRevalidator } from "react-router-dom";
+import { snackbar } from "mdui";
 import { db } from "../../firebase";
 import { Class, Student } from "../../types";
 
@@ -38,7 +39,23 @@ export default function Match() {
     choices: any[];
   };
 
-  const [mode, setMode] = React.useState("database");
+  const { id } = useParams();
+  const revalidator = useRevalidator();
+
+  const handleAcceptMatch = async (choiceId: string, newListIndex: string | number) => {
+    try {
+      await updateDoc(doc(db, `schools/SCHOOLID/votes/${id}/choices/${choiceId}`), {
+        listIndex: Number(newListIndex)
+      });
+      snackbar({ message: "Listennummer aktualisiert", autoCloseDelay: 5000 });
+      revalidator.revalidate();
+    } catch (e) {
+      console.error(e);
+      snackbar({ message: "Fehler beim Aktualisieren der Listennummer", autoCloseDelay: 5000 });
+    }
+  };
+
+  const [mode, setMode] = React.useState("overview");
 
   const sortedClasses = classes.sort((a, b) => a.grade - b.grade);
 
@@ -282,6 +299,31 @@ export default function Match() {
     return result;
   }, [sortedClasses, handledStudentKeys]);
 
+  // Find orphaned choices (choices that don't match any class or listIndex)
+  const orphanedChoices = React.useMemo(() => {
+    return choices.filter((choice) => {
+      const classItem = sortedClasses.find(
+        (c) => Number(c.grade) === Number(choice.grade)
+      );
+      if (!classItem) {
+        return true;
+      }
+      const student = classItem.students.find(
+        (s) => Number(s.listIndex) === Number(choice.listIndex)
+      );
+      if (!student) {
+        return true;
+      }
+      return false;
+    });
+  }, [choices, sortedClasses]);
+
+  const orphanedChoicesUnknownClass = React.useMemo(() => {
+    return orphanedChoices.filter(
+      (c) => !sortedClasses.some((cls) => Number(cls.grade) === Number(c.grade))
+    );
+  }, [orphanedChoices, sortedClasses]);
+
   // Find students who haven't voted
   const nonVoters = React.useMemo(() => {
     const result: Array<{ student: Student; className: number }> = [];
@@ -449,203 +491,254 @@ export default function Match() {
 
   return (
     <div className="mdui-prose">
-      <h2>Abgleichen</h2>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
+        <h2>Abgleichen</h2>
+      </div>
 
-      {/* Card for mismatched students */}
-      {mismatchedStudents.length > 0 && (
-        <mdui-card
-          style={{ width: "100%", padding: "20px", marginBottom: "20px" }}
-          variant="filled"
-        >
-          <h3>Nicht übereinstimmende Namen ({mismatchedStudents.length})</h3>
-          <p>
-            Einige Schüler haben in der Datenbank einen anderen Namen als in den
-            Antworten. Bitte überprüfen Sie diese Einträge.
-          </p>
-          <div>
-            <div className="mdui-table">
-              <table>
-                <thead>
-                  <tr>
-                    <th>Klasse</th>
-                    <th>#</th>
-                    <th>Name in Antwort</th>
-                    <th>Name in Datenbank</th>
-                    <th>Mögliche Korrektur</th>
-                    <th>Aktion</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {mismatchedStudents.map((item, index) => (
-                    <tr key={index}>
-                      <td>{item.className}</td>
-                      <td>{item.student.listIndex}</td>
-                      <td>{item.choice.name}</td>
-                      <td>{item.student.name}</td>
-                      <td>
-                        {item.possibleMatches?.map((match, matchIndex) => (
-                          <div key={matchIndex} style={{ marginBottom: "8px" }}>
-                            <span style={{ fontWeight: "bold" }}>
-                              Korrigiere listIndex zu #{match.student.listIndex}{" "}
-                              ({match.student.name})
-                              {Math.abs(match.offset) > 1
-                                ? ` (${Math.abs(match.offset)} entfernt)`
-                                : ""}
-                            </span>
-                            <mdui-icon
-                              style={{
-                                color:
-                                  Math.abs(match.offset) <= 1
-                                    ? "rgb(0, 150, 0)"
-                                    : "rgb(80, 150, 0)",
-                                marginLeft: "5px",
-                                translate: "0 5px",
-                              }}
-                              mdui-tooltip={`title: ${
-                                match.offset > 0
-                                  ? "Weiter unten"
-                                  : "Weiter oben"
-                              } (${Math.abs(match.offset)} Positionen)`}
-                            >
-                              {match.offset > 0
-                                ? "arrow_downward" // If offset is positive, name is below (higher index)
-                                : "arrow_upward"}{" "}
-                            </mdui-icon>
-                          </div>
-                        ))}
-                        {!item.possibleMatches && (
-                          <span style={{ color: "gray" }}>
-                            Keine Vorschläge
-                          </span>
-                        )}
-                      </td>
-                      <td>
-                        <Link to={`../answers?search=${item.choice.id}`}>
-                          Bearbeiten
-                        </Link>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </mdui-card>
-      )}
-
-      {/* Card for duplicate choices */}
-      {duplicateChoices.length > 0 && (
-        <mdui-card
-          style={{ width: "100%", padding: "20px", marginBottom: "20px" }}
-          variant="filled"
-          color="warning"
-        >
-          <h3>Doppelte Antworten ({duplicateChoices.length})</h3>
-          <p>
-            Mehrere Antworten für die gleiche Listennummer und Klasse gefunden.
-            Bitte überprüfen und bereinigen Sie diese Einträge.
-          </p>
-          <div className="mdui-table">
-            <table>
-              <thead>
-                <tr>
-                  <th>Klasse</th>
-                  <th>#</th>
-                  <th>Anzahl</th>
-                  <th>Namen</th>
-                  <th>Aktion</th>
-                </tr>
-              </thead>
-              <tbody>
-                {duplicateChoices.map((item, index) => (
-                  <tr key={index}>
-                    <td>{item.grade}</td>
-                    <td>{item.listIndex}</td>
-                    <td>{item.choices.length}</td>
-                    <td>
-                      {item.choices.map((choice, i) => (
-                        <div key={i} style={{ marginBottom: "4px" }}>
-                          {choice.name}
-                        </div>
-                      ))}
-                    </td>
-                    <td>
-                      <Link
-                        to={`../answers?grade=${item.grade}&listIndex=${item.listIndex}`}
-                        style={{ color: "rgb(255, 100, 100)" }}
-                      >
-                        Bearbeiten
-                      </Link>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </mdui-card>
-      )}
-
-      {/* Card for duplicate students */}
-      {duplicateStudents.length > 0 && (
-        <mdui-card
-          style={{ width: "100%", padding: "20px", marginBottom: "20px" }}
-          variant="filled"
-          color="warning"
-        >
-          <h3>Doppelte Schüler ({duplicateStudents.length})</h3>
-          <p>
-            Mehrere Schüler mit dem gleichen Namen in der gleichen Klasse
-            gefunden. Dies kann zu Verwechslungen führen.
-          </p>
-          <div className="mdui-table">
-            <table>
-              <thead>
-                <tr>
-                  <th>Klasse</th>
-                  <th>Name</th>
-                  <th>Listeneinträge</th>
-                </tr>
-              </thead>
-              <tbody>
-                {duplicateStudents.map((item, index) => (
-                  <tr key={index}>
-                    <td>{item.grade}</td>
-                    <td>{item.name}</td>
-                    <td>
-                      {item.students.map((student, i) => (
-                        <div key={i} style={{ marginBottom: "4px" }}>
-                          #{student.listIndex}{" "}
-                          <Link
-                            to={`../answers?grade=${item.grade}&listIndex=${student.listIndex}`}
-                            style={{
-                              color: "rgb(0, 100, 200)",
-                              marginLeft: "8px",
-                            }}
-                          >
-                            Antworten anzeigen
-                          </Link>
-                        </div>
-                      ))}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </mdui-card>
-      )}
-
-      <mdui-radio-group value={mode}>
-        <mdui-radio value="database" onClick={() => setMode("database")}>
-          Datenbank
-        </mdui-radio>
-        <mdui-radio value="answers" onClick={() => setMode("answers")}>
-          Antworten
-        </mdui-radio>
-        <mdui-radio value="non-voters" onClick={() => setMode("non-voters")}>
+      <mdui-tabs value={mode} style={{ marginBottom: "24px", overflowX: "auto" }}>
+        <mdui-tab value="overview" onClick={() => setMode("overview")}>
+          Übersicht & Probleme
+        </mdui-tab>
+        <mdui-tab value="database" onClick={() => setMode("database")}>
+          Klassen & Antworten
+        </mdui-tab>
+        <mdui-tab value="non-voters" onClick={() => setMode("non-voters")}>
           Nicht-Wähler
-        </mdui-radio>
-      </mdui-radio-group>
+        </mdui-tab>
+      </mdui-tabs>
+
+      {mode === "overview" && (
+        <div>
+          {mismatchedStudents.length === 0 && duplicateChoices.length === 0 && duplicateStudents.length === 0 && orphanedChoices.length === 0 && (
+            <mdui-card style={{ padding: "40px", textAlign: "center", width: "100%" }} variant="filled">
+              <mdui-icon style={{ fontSize: "48px", color: "rgb(0, 150, 0)", marginBottom: "16px" }}>check_circle</mdui-icon>
+              <h3>Alles in Ordnung!</h3>
+              <p>Es wurden keine Probleme, Duplikate oder nicht übereinstimmende Namen gefunden.</p>
+            </mdui-card>
+          )}
+
+          {/* Card for mismatched students */}
+          {mismatchedStudents.length > 0 && (
+            <mdui-card
+              style={{ width: "100%", padding: "20px", marginBottom: "20px" }}
+              variant="filled"
+            >
+              <h3>Nicht übereinstimmende Namen ({mismatchedStudents.length})</h3>
+              <p>
+                Einige Schüler haben in der Datenbank einen anderen Namen als in den
+                Antworten. Bitte überprüfen Sie diese Einträge.
+              </p>
+              <div>
+                <div className="mdui-table">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th style={{ width: "60px" }}>Klasse</th>
+                        <th>Eingereichte Antwort</th>
+                        <th>Korrekturvorschlag</th>
+                        <th>Konflikt</th>
+                        <th style={{ width: "100px" }}>Manuell</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {mismatchedStudents.map((item, index) => (
+                        <tr key={index}>
+                          <td>{item.className}</td>
+                          <td>
+                            <div>
+                              <b>{item.choice.name}</b>
+                              <br />
+                              <span style={{ fontSize: "0.85em", color: "gray" }}>(eingetragen als #{item.student.listIndex})</span>
+                            </div>
+                          </td>
+                          <td>
+                            {item.possibleMatches?.map((match, matchIndex) => (
+                              <div key={matchIndex} style={{ display: "flex", alignItems: "center", gap: "8px", background: "rgba(0,180,0,0.1)", padding: "4px 8px", borderRadius: "6px", marginBottom: "4px" }}>
+                                <mdui-icon style={{ color: "rgb(70, 200, 70)", fontSize: "1.2em" }}>lightbulb_outline</mdui-icon>
+                                <span style={{ color: "rgb(70, 200, 70)", fontSize: "0.9em" }}>
+                                  Auf <b>#{match.student.listIndex}</b> korrigieren <span style={{ opacity: 0.8 }}>({match.student.name})</span>
+                                </span>
+                                <mdui-button-icon
+                                  icon="check"
+                                  onClick={() => handleAcceptMatch(item.choice.id, match.student.listIndex)}
+                                  style={{ color: "white", background: "rgb(0, 150, 0)", marginLeft: "auto", transform: "scale(0.8)", margin: "-8px 0" }}
+                                  mdui-tooltip="title: Korrektur übernehmen"
+                                ></mdui-button-icon>
+                              </div>
+                            ))}
+                            {(!item.possibleMatches || item.possibleMatches.length === 0) && (
+                              <span style={{ color: "gray", fontStyle: "italic" }}>
+                                Keine automatischen Vorschläge
+                              </span>
+                            )}
+                          </td>
+                          <td>
+                            <div style={{ color: "rgb(255, 100, 100)", fontSize: "0.85em", display: "flex", alignItems: "center", gap: "4px" }}>
+                              <mdui-icon style={{ fontSize: "1.2em" }}>error_outline</mdui-icon>
+                              <span>Aber #{item.student.listIndex} ist <b>{item.student.name}</b> in der Datenbank</span>
+                            </div>
+                          </td>
+                          <td>
+                            <Link to={`../answers?search=${item.choice.id}`}>
+                              Bearbeiten
+                            </Link>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </mdui-card>
+          )}
+
+          {/* Card for duplicate choices */}
+          {duplicateChoices.length > 0 && (
+            <mdui-card
+              style={{ width: "100%", padding: "20px", marginBottom: "20px" }}
+              variant="filled"
+              color="warning"
+            >
+              <h3>Doppelte Antworten ({duplicateChoices.length})</h3>
+              <p>
+                Mehrere Antworten für die gleiche Listennummer und Klasse gefunden.
+                Bitte überprüfen und bereinigen Sie diese Einträge.
+              </p>
+              <div className="mdui-table">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Klasse</th>
+                      <th>#</th>
+                      <th>Anzahl</th>
+                      <th>Namen</th>
+                      <th>Aktion</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {duplicateChoices.map((item, index) => (
+                      <tr key={index}>
+                        <td>{item.grade}</td>
+                        <td>{item.listIndex}</td>
+                        <td>{item.choices.length}</td>
+                        <td>
+                          {item.choices.map((choice, i) => (
+                            <div key={i} style={{ marginBottom: "4px" }}>
+                              {choice.name}
+                            </div>
+                          ))}
+                        </td>
+                        <td>
+                          <Link
+                            to={`../answers?grade=${item.grade}&listIndex=${item.listIndex}`}
+                            style={{ color: "rgb(255, 100, 100)" }}
+                          >
+                            Bearbeiten
+                          </Link>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </mdui-card>
+          )}
+
+          {/* Card for duplicate students */}
+          {duplicateStudents.length > 0 && (
+            <mdui-card
+              style={{ width: "100%", padding: "20px", marginBottom: "20px" }}
+              variant="filled"
+              color="warning"
+            >
+              <h3>Doppelte Schüler ({duplicateStudents.length})</h3>
+              <p>
+                Mehrere Schüler mit dem gleichen Namen in der gleichen Klasse
+                gefunden. Dies kann zu Verwechslungen führen.
+              </p>
+              <div className="mdui-table">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Klasse</th>
+                      <th>Name</th>
+                      <th>Listeneinträge</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {duplicateStudents.map((item, index) => (
+                      <tr key={index}>
+                        <td>{item.grade}</td>
+                        <td>{item.name}</td>
+                        <td>
+                          {item.students.map((student, i) => (
+                            <div key={i} style={{ marginBottom: "4px" }}>
+                              #{student.listIndex}{" "}
+                              <Link
+                                to={`../answers?grade=${item.grade}&listIndex=${student.listIndex}`}
+                                style={{
+                                  color: "rgb(0, 100, 200)",
+                                  marginLeft: "8px",
+                                }}
+                              >
+                                Antworten anzeigen
+                              </Link>
+                            </div>
+                          ))}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </mdui-card>
+          )}
+
+          {/* Card for orphaned choices */}
+          {orphanedChoices.length > 0 && (
+            <mdui-card
+              style={{ width: "100%", padding: "20px", marginBottom: "20px" }}
+              variant="filled"
+              color="error"
+            >
+              <h3>Unbekannte Einträge ({orphanedChoices.length})</h3>
+              <p>
+                Diese Antworten haben eine Klasse oder Listennummer, die in der Datenbank nicht existiert.
+                Dies passiert oft bei Tippfehlern in der Klasse oder Listennummer.
+              </p>
+              <div className="mdui-table">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Eingetragene Klasse</th>
+                      <th>Eingetragene #</th>
+                      <th>Name in Antwort</th>
+                      <th>Aktion</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {orphanedChoices.map((choice, index) => (
+                      <tr key={index}>
+                        <td>{choice.grade}</td>
+                        <td>{choice.listIndex}</td>
+                        <td>{choice.name}</td>
+                        <td>
+                          <Link
+                            to={`../answers?search=${choice.id}`}
+                            style={{ color: "rgb(255, 100, 100)" }}
+                          >
+                            Bearbeiten
+                          </Link>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </mdui-card>
+          )}
+        </div>
+      )}
 
       {mode === "database" && (
         <mdui-tabs value={sortedClasses[0].id}>
@@ -655,6 +748,12 @@ export default function Match() {
               <mdui-badge>{c.students.length}</mdui-badge>
             </mdui-tab>
           ))}
+          {orphanedChoicesUnknownClass.length > 0 && (
+            <mdui-tab value="unknown">
+              Unbekannt
+              <mdui-badge>{orphanedChoicesUnknownClass.length}</mdui-badge>
+            </mdui-tab>
+          )}
           <p />
           {sortedClasses.map((c) => (
             <mdui-tab-panel slot="panel" value={c.id}>
@@ -663,9 +762,9 @@ export default function Match() {
                   <table>
                     <thead>
                       <tr>
-                        <th>Name</th>
+                        <th>Schüler (Datenbank)</th>
                         <th>#</th>
-                        <th>Name</th>
+                        <th>Eingereichte Antwort</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -767,63 +866,59 @@ export default function Match() {
                           </td>
                         </tr>
                       ))}
+                      {orphanedChoices
+                        .filter((choice) => Number(choice.grade) === Number(c.grade))
+                        .map((choice) => (
+                          <tr key={choice.id} style={{ backgroundColor: "rgba(128, 128, 128, 0.1)", opacity: 0.7 }}>
+                            <td style={{ fontStyle: "italic" }}>Nicht in Datenbank</td>
+                            <td>{choice.listIndex}</td>
+                            <td>
+                              <Link to={`../answers?search=${choice.id}`}>{choice.name}</Link>
+                              <mdui-icon style={{ color: "rgb(255, 100, 100)", marginLeft: "10px", translate: "0 5px" }} mdui-tooltip="title: Kein passender Schüler gefunden">warning</mdui-icon>
+                            </td>
+                          </tr>
+                        ))}
                     </tbody>
                   </table>
                 </div>
               </div>
             </mdui-tab-panel>
           ))}
+          {orphanedChoicesUnknownClass.length > 0 && (
+            <mdui-tab-panel slot="panel" value="unknown">
+              <div className="p-10">
+                <div className="mdui-table">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Schüler (Datenbank)</th>
+                        <th>Eingetragene Klasse</th>
+                        <th>#</th>
+                        <th>Eingereichte Antwort</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {orphanedChoicesUnknownClass.map((choice) => (
+                        <tr key={choice.id} style={{ backgroundColor: "rgba(128, 128, 128, 0.1)", opacity: 0.7 }}>
+                          <td style={{ fontStyle: "italic" }}>Klasse nicht in Datenbank</td>
+                          <td>{choice.grade}</td>
+                          <td>{choice.listIndex}</td>
+                          <td>
+                            <Link to={`../answers?search=${choice.id}`}>{choice.name}</Link>
+                            <mdui-icon style={{ color: "rgb(255, 100, 100)", marginLeft: "10px", translate: "0 5px" }} mdui-tooltip="title: Kein passender Schüler gefunden">warning</mdui-icon>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </mdui-tab-panel>
+          )}
         </mdui-tabs>
       )}
 
-      {mode === "answers" && (
-        <div>
-          <div className="mdui-table">
-            <table>
-              <thead>
-                <tr>
-                  <th>Name</th>
-                  <th>#</th>
-                  <th>Klasse</th>
-                  <th>Name</th>
-                </tr>
-              </thead>
-              <tbody>
-                {choices
-                  .sort((a, b) => {
-                    if (a.grade === b.grade) {
-                      return a.listIndex - b.listIndex;
-                    }
-                    return a.grade - b.grade;
-                  })
-                  .map((choice) => (
-                    <tr key={choice.id}>
-                      <td>
-                        <Link to={`../answers?search=${choice.id}`}>
-                          {choice.name}
-                        </Link>
-                      </td>
-                      <td>{choice.listIndex}</td>
-                      <td>{choice.grade}</td>
-                      <td>
-                        {
-                          sortedClasses
-                            .find(
-                              (c) => Number(c.grade) === Number(choice.grade)
-                            )
-                            ?.students.find(
-                              (s) =>
-                                Number(s.listIndex) === Number(choice.listIndex)
-                            )?.name
-                        }
-                      </td>
-                    </tr>
-                  ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
+
 
       {mode === "non-voters" && (
         <mdui-card
