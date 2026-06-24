@@ -318,7 +318,7 @@ export async function handleDownload(
     let studentsData = students as {
       name: string;
       grade?: number;
-      listIndex?: string;
+      listIndex?: number;
       results?: string[];
     }[];
 

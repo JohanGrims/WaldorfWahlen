@@ -25,7 +25,7 @@ export default function Add() {
   };
 
   const [suggestedStudents, setSuggestedStudents] = React.useState<
-    { name: string; grade: number; listIndex: string }[]
+    { name: string; grade: number; listIndex: number }[]
   >([]);
 
   const revalidator = useRevalidator();
@@ -34,7 +34,7 @@ export default function Add() {
     const newSuggestedStudents: {
       name: string;
       grade: number;
-      listIndex: string;
+      listIndex: number;
     }[] = [];
     for (const c of classes) {
       for (const s of c.students) {

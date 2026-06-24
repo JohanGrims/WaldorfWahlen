@@ -22,7 +22,7 @@ interface MismatchedStudent {
 // Define interface for duplicate choices (multiple answers for same listIndex and grade)
 interface DuplicateChoice {
   grade: number;
-  listIndex: string;
+  listIndex: number;
   choices: any[]; // Multiple choice entries with same listIndex and grade
 }
 

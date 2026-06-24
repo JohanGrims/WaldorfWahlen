@@ -376,12 +376,14 @@ export default function Students() {
         </mdui-radio-group>
 
         {updateMethod === "by-text" && (
-          <form
+            <form
             onSubmit={(e) => {
               e.preventDefault();
               if (classId) {
+                let parsedStudents = JSON.parse(updatedStudents);
+                parsedStudents = processStudents(parsedStudents);
                 updateClass(classId, {
-                  students: JSON.parse(updatedStudents),
+                  students: parsedStudents,
                 }).then(() => navigate(`/admin/students/${classId}`));
               }
             }}

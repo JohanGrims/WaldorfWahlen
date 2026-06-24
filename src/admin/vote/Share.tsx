@@ -12,7 +12,7 @@ import { Canvg } from "canvg";
 
 interface StudentData extends DocumentData {
   name: string;
-  listIndex: string;
+  listIndex: number;
   email?: string;
 }
 

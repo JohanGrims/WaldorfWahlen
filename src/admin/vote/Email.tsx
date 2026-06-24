@@ -22,7 +22,7 @@ interface ChoiceData extends DocumentData {
   id: string;
   name: string;
   grade: number;
-  listIndex: string;
+  listIndex: number;
   selected?: string[];
 }
 
@@ -35,7 +35,7 @@ interface OptionData extends DocumentData {
 
 interface StudentData extends DocumentData {
   name: string;
-  listIndex: string;
+  listIndex: number;
   email?: string;
 }
 
@@ -53,7 +53,7 @@ interface CommentData {
 
 interface ResultData extends DocumentData {
   id: string;
-  listIndex: string;
+  listIndex: number;
   name: string;
   assignedOption: string;
   result?: string;
@@ -412,7 +412,7 @@ export default function Email() {
   }, [selectedTemplate]);
 
   // Helper functions for selection management
-  const toggleStudentSelection = (classId: string, listIndex: string) => {
+  const toggleStudentSelection = (classId: string, listIndex: number) => {
     const studentKey = `${classId}-${listIndex}`;
     const newSelected = new Set(selectedStudents);
     if (newSelected.has(studentKey)) {
@@ -575,7 +575,7 @@ export default function Email() {
             student_name: student.name,
             student_name_encoded: encodeURIComponent(student.name),
             student_grade: student.grade.toString(),
-            student_list_index: student.listIndex,
+            student_list_index: student.listIndex.toString(),
           };
 
           // Add result-specific variables for results emails
@@ -771,7 +771,7 @@ export default function Email() {
         student_name: randomStudent.name,
         student_name_encoded: encodeURIComponent(randomStudent.name),
         student_grade: randomStudent.grade.toString(),
-        student_list_index: randomStudent.listIndex,
+        student_list_index: randomStudent.listIndex.toString(),
       };
 
       // Add result-specific variables for results emails
