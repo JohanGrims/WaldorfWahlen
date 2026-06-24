@@ -19,20 +19,33 @@ export default function Overview() {
 
   const navigate = useNavigate();
 
-  const [isAdmin, setIsAdmin] = React.useState(false);
+  const [isAdmin, setIsAdmin] = React.useState(() => {
+    return localStorage.getItem("superadminMode") === "true";
+  });
 
   React.useEffect(() => {
+    if (isAdmin) {
+      navigate("/admin/power", { replace: true });
+    }
+
     auth.currentUser?.getIdTokenResult().then((idTokenResult) => {
       const claims = idTokenResult.claims;
       if (claims.role === "admin") {
+        localStorage.setItem("superadminMode", "true");
         setIsAdmin(true);
-        navigate("/admin/power");
+        navigate("/admin/power", { replace: true });
+      } else {
+        localStorage.setItem("superadminMode", "false");
       }
     });
-  }, []);
+  }, [isAdmin, navigate]);
 
   if (isAdmin) {
-    redirect("/admin/power");
+    return (
+      <div style={{ width: "100%", padding: "2rem" }}>
+        <mdui-linear-progress></mdui-linear-progress>
+      </div>
+    );
   }
 
   return (

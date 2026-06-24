@@ -20,8 +20,11 @@ interface LoaderData {
   feedbacks: any[];
 }
 
+import React from "react";
+
 export default function Power() {
   const { schools, votes, feedbacks } = useLoaderData() as LoaderData;
+  const [expanded, setExpanded] = React.useState(false);
 
   function averageEaseOfProcess(voteId?: string) {
     if (!voteId) return 0;
@@ -235,7 +238,7 @@ export default function Power() {
             <mdui-list>
               {votes
                 .sort((a, b) => (b.startTime?.seconds || 0) - (a.startTime?.seconds || 0))
-                .slice(0, 15) // Limit to top 15 recently active
+                .slice(0, expanded ? votes.length : 5) // Limit to top 5 recently active or all if expanded
                 .map((vote) => {
                   const rating = averageEaseOfProcess(vote.id);
                   const schoolInfo = schools.find((s) => s.id === vote.schoolId);
@@ -283,6 +286,18 @@ export default function Power() {
                     </mdui-list-item>
                   );
                 })}
+              {votes.length > 5 && (
+                <mdui-list-item
+                  rounded
+                  onClick={() => setExpanded(!expanded)}
+                  style={{ textAlign: "center", display: "flex", justifyContent: "center" }}
+                >
+                  <span style={{ width: "100%", display: "flex", justifyContent: "center", alignItems: "center", gap: "8px" }}>
+                    <mdui-icon name={expanded ? "expand_less" : "expand_more"}></mdui-icon>
+                    {expanded ? "Weniger anzeigen" : "Alle anzeigen"}
+                  </span>
+                </mdui-list-item>
+              )}
             </mdui-list>
           </mdui-card>
         </div>
@@ -315,8 +330,12 @@ Power.loader = async function loader() {
   }
   console.log(votes);
 
+  const recentVotes = [...votes]
+    .sort((a, b) => (b.startTime?.seconds || 0) - (a.startTime?.seconds || 0))
+    .slice(0, 5);
+
   const feedbacks = [] as any[];
-  for (const vote of votes) {
+  for (const vote of recentVotes) {
     console.log(vote);
     const voteFeedbacks = await getDocs(
       collection(db, `schools/${vote.schoolId}/votes/${vote.id}/feedback`)

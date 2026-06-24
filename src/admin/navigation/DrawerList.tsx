@@ -252,6 +252,8 @@ export default function DrawerList({
               Neue Schule
             </mdui-menu-item>
           </mdui-select>
+        ) : localStorage.getItem("superadminMode") === "true" ? (
+          <mdui-linear-progress></mdui-linear-progress>
         ) : (
           <mdui-list-item disabled>{schoolData?.name}</mdui-list-item>
         )}
