@@ -41,6 +41,7 @@ interface OptionData extends DocumentData {
   max: number;
   teacher?: string;
   description?: string;
+  cost?: number;
   allowedGrades?: number[];
 }
 
@@ -804,6 +805,12 @@ export default function Vote() {
                     <div className="teacher">
                       <mdui-icon name="person"></mdui-icon>
                       {option.teacher}
+                    </div>
+                  )}
+                  {option.cost !== undefined && option.cost > 0 && (
+                    <div className="teacher">
+                      <mdui-icon name="euro"></mdui-icon>
+                      {option.cost}€
                     </div>
                   )}
                   {option.allowedGrades && option.allowedGrades.length > 0 && (

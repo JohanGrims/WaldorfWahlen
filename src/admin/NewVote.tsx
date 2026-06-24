@@ -29,6 +29,7 @@ interface OptionData {
   max: number;
   teacher: string;
   description: string;
+  cost?: number;
   leaders?: string[];
   allowedGrades?: number[];
 }
@@ -176,9 +177,9 @@ export default function NewVote() {
 
   const [id, setId] = React.useState<string>(generateRandomHash());
 
-  // Form fields for new option
   const [name, setName] = React.useState<string>("");
   const [max, setMax] = React.useState<string | number>("");
+  const [cost, setCost] = React.useState<number | undefined>();
   const [teacher, setTeacher] = React.useState<string>("");
   const [optionDescription, setOptionDescription] = React.useState<string>("");
   const [leaders, setLeaders] = React.useState<string[]>([]);
@@ -784,6 +785,7 @@ export default function NewVote() {
     setTeacher("");
     setOptionDescription("");
     setMax("");
+    setCost(undefined);
     setLeaders([]);
     setOptionAllowedGrades([]);
     setOptionDialogOpen(true);
@@ -795,21 +797,25 @@ export default function NewVote() {
     setTeacher(options[index].teacher);
     setOptionDescription(options[index].description);
     setMax(options[index].max);
+    setCost(options[index].cost);
     setLeaders(options[index].leaders || []);
     setOptionAllowedGrades(options[index].allowedGrades || []);
     setOptionDialogOpen(true);
   }
 
   function saveOption() {
+    const finalAllowedGrades = optionAllowedGrades.length === classes.length ? [] : optionAllowedGrades;
+
     if (editingOptionIndex !== null) {
       const newOptions = [...options];
       newOptions[editingOptionIndex] = {
         title: name,
         max: max as number,
+        cost: cost,
         teacher: teacher,
         description: optionDescription,
         leaders: leaders,
-        allowedGrades: optionAllowedGrades,
+        allowedGrades: finalAllowedGrades,
       };
       setOptions(newOptions);
     } else {
@@ -818,10 +824,11 @@ export default function NewVote() {
         {
           title: name,
           max: max as number,
+          cost: cost,
           teacher: teacher,
           description: optionDescription,
           leaders: leaders,
-          allowedGrades: optionAllowedGrades,
+          allowedGrades: finalAllowedGrades,
         },
       ]);
     }
@@ -850,6 +857,7 @@ export default function NewVote() {
         proposeFields: proposals ? proposeFields : [],
         proposeTexts: proposals ? proposeTexts : {},
         ...(voteAllowedGrades.length > 0 && { allowedGrades: voteAllowedGrades }),
+        participatingClasses: voteAllowedGrades.length > 0 ? voteAllowedGrades : classes.map(c => c.grade).sort((a,b)=>a-b),
       });
 
       if (proposals) {
@@ -877,11 +885,12 @@ export default function NewVote() {
             {
               title: e.title,
               max: e.max,
+              ...(e.cost !== undefined && { cost: e.cost }),
               teacher: e.teacher,
               description: e.description,
               leaders: e.leaders || [],
-            }
-          );
+              allowedGrades: e.allowedGrades || [],
+            });
         });
 
         await Promise.all(optionPromises);
@@ -1327,7 +1336,12 @@ export default function NewVote() {
                     <div>
                       <b>{e.title}</b>
                       <div className="teacher">{e.teacher}</div>
-                      {e.allowedGrades && e.allowedGrades.length > 0 && (
+                      {e.cost !== undefined && e.cost > 0 && (
+                        <div className="description" style={{ marginTop: "4px" }}>
+                          <strong>Kosten:</strong> {e.cost}€
+                        </div>
+                      )}
+                      {e.allowedGrades && e.allowedGrades.length > 0 && e.allowedGrades.length !== classes.length && (
                         <div className="description" style={{ marginTop: "4px" }}>
                           <strong>Nur für Klassen:</strong> {formatGrades(e.allowedGrades)}
                         </div>
@@ -1566,6 +1580,15 @@ export default function NewVote() {
             min={1}
             value={String(max)}
             onInput={(e: React.ChangeEvent<HTMLInputElement>) => setMax(parseInt(e.target.value))}
+          ></mdui-text-field>
+          <mdui-text-field
+            label="Kosten (optional)"
+            type="number"
+            placeholder="0"
+            min={0}
+            value={cost?.toString() || ""}
+            onInput={(e: React.ChangeEvent<HTMLInputElement>) => setCost(Number(e.target.value) || undefined)}
+            icon="euro"
           ></mdui-text-field>
           <mdui-text-field
             label="Lehrer (optional)"

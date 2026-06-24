@@ -42,6 +42,7 @@ interface OptionData {
   teacher: string;
   description: string;
   max: number;
+  cost?: number;
   leaders?: string[];
   allowedGrades?: number[];
 }
@@ -52,6 +53,7 @@ interface ProposalData {
   teacher: string;
   description: string;
   max: number;
+  cost?: number;
   customFields?: Record<string, string>;
 }
 
@@ -252,6 +254,7 @@ export default function Edit() {
   const [teacher, setTeacher] = React.useState<string>("");
   const [optionDescription, setOptionDescription] = React.useState<string>("");
   const [max, setMax] = React.useState<number | undefined>(undefined);
+  const [cost, setCost] = React.useState<number | undefined>(undefined);
   const [optionId, setOptionId] = React.useState<string>(
     generateRandomHash(20)
   );
@@ -284,6 +287,7 @@ export default function Edit() {
     setTeacher("");
     setOptionDescription("");
     setMax(undefined);
+    setCost(undefined);
     setOptionId(generateRandomHash(20));
     setLeaders([]);
     setOptionAllowedGrades([]);
@@ -296,6 +300,7 @@ export default function Edit() {
     setTeacher(options[index].teacher);
     setOptionDescription(options[index].description);
     setMax(options[index].max);
+    setCost(options[index].cost);
     setOptionId(options[index].id);
     setLeaders(options[index].leaders || []);
     setOptionAllowedGrades(options[index].allowedGrades || []);
@@ -305,16 +310,19 @@ export default function Edit() {
   function saveOption() {
     if (name && max !== undefined) {
       let newOptions: OptionData[];
+      const finalAllowedGrades = optionAllowedGrades.length === classes.length ? [] : optionAllowedGrades;
+      
       if (editingOptionIndex !== null) {
         newOptions = [...options];
         newOptions[editingOptionIndex] = {
           title: name,
           max: max,
+          cost: cost,
           teacher: teacher,
           description: optionDescription,
           id: optionId,
           leaders: leaders,
-          allowedGrades: optionAllowedGrades,
+          allowedGrades: finalAllowedGrades,
         };
       } else {
         newOptions = [
@@ -322,11 +330,12 @@ export default function Edit() {
           {
             title: name,
             max: max,
+            cost: cost,
             teacher: teacher,
             description: optionDescription,
             id: optionId,
             leaders: leaders,
-            allowedGrades: optionAllowedGrades,
+            allowedGrades: finalAllowedGrades,
           },
         ];
       }
@@ -353,6 +362,7 @@ export default function Edit() {
           proposeFields: vote.proposals ? proposeFields : [],
           proposeTexts: vote.proposals ? proposeTexts : {},
           allowedGrades: voteAllowedGrades,
+          participatingClasses: voteAllowedGrades.length > 0 ? voteAllowedGrades : classes.map(c => c.grade).sort((a,b)=>a-b),
         },
         { merge: true }
       );
@@ -379,6 +389,7 @@ export default function Edit() {
           {
             title: e.title,
             max: e.max,
+            ...(e.cost !== undefined && { cost: e.cost }),
             teacher: e.teacher,
             description: e.description,
             leaders: e.leaders || [],
@@ -617,6 +628,7 @@ export default function Edit() {
                     setTeacher("");
                     setOptionDescription("");
                     setMax(undefined);
+                    setCost(undefined);
                     setOptionId(generateRandomHash(20));
                     setLeaders([]);
                     revalidator.revalidate();
@@ -973,6 +985,7 @@ export default function Edit() {
                           setTeacher(e.teacher);
                           setOptionDescription(e.description);
                           setMax(e.max);
+                          setCost(e.cost);
                           setOptionId(e.id);
                           setEditingOptionIndex(null);
                           setOptionDialogOpen(true);
@@ -992,6 +1005,11 @@ export default function Edit() {
                             <div className="teacher">{e.teacher}</div>
                             <div className="description">{e.description}</div>
                             <div className="max">max. {e.max} SchülerInnen</div>
+                            {e.cost !== undefined && e.cost > 0 && (
+                              <div className="max" style={{ marginTop: "4px" }}>
+                                <strong>Kosten:</strong> {e.cost}€
+                              </div>
+                            )}
 
                             {/* Display custom field data */}
                             {e.customFields &&
@@ -1093,7 +1111,12 @@ export default function Edit() {
                       {e.title} <i>(#{e.id})</i>
                     </b>
                     <div className="teacher">{e.teacher}</div>
-                    {e.allowedGrades && e.allowedGrades.length > 0 && (
+                    {e.cost !== undefined && e.cost > 0 && (
+                      <div className="description" style={{ marginTop: "4px" }}>
+                        <strong>Kosten:</strong> {e.cost}€
+                      </div>
+                    )}
+                    {e.allowedGrades && e.allowedGrades.length > 0 && e.allowedGrades.length !== classes.length && (
                       <div className="description" style={{ marginTop: "4px" }}>
                         <strong>Nur für Klassen:</strong> {formatGrades(e.allowedGrades)}
                       </div>
@@ -1157,6 +1180,15 @@ export default function Edit() {
             min={1}
             value={String(max || "")}
             onInput={(e: React.ChangeEvent<HTMLInputElement>) => setMax(Number(e.target.value))}
+          ></mdui-text-field>
+          <mdui-text-field
+            label="Kosten (optional)"
+            type="number"
+            placeholder="0"
+            min={0}
+            value={cost?.toString() || ""}
+            onInput={(e: React.ChangeEvent<HTMLInputElement>) => setCost(Number(e.target.value) || undefined)}
+            icon="euro"
           ></mdui-text-field>
           <mdui-text-field
             label="Lehrer (optional)"

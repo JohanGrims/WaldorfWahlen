@@ -16,8 +16,9 @@ export default function Propose() {
   const [description, setDescription] = useState("");
   const [teacher, setTeacher] = useState("");
   const [max, setMax] = useState<number | undefined>();
+  const [cost, setCost] = useState<number | undefined>();
   const [optionAllowedGrades, setOptionAllowedGrades] = useState<number[]>([]);
-  const [classes, setClasses] = useState<any[]>([]);
+  const classes = (vote as any).participatingClasses || [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13];
 
   // Custom field values
   const [customFieldValues, setCustomFieldValues] = useState<
@@ -29,12 +30,15 @@ export default function Propose() {
 
   async function submit() {
     setLoading(true);
+    const finalAllowedGrades = optionAllowedGrades.length === classes.length ? [] : optionAllowedGrades;
+    
     await addDoc(collection(db, `schools/SCHOOLID/votes/${id}/proposals`), {
       name: name,
       description: description,
       teacher: teacher,
       max: max,
-      allowedGrades: optionAllowedGrades,
+      ...(cost !== undefined && { cost: cost }),
+      allowedGrades: finalAllowedGrades,
       customFields: customFieldValues,
     })
       .then(() => {
@@ -103,6 +107,7 @@ export default function Propose() {
         setDescription("");
         setTeacher("");
         setMax(undefined);
+        setCost(undefined);
         setOptionAllowedGrades([]);
         setCustomFieldValues({});
       },
@@ -148,12 +153,6 @@ export default function Propose() {
         },
       });
     }
-    async function loadClasses() {
-      const clsSnap = await getDocs(collection(db, "schools/SCHOOLID/class"));
-      const clsData = clsSnap.docs.map(doc => doc.data());
-      setClasses(clsData);
-    }
-    loadClasses();
   }, []);
 
   return (
@@ -274,6 +273,18 @@ export default function Propose() {
           icon="group"
         ></mdui-text-field>
         <p />
+        <mdui-text-field
+          label="Kosten (optional)"
+          type="number"
+          placeholder="0"
+          min={0}
+          value={cost?.toString() || ""}
+          onInput={(e) =>
+            setCost(Number((e.target as HTMLInputElement).value) || undefined)
+          }
+          icon="euro"
+        ></mdui-text-field>
+        <p />
 
         <div style={{ marginTop: "8px", paddingTop: "8px" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
@@ -289,8 +300,8 @@ export default function Propose() {
             >
               Alle Klassen
             </mdui-chip>
-            {Array.from(new Set(classes.map(c => c.grade)))
-              .filter(grade => !(vote as any).allowedGrades || (vote as any).allowedGrades.length === 0 || (vote as any).allowedGrades.includes(grade))
+            {classes
+              .filter((grade: number) => !(vote as any).allowedGrades || (vote as any).allowedGrades.length === 0 || (vote as any).allowedGrades.includes(grade))
               .sort((a,b)=>a-b).map((grade) => (
               <mdui-chip
                 key={grade}
@@ -416,7 +427,13 @@ export default function Propose() {
               {teacher}
             </div>
           )}
-          {optionAllowedGrades && optionAllowedGrades.length > 0 && (
+          {cost !== undefined && cost > 0 && (
+            <div className="teacher">
+              <mdui-icon name="euro"></mdui-icon>
+              {cost}€
+            </div>
+          )}
+          {optionAllowedGrades && optionAllowedGrades.length > 0 && optionAllowedGrades.length !== classes.length && (
             <div className="teacher" style={{ color: "var(--mdui-color-error)" }}>
               <mdui-icon name="school"></mdui-icon>
               Kl. {formatGrades(optionAllowedGrades)}
