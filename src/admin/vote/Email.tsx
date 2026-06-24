@@ -45,11 +45,19 @@ interface ClassData extends DocumentData {
   students: StudentData[];
 }
 
+interface CommentData {
+  from: string;
+  text: string;
+  timestamp: number;
+}
+
 interface ResultData extends DocumentData {
   id: string;
   listIndex: string;
   name: string;
   assignedOption: string;
+  result?: string;
+  comments?: CommentData[];
 }
 
 interface LoaderData {
@@ -323,19 +331,21 @@ const EMAIL_TEMPLATES = {
     <div class="container">
         <h3>Ergebnisse: {{vote_title}}</h3>
         <p>Liebe/r {{student_name}},</p>
-        <p>die Wahl <strong>{{vote_title}}</strong> ist beendet. Hier sind Ihre Ergebnisse:</p>
+        <p>die Wahl <strong>{{vote_title}}</strong> ist beendet. Hier ist Ihr Ergebnis:</p>
         
         <div class="result-box">
             <p style="margin: 0;"><strong>Ihre Zuteilung: {{assigned_option}}</strong></p>
             {{assigned_details}}
         </div>
         
-        <p>Die vollständigen Ergebnisse können Sie hier einsehen:</p>
+        {{comments_section}}
+        
+        <p>Sie können Ihr Ergebnis auch hier einsehen:</p>
         <p style="text-align: center;">
-            <a href="${window.location.origin}/r/{{vote_id}}?id={{choice_id}}" class="button">Ergebnisse ansehen</a>
+            <a href="${window.location.origin}/r/{{vote_id}}?id={{choice_id}}" class="button">Ergebnis ansehen</a>
         </p>
         
-        <p><strong>Direktlink (mit Identifikation):</strong></p>
+        <p><strong>Direktlink:</strong></p>
         <p class="link-box">${window.location.origin}/r/{{vote_id}}?id={{choice_id}}</p>
 
         <p class="footer">Mit freundlichen Grüßen!</p>
@@ -599,6 +609,18 @@ export default function Email() {
                     assignedOption.description || "Keine Beschreibung verfügbar"
                   }</p>`
                 : "",
+              comments_section: (() => {
+                const comments = studentResult?.comments;
+                if (!comments || comments.length === 0) return "";
+                const items = comments.map(
+                  (c) =>
+                    `<div style="background:#f5f5f5;border-radius:8px;padding:12px 16px;margin-bottom:8px;">
+                      <p style="margin:0 0 4px 0;font-size:15px;line-height:1.5;">${c.text}</p>
+                      <p style="margin:0;font-size:12px;color:#757575;">${c.from}</p>
+                    </div>`
+                ).join("");
+                return `<p><strong>Hinweise:</strong></p>${items}`;
+              })(),
             };
           }
 
@@ -778,6 +800,18 @@ export default function Email() {
                 assignedOption.description || "Keine Beschreibung verfügbar"
               }</p>`
             : "",
+          comments_section: (() => {
+            const comments = studentResult?.comments;
+            if (!comments || comments.length === 0) return "";
+            const items = comments.map(
+              (c) =>
+                `<div style="background:#f5f5f5;border-radius:8px;padding:12px 16px;margin-bottom:8px;">
+                  <p style="margin:0 0 4px 0;font-size:15px;line-height:1.5;">${c.text}</p>
+                  <p style="margin:0;font-size:12px;color:#757575;">${c.from}</p>
+                </div>`
+            ).join("");
+            return `<p><strong>Hinweise:</strong></p>${items}`;
+          })(),
         };
       }
 

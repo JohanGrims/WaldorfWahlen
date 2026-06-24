@@ -64,13 +64,17 @@ export default function Results() {
   const grades = [...new Set(choices.map((choice) => choice.grade))];
 
   const [commentText, setCommentText] = React.useState<string>("");
-  const [commentGroup, setCommentGroup] = React.useState<string>("");
   const [commenting, setCommenting] = React.useState<boolean>(false);
+
+  // Visual comment filter state
+  const [commentNameSearch, setCommentNameSearch] = React.useState<string>("");
+  const [commentGrade, setCommentGrade] = React.useState<string>("all");
+  const [commentAssignedTo, setCommentAssignedTo] = React.useState<string>("all");
   const [customMessage, setCustomMessage] = React.useState<string>("");
   const [showAttendanceDialog, setShowAttendanceDialog] =
     React.useState<boolean>(false);
-  const [attendanceColumns, setAttendanceColumns] = React.useState<number>(5);
   const [emptyRows, setEmptyRows] = React.useState<number>(2);
+  // columnHeaders is the single source of truth; its length = number of columns
   const [columnHeaders, setColumnHeaders] = React.useState<string[]>([
     "Anwesenheit 1",
     "Anwesenheit 2",
@@ -78,6 +82,14 @@ export default function Results() {
     "Anwesenheit 4",
     "Anwesenheit 5",
   ]);
+
+  // Date generator state
+  const [dateGenMode, setDateGenMode] = React.useState<"weekday" | "consecutive">("weekday");
+  const today = new Date().toISOString().split("T")[0];
+  const [dateGenStartDate, setDateGenStartDate] = React.useState<string>(today);
+  const [dateGenEndDate, setDateGenEndDate] = React.useState<string>("");
+  const [dateGenWeekday, setDateGenWeekday] = React.useState<number>(2); // 0=Sun…6=Sat, default=Tuesday
+  const [dateGenFormat, setDateGenFormat] = React.useState<"short" | "medium" | "weekday">("short");
 
   const revalidator = useRevalidator();
 
@@ -460,46 +472,22 @@ export default function Results() {
     });
   }
 
+  const commentFilteredChoices = React.useMemo(() => {
+    return choices.filter((choice) => {
+      if (commentNameSearch.trim() && !choice.name.toLowerCase().includes(commentNameSearch.toLowerCase())) return false;
+      if (commentGrade !== "all" && choice.grade.toString() !== commentGrade) return false;
+      if (commentAssignedTo !== "all") {
+        const result = results.find((r) => r.id === choice.id);
+        if (!result || result.result !== commentAssignedTo) return false;
+      }
+      return true;
+    });
+  }, [choices, results, commentNameSearch, commentGrade, commentAssignedTo]);
+
   function addCommentToGroup() {
-    // Parse group
-    let group: Record<string, string> = {};
-    commentGroup.split(",").forEach((condition) => {
-      const [key, value] = condition.split("=");
-      if (key && value) {
-        group[key.trim()] = value.trim();
-      }
-    });
+    const idsToComment = commentFilteredChoices.map((c) => c.id);
 
-    // Filter results
-    let resultsToAdd: string[] = [];
-    choices.forEach((choice) => {
-      // Check if choice matches group, also considering the current results
-      const currentResult = results.find((res) => res.id === choice.id);
-      if (
-        Object.keys(group).every((key) => {
-          if (key === "name") {
-            return choice.name.toLowerCase().includes(group[key].toLowerCase());
-          } else if (key === "grade") {
-            return choice.grade.toString() === group[key];
-          } else if (key === "assignedTo") {
-            // Check if the choice is assigned to the project with the ID group[key]
-            return currentResult?.result === group[key];
-          } else if (key === "choice") {
-            // Check which index the assigned project has in the selected array (choices)
-            return (
-              currentResult?.result ===
-              choice.selected[parseInt(group[key]) - 1]
-            );
-          }
-          return false;
-        })
-      ) {
-        resultsToAdd.push(choice.id);
-      }
-    });
-
-    // Add comments
-    resultsToAdd.forEach((id) => {
+    idsToComment.forEach((id) => {
       const currentResult = results.find((res) => res.id === id);
       const existingComments = currentResult?.comments || [];
       setDoc(
@@ -514,17 +502,16 @@ export default function Results() {
             },
           ],
         },
-        {
-          merge: true,
-        }
+        { merge: true }
       );
     });
     revalidator.revalidate();
-    snackbar({
-      message: resultsToAdd.length + " Kommentare hinzugefügt.",
-    });
-
+    snackbar({ message: idsToComment.length + " Kommentare hinzugefügt." });
     setCommenting(false);
+    setCommentText("");
+    setCommentNameSearch("");
+    setCommentGrade("all");
+    setCommentAssignedTo("all");
   }
 
   function exportAttendancePDF() {
@@ -542,16 +529,54 @@ export default function Results() {
     const margin = 15;
     const usableWidth = pageWidth - 2 * margin;
 
-    // Calculate column widths
-    const nameWidth = 80;
-    const gradeWidth = 25;
+    // Narrower fixed columns to free space for attendance checkboxes
+    const nameWidth = 55;
+    const gradeWidth = 15;
     const checkboxWidth =
       (usableWidth - nameWidth - gradeWidth) / attendanceColumns;
-    const checkboxSize = 2;
+    const checkboxSize = 2.5;
     const rowHeight = 6;
+
+    // Use vertical header text when columns are narrow
+    const verticalHeaders = checkboxWidth < 14;
+    const headerRowHeight = verticalHeaders ? 16 : 8; // mm of space for the header row
 
     let currentPage = 1;
     let currentY = margin;
+
+    // Helper to draw header row at a given Y
+    function drawHeaderRow(y: number) {
+      doc.setFillColor(240, 240, 240);
+      doc.rect(margin, y - 4, usableWidth, verticalHeaders ? headerRowHeight : 6, "F");
+
+      doc.setFontSize(verticalHeaders ? 7 : 10);
+      doc.setTextColor(0, 0, 0);
+      
+      // Bottom align "Name" and "Kl."
+      const textY = verticalHeaders ? y + headerRowHeight - 6 : y;
+      doc.text("Name", margin + 2, textY);
+      doc.text("Kl.", margin + nameWidth + 2, textY);
+
+      for (let col = 0; col < attendanceColumns; col++) {
+        const headerText = headers[col];
+        if (headerText && headerText.trim() !== "") {
+          const colX = margin + nameWidth + gradeWidth + col * checkboxWidth;
+          if (verticalHeaders) {
+            // Rotate text 90° — anchor at bottom-center of the column
+            doc.setFontSize(7);
+            doc.text(
+              headerText,
+              colX + checkboxWidth / 2 + 1,
+              y + headerRowHeight - 6,
+              { angle: 90 }
+            );
+          } else {
+            doc.setFontSize(8);
+            doc.text(headerText, colX + 1, y, { maxWidth: checkboxWidth - 1 });
+          }
+        }
+      }
+    }
 
     // Helper function to add custom message under project title
     function addCustomMessage() {
@@ -559,7 +584,6 @@ export default function Results() {
         doc.setFontSize(10);
         doc.setTextColor(70, 70, 70);
 
-        // Split message into multiple lines if needed
         const maxWidth = usableWidth - 15;
         const lines = doc.splitTextToSize(customMessage, maxWidth);
         const messageHeight = Math.max(20, 10 + lines.length * 4);
@@ -586,10 +610,8 @@ export default function Results() {
         (result) => result.result === option.id
       );
 
-      // Calculate needed height for this project (header + students + empty rows)
       const totalRows = projectStudents.length + emptyRows;
 
-      // Always start a new page for each project (except the first one)
       if (optionIndex > 0) {
         doc.addPage();
         currentPage++;
@@ -601,44 +623,21 @@ export default function Results() {
       doc.text(option.title.replace(/\[.*?\]/g, ""), margin, currentY + 8);
       currentY += 18;
 
-      // Add custom message under project title
       addCustomMessage();
 
-      // Table headers
+      // Table header
       doc.setFontSize(10);
       const headerY = currentY;
+      drawHeaderRow(headerY);
+      currentY += headerRowHeight + (verticalHeaders ? 2 : 0);
 
-      // Draw header background
-      doc.setFillColor(240, 240, 240);
-      doc.rect(margin, headerY - 4, usableWidth, 6, "F");
-
-      // Header texts
-      doc.setTextColor(0, 0, 0);
-      doc.text("Name", margin + 2, headerY);
-      doc.text("Klasse", margin + nameWidth + 2, headerY);
-
-      // Add column headers
-      for (let col = 0; col < attendanceColumns; col++) {
-        const headerText = headers[col];
-        if (headerText && headerText.trim() !== "") {
-          const headerX = margin + nameWidth + gradeWidth + col * checkboxWidth;
-          doc.text(headerText, headerX + 2, headerY);
-        }
-      }
-
-      currentY += 8;
-      const dataStartY = currentY;
-
-      // Process each row (students + empty rows)
+      // Process each row
       for (let rowIndex = 0; rowIndex < totalRows; rowIndex++) {
-        // Check if this row fits on current page
         if (currentY + rowHeight > pageHeight - margin) {
-          // Start new page with continuation header
           doc.addPage();
           currentPage++;
           currentY = margin;
 
-          // Project title (continuation)
           doc.setFontSize(12);
           doc.text(
             option.title.replace(/\[.*?\]/g, "") + " (Fortsetzung)",
@@ -647,90 +646,43 @@ export default function Results() {
           );
           currentY += 18;
 
-          // Table headers
-          doc.setFontSize(10);
-          const newHeaderY = currentY;
-
-          // Header background
-          doc.setFillColor(240, 240, 240);
-          doc.rect(margin, newHeaderY - 4, usableWidth, 6, "F");
-
-          // Header texts
-          doc.setTextColor(0, 0, 0);
-          doc.text("Name", margin + 2, newHeaderY);
-          doc.text("Klasse", margin + nameWidth + 2, newHeaderY);
-
-          // Add column headers
-          for (let col = 0; col < attendanceColumns; col++) {
-            const headerText = headers[col];
-            if (headerText && headerText.trim() !== "") {
-              const headerX =
-                margin + nameWidth + gradeWidth + col * checkboxWidth;
-              doc.text(headerText, headerX + 2, newHeaderY);
-            }
-          }
-
-          currentY += 8;
+          drawHeaderRow(currentY);
+          currentY += headerRowHeight + (verticalHeaders ? 2 : 0);
         }
 
         const rowY = currentY;
 
-        // Draw row border lines
         doc.setDrawColor(200, 200, 200);
 
-        // Vertical lines for this row
-        doc.line(margin, rowY - 2, margin, rowY + rowHeight - 2); // Left
-        doc.line(
-          margin + nameWidth,
-          rowY - 2,
-          margin + nameWidth,
-          rowY + rowHeight - 2
-        );
-        doc.line(
-          margin + nameWidth + gradeWidth,
-          rowY - 2,
-          margin + nameWidth + gradeWidth,
-          rowY + rowHeight - 2
-        );
+        // Vertical dividers
+        doc.line(margin, rowY - 2, margin, rowY + rowHeight - 2);
+        doc.line(margin + nameWidth, rowY - 2, margin + nameWidth, rowY + rowHeight - 2);
+        doc.line(margin + nameWidth + gradeWidth, rowY - 2, margin + nameWidth + gradeWidth, rowY + rowHeight - 2);
 
         for (let col = 1; col < attendanceColumns; col++) {
           const lineX = margin + nameWidth + gradeWidth + col * checkboxWidth;
           doc.line(lineX, rowY - 2, lineX, rowY + rowHeight - 2);
         }
-        doc.line(
-          margin + usableWidth,
-          rowY - 2,
-          margin + usableWidth,
-          rowY + rowHeight - 2
-        ); // Right
+        doc.line(margin + usableWidth, rowY - 2, margin + usableWidth, rowY + rowHeight - 2);
 
-        // Top horizontal line for first row or after page break
-        if (rowIndex === 0 || rowY === margin + 20) {
+        if (rowIndex === 0) {
           doc.line(margin, rowY - 2, margin + usableWidth, rowY - 2);
         }
+        doc.line(margin, rowY + rowHeight - 2, margin + usableWidth, rowY + rowHeight - 2);
 
-        // Bottom horizontal line for each row
-        doc.line(
-          margin,
-          rowY + rowHeight - 2,
-          margin + usableWidth,
-          rowY + rowHeight - 2
-        );
-
-        // Add student data or leave empty
         if (rowIndex < projectStudents.length) {
           const student = choices.find(
             (choice) => choice.id === projectStudents[rowIndex].id
           );
 
-          // Student name
-          doc.text(
-            student?.name?.replace(/\[.*?\]/g, "").trim() || "",
-            margin + 2,
-            rowY + 3
-          );
+          doc.setFontSize(8);
+          doc.setTextColor(0, 0, 0);
 
-          // Student grade
+          // Truncate name to fit column
+          const rawName = student?.name?.replace(/\[.*?\]/g, "").trim() || "";
+          const nameStr = doc.splitTextToSize(rawName, nameWidth - 3)[0] || rawName;
+          doc.text(nameStr, margin + 2, rowY + 3);
+
           doc.text(
             student?.grade?.toString() || "",
             margin + nameWidth + 2,
@@ -738,7 +690,7 @@ export default function Results() {
           );
         }
 
-        // Draw attendance checkboxes (centered in columns)
+        // Checkboxes
         for (let col = 0; col < attendanceColumns; col++) {
           const checkboxX =
             margin +
@@ -746,18 +698,17 @@ export default function Results() {
             gradeWidth +
             col * checkboxWidth +
             (checkboxWidth - checkboxSize) / 2;
-          const checkboxY = rowY; // Center checkboxes vertically to align with text
+          const checkboxY = rowY + (rowHeight - checkboxSize) / 2 - 2;
           doc.rect(checkboxX, checkboxY, checkboxSize, checkboxSize);
         }
 
         currentY += rowHeight;
       }
 
-      // Add spacing after each project (no cutting line needed since each project starts on a new page)
       currentY += 10;
     });
 
-    // Footer on each page
+    // Footer
     const totalPages = doc.getNumberOfPages();
     for (let i = 1; i <= totalPages; i++) {
       doc.setPage(i);
@@ -782,27 +733,67 @@ export default function Results() {
     });
   }
 
-  function handleColumnCountChange(newCount: number) {
-    setAttendanceColumns(newCount);
-    const newHeaders = [...columnHeaders];
-
-    // If we need more headers, add them
-    while (newHeaders.length < newCount) {
-      newHeaders.push(`Anwesenheit ${newHeaders.length + 1}`);
-    }
-
-    // If we have too many headers, remove the excess
-    if (newHeaders.length > newCount) {
-      newHeaders.splice(newCount);
-    }
-
-    setColumnHeaders(newHeaders);
+  function handleHeaderChange(index: number, value: string) {
+    const next = [...columnHeaders];
+    next[index] = value;
+    setColumnHeaders(next);
   }
 
-  function handleHeaderChange(index: number, value: string) {
-    const newHeaders = [...columnHeaders];
-    newHeaders[index] = value;
-    setColumnHeaders(newHeaders);
+  function deleteHeader(index: number) {
+    setColumnHeaders(columnHeaders.filter((_, i) => i !== index));
+  }
+
+  function insertHeaderAfter(index: number) {
+    const next = [...columnHeaders];
+    next.splice(index + 1, 0, "");
+    setColumnHeaders(next);
+  }
+
+  function addHeader() {
+    setColumnHeaders([...columnHeaders, ""]);
+  }
+
+  /** Format a Date according to the chosen dateGenFormat. */
+  function formatDate(d: Date): string {
+    const weekdayNames = ["So", "Mo", "Di", "Mi", "Do", "Fr", "Sa"];
+    const day = String(d.getDate()).padStart(2, "0");
+    const month = String(d.getMonth() + 1).padStart(2, "0");
+    if (dateGenFormat === "short") return `${day}.${month}.`;
+    if (dateGenFormat === "medium") return `${day}.${month}.${d.getFullYear()}`;
+    return `${weekdayNames[d.getDay()]} ${day}.${month}.`;
+  }
+
+  /** Build date list from start→end (or unbounded) range. */
+  function buildDateList(): string[] {
+    const start = new Date(dateGenStartDate);
+    if (isNaN(start.getTime())) return [];
+    const end = dateGenEndDate ? new Date(dateGenEndDate) : null;
+    const dates: string[] = [];
+    const cursor = new Date(start);
+
+    if (dateGenMode === "weekday") {
+      // advance to first occurrence of the chosen weekday
+      while (cursor.getDay() !== dateGenWeekday) cursor.setDate(cursor.getDate() + 1);
+      while (!end || cursor <= end) {
+        dates.push(formatDate(new Date(cursor)));
+        cursor.setDate(cursor.getDate() + 7);
+        if (!end && dates.length >= 52) break; // safety cap when no end date
+      }
+    } else {
+      while (!end || cursor <= end) {
+        const dow = cursor.getDay();
+        if (dow !== 0 && dow !== 6) dates.push(formatDate(new Date(cursor)));
+        cursor.setDate(cursor.getDate() + 1);
+        if (!end && dates.length >= 52) break;
+      }
+    }
+    return dates;
+  }
+
+  /** Apply generated dates to columnHeaders. */
+  function generateDates() {
+    const list = buildDateList();
+    if (list.length > 0) setColumnHeaders(list);
   }
 
   return (
@@ -872,179 +863,310 @@ export default function Results() {
       </mdui-card>
       <br />
       <mdui-dialog fullscreen open={commenting}>
-        <mdui-button-icon
-          icon="close"
-          onClick={() => setCommenting(false)}
-        ></mdui-button-icon>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "16px" }}>
+          <h2 style={{ margin: 0 }}>Kommentare hinzufügen</h2>
+          <mdui-button-icon icon="close" onClick={() => setCommenting(false)}></mdui-button-icon>
+        </div>
+
+        {/* Comment text */}
         <mdui-text-field
           label="Kommentar"
-          rows={5}
+          rows={4}
           value={commentText}
-          onInput={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
-            setCommentText(e.target.value)
-          }
-          placeholder="Ihr Kommentar"
+          onInput={(e: React.ChangeEvent<HTMLTextAreaElement>) => setCommentText(e.target.value)}
+          placeholder="Nachricht an die Schüler..."
+          style={{ width: "100%", marginBottom: "20px" }}
         />
-        <p />
-        <div>
-          <mdui-collapse>
-            <mdui-collapse-item value="info">
-              <mdui-list-item rounded slot="header" icon="info">
-                Informationen
-                <mdui-icon
-                  slot="end-icon"
-                  name="keyboard_arrow_down"
-                ></mdui-icon>
-              </mdui-list-item>
-              <div className="mdui-prose">
-                Durchsuchen Sie die Ergebnisse mit folgenden Operatoren:
-                <ul>
-                  <li>
-                    <code>name=Johan</code>: Schüler deren Name Johan enthält
-                  </li>
-                  <li>
-                    <code>grade=12</code>: Schüler der 12. Klasse
-                  </li>
-                  <li>
-                    <code>assignedTo=abc</code>: Schüler die zu dem Projekt mit
-                    der ID abc zugewiesen sind
-                  </li>
-                  <li>
-                    <code>choice=2</code>: Schüler die zu ihrer Zweitwahl
-                    zugewiesen sind
-                  </li>
-                </ul>
-              </div>
-            </mdui-collapse-item>
-            <mdui-collapse-item value="results">
-              <mdui-list-item rounded slot="header" icon="preview">
-                Projekte anzeigen
-                <mdui-icon
-                  slot="end-icon"
-                  name="keyboard_arrow_down"
-                ></mdui-icon>
-              </mdui-list-item>
-              <div className="mdui-table">
-                <table>
-                  <thead>
-                    <tr>
-                      <th>
-                        <b>Projekt</b>
-                      </th>
-                      <th>
-                        <b>Maximalanzahl</b>
-                      </th>
-                      <th>
-                        <b>ID</b>
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {options.map((option, i) => (
-                      <tr key={i}>
-                        <td>{option.title}</td>
-                        <td>{option.max}</td>
-                        <td>{option.id}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </mdui-collapse-item>
-          </mdui-collapse>
-        </div>
-        <p />
+
+        {/* Visual filter: who gets this comment? */}
+        <h3 style={{ margin: "0 0 12px 0" }}>Empfänger</h3>
+
+        {/* Name search */}
         <mdui-text-field
-          label="Gruppe"
-          value={commentGroup}
-          onInput={(e: React.ChangeEvent<HTMLInputElement>) =>
-            setCommentGroup(e.target.value)
-          }
-          placeholder="grade=12"
-        />
-        <p />
-        <mdui-button onClick={() => addCommentToGroup()} icon="add">
-          Hinzufügen
+          icon="search"
+          placeholder="Name suchen..."
+          value={commentNameSearch}
+          onInput={(e: any) => setCommentNameSearch(e.target.value)}
+          clearable
+          style={{ width: "100%", marginBottom: "12px" }}
+        ></mdui-text-field>
+
+        {/* Grade tabs */}
+        <mdui-tabs value={commentGrade} style={{ marginBottom: "12px" }}>
+          <mdui-tab value="all" onClick={() => setCommentGrade("all")}>Alle Klassen</mdui-tab>
+          {grades.map((g) => (
+            <mdui-tab key={g} value={String(g)} onClick={() => setCommentGrade(String(g))}>Klasse {g}</mdui-tab>
+          ))}
+        </mdui-tabs>
+
+        {/* Project assignment filter */}
+        <mdui-select
+          label="Zugewiesenes Projekt"
+          value={commentAssignedTo}
+          onChange={(e: any) => setCommentAssignedTo(e.target.value)}
+          style={{ width: "100%", marginBottom: "16px" }}
+        >
+          <mdui-menu-item value="all">Alle Projekte</mdui-menu-item>
+          {options.map((opt) => (
+            <mdui-menu-item key={opt.id} value={opt.id}>{opt.title}</mdui-menu-item>
+          ))}
+        </mdui-select>
+
+        {/* Live preview */}
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
+          <span style={{ color: "gray", fontSize: "14px" }}>
+            {commentFilteredChoices.length} Schüler {commentFilteredChoices.length === 1 ? "erhält" : "erhalten"} diesen Kommentar
+          </span>
+        </div>
+        <div style={{padding: "10px"}}>
+        <div className="mdui-table" style={{ width: "100%", maxHeight: "280px", overflowY: "auto", marginBottom: "20px" }}>
+          <table>
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Klasse</th>
+                <th>Projekt</th>
+              </tr>
+            </thead>
+            <tbody>
+              {commentFilteredChoices.map((choice) => {
+                const result = results.find((r) => r.id === choice.id);
+                const project = options.find((o) => o.id === result?.result);
+                return (
+                  <tr key={choice.id}>
+                    <td>{choice.name.replace(/\[.*?\]/g, "").trim()}</td>
+                    <td>{choice.grade}</td>
+                    <td>{project?.title || "—"}</td>
+                  </tr>
+                );
+              })}
+              {commentFilteredChoices.length === 0 && (
+                <tr><td colSpan={3} style={{ textAlign: "center", padding: "20px", color: "gray" }}>Keine Schüler gefunden.</td></tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+        </div>
+
+        <mdui-button
+          onClick={() => addCommentToGroup()}
+          icon="add"
+          disabled={!commentText.trim() || commentFilteredChoices.length === 0}
+        >
+          Kommentar hinzufügen ({commentFilteredChoices.length})
         </mdui-button>
       </mdui-dialog>
 
       <mdui-dialog fullscreen open={showAttendanceDialog}>
-        <mdui-button-icon
-          icon="close"
-          onClick={() => setShowAttendanceDialog(false)}
-        ></mdui-button-icon>
-        <div className="mdui-prose" style={{ padding: "20px" }}>
-          <h2>Anwesenheitsliste konfigurieren</h2>
-
-          <div style={{ marginBottom: "20px" }}>
-            <mdui-text-field
-              label="Anzahl Spalten"
-              type="number"
-              value={attendanceColumns.toString()}
-              onInput={(e: React.ChangeEvent<HTMLInputElement>) =>
-                handleColumnCountChange(parseInt(e.target.value) || 1)
-              }
-              min={1}
-              max={10}
-              style={{ width: "200px", marginRight: "20px" }}
-            />
-            <mdui-text-field
-              label="Leere Zeilen nach Projekt"
-              type="number"
-              value={emptyRows.toString()}
-              onInput={(e: React.ChangeEvent<HTMLInputElement>) =>
-                setEmptyRows(parseInt(e.target.value) || 0)
-              }
-              min={0}
-              max={10}
-              style={{ width: "200px" }}
-            />
-          </div>
-
-          <h3>Spaltenüberschriften</h3>
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))",
-              gap: "15px",
-              marginBottom: "30px",
-            }}
-          >
-            {columnHeaders.slice(0, attendanceColumns).map((header, index) => (
-              <mdui-text-field
-                key={index}
-                label={`Spalte ${index + 1}`}
-                value={header}
-                onInput={(e: React.ChangeEvent<HTMLInputElement>) =>
-                  handleHeaderChange(index, e.target.value)
-                }
-                style={{ width: "100%" }}
-              />
-            ))}
-          </div>
-
-          <div
-            style={{ display: "flex", gap: "10px", justifyContent: "flex-end" }}
-          >
-            <mdui-button
-              variant="outlined"
-              onClick={() => setShowAttendanceDialog(false)}
-            >
-              Abbrechen
-            </mdui-button>
+        <div style={{
+          display: "flex",
+          flexDirection: "column",
+          height: "100%",
+          overflow: "hidden",
+        }}>
+          {/* ── Header bar ── */}
+          <div style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "12px",
+            padding: "16px 20px",
+            borderBottom: "1px solid var(--mdui-color-outline-variant, #e0e0e0)",
+            flexShrink: 0,
+          }}>
+            <mdui-button-icon icon="close" onClick={() => setShowAttendanceDialog(false)} />
+            <span style={{ fontSize: "20px", fontWeight: 600, flex: 1 }}>Anwesenheitsliste konfigurieren</span>
             <mdui-button
               onClick={() => {
-                generateAttendancePDF(
-                  attendanceColumns,
-                  emptyRows,
-                  columnHeaders
-                );
+                generateAttendancePDF(columnHeaders.length, emptyRows, columnHeaders);
                 setShowAttendanceDialog(false);
               }}
               icon="picture_as_pdf"
             >
               PDF erstellen
             </mdui-button>
+          </div>
+
+          {/* ── Scrollable body ── */}
+          <div style={{ flex: 1, overflowY: "auto", padding: "24px 28px", display: "flex", flexDirection: "column", gap: "28px" }}>
+
+            {/* Section 1 — Allgemein */}
+            <section>
+              <p style={{ margin: "0 0 14px 0", fontWeight: 600, fontSize: "13px", letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--mdui-color-outline, #888)" }}>Allgemein</p>
+              <div style={{ display: "flex", gap: "16px", flexWrap: "wrap" }}>
+                <mdui-text-field
+                  label="Leere Zeilen nach Projekt"
+                  type="number"
+                  value={emptyRows.toString()}
+                  onInput={(e: React.ChangeEvent<HTMLInputElement>) =>
+                    setEmptyRows(parseInt(e.target.value) || 0)
+                  }
+                  min={0}
+                  max={10}
+                  style={{ width: "220px" }}
+                />
+              </div>
+            </section>
+
+            {/* Section 2 — Datumsgenerator */}
+            <section>
+              <p style={{ margin: "0 0 14px 0", fontWeight: 600, fontSize: "13px", letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--mdui-color-outline, #888)" }}>Datumsgenerator</p>
+              <div style={{
+                border: "1px solid var(--mdui-color-outline-variant, #e0e0e0)",
+                borderRadius: "12px",
+                padding: "20px",
+                display: "flex",
+                flexDirection: "column",
+                gap: "18px",
+              }}>
+                {/* Mode row */}
+                <div style={{ display: "flex", gap: "8px" }}>
+                  <mdui-chip
+                    selectable
+                    selected={dateGenMode === "weekday"}
+                    onClick={() => setDateGenMode("weekday")}
+                  >
+                    Jede Woche
+                  </mdui-chip>
+                  <mdui-chip
+                    selectable
+                    selected={dateGenMode === "consecutive"}
+                    onClick={() => setDateGenMode("consecutive")}
+                  >
+                    Aufeinanderfolgend
+                  </mdui-chip>
+                </div>
+
+                {/* Inputs row */}
+                <div style={{ display: "flex", gap: "12px", flexWrap: "wrap", alignItems: "flex-end" }}>
+                  <mdui-text-field
+                    label="Von"
+                    type="date"
+                    value={dateGenStartDate}
+                    onInput={(e: React.ChangeEvent<HTMLInputElement>) => setDateGenStartDate(e.target.value)}
+                    style={{ width: "160px" }}
+                  />
+                  <mdui-text-field
+                    label="Bis (optional)"
+                    type="date"
+                    value={dateGenEndDate}
+                    onInput={(e: React.ChangeEvent<HTMLInputElement>) => setDateGenEndDate(e.target.value)}
+                    style={{ width: "160px" }}
+                  />
+                  {dateGenMode === "weekday" && (
+                    <mdui-select
+                      label="Wochentag"
+                      value={String(dateGenWeekday)}
+                      onChange={(e: any) => setDateGenWeekday(Number(e.target.value))}
+                      style={{ width: "150px" }}
+                    >
+                      <mdui-menu-item value="1">Montag</mdui-menu-item>
+                      <mdui-menu-item value="2">Dienstag</mdui-menu-item>
+                      <mdui-menu-item value="3">Mittwoch</mdui-menu-item>
+                      <mdui-menu-item value="4">Donnerstag</mdui-menu-item>
+                      <mdui-menu-item value="5">Freitag</mdui-menu-item>
+                      <mdui-menu-item value="6">Samstag</mdui-menu-item>
+                      <mdui-menu-item value="0">Sonntag</mdui-menu-item>
+                    </mdui-select>
+                  )}
+                  <mdui-select
+                    label="Format"
+                    value={dateGenFormat}
+                    onChange={(e: any) => setDateGenFormat(e.target.value)}
+                    style={{ width: "150px" }}
+                  >
+                    <mdui-menu-item value="short">24.06.</mdui-menu-item>
+                    <mdui-menu-item value="medium">24.06.2026</mdui-menu-item>
+                    <mdui-menu-item value="weekday">Di 24.06.</mdui-menu-item>
+                  </mdui-select>
+                </div>
+
+                {/* Preview + generate row */}
+                <div style={{ display: "flex", gap: "10px", alignItems: "center", flexWrap: "wrap" }}>
+                  {(() => {
+                    const preview = buildDateList();
+                    const shown = preview.slice(0, 4);
+                    return (
+                      <>
+                        {shown.map((p, i) => (
+                          <span key={i} style={{
+                            background: "var(--mdui-color-secondary-container, #e8def8)",
+                            color: "var(--mdui-color-on-secondary-container, #1d192b)",
+                            borderRadius: "6px",
+                            padding: "3px 10px",
+                            fontSize: "13px",
+                            fontWeight: 500,
+                          }}>{p}</span>
+                        ))}
+                        {preview.length > 4 && (
+                          <span style={{ fontSize: "13px", color: "var(--mdui-color-outline, #888)" }}>…+{preview.length - 4} weitere ({preview.length} gesamt)</span>
+                        )}
+                        {preview.length === 0 && (
+                          <span style={{ fontSize: "13px", color: "var(--mdui-color-outline, #888)" }}>Wähle Start- und Enddatum</span>
+                        )}
+                        <mdui-button
+                          variant="tonal"
+                          icon="auto_fix_high"
+                          onClick={generateDates}
+                          style={{ marginLeft: "auto" }}
+                          disabled={preview.length === 0}
+                        >
+                          {preview.length > 0 ? `${preview.length} Spalten generieren` : "Generieren"}
+                        </mdui-button>
+                      </>
+                    );
+                  })()}
+                </div>
+              </div>
+            </section>
+
+            {/* Section 3 — Spalten (editable list) */}
+            <section>
+              <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "14px" }}>
+                <p style={{ margin: 0, fontWeight: 600, fontSize: "13px", letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--mdui-color-outline, #888)" }}>Spalten ({columnHeaders.length})</p>
+                <mdui-button variant="text" icon="add" onClick={addHeader} style={{ marginLeft: "auto" }}>Spalte hinzufügen</mdui-button>
+              </div>
+
+              <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                {columnHeaders.map((header, index) => (
+                  <div key={index}>
+                    {/* Row */}
+                    <div style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "8px",
+                      background: "var(--mdui-color-surface-container, #f5f5f5)",
+                      borderRadius: "10px",
+                      padding: "6px 10px 6px 14px",
+                    }}>
+                      <span style={{ fontSize: "13px", color: "var(--mdui-color-outline, #888)", minWidth: "28px", fontVariantNumeric: "tabular-nums" }}>#{index + 1}</span>
+                      <mdui-text-field
+                        value={header}
+                        placeholder={`Spalte ${index + 1}`}
+                        onInput={(e: React.ChangeEvent<HTMLInputElement>) => handleHeaderChange(index, e.target.value)}
+                        style={{ flex: 1 }}
+                        variant="filled"
+                      />
+                      <mdui-button-icon
+                        icon="add"
+                        title="Spalte darunter einfügen"
+                        onClick={() => insertHeaderAfter(index)}
+                      />
+                      <mdui-button-icon
+                        icon="delete_outline"
+                        title="Spalte löschen"
+                        onClick={() => deleteHeader(index)}
+                      />
+                    </div>
+                  </div>
+                ))}
+
+                {columnHeaders.length === 0 && (
+                  <div style={{ textAlign: "center", padding: "32px", color: "var(--mdui-color-outline, #888)", border: "2px dashed var(--mdui-color-outline-variant, #e0e0e0)", borderRadius: "12px" }}>
+                    Keine Spalten. Generiere Daten oder füge manuell hinzu.
+                  </div>
+                )}
+              </div>
+            </section>
           </div>
         </div>
       </mdui-dialog>

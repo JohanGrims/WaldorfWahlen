@@ -8,7 +8,7 @@ import {
 import React from "react";
 import { useLoaderData, useNavigate, useParams } from "react-router-dom";
 import { db } from "./firebase";
-import { confirm } from "mdui";
+
 
 interface VoteData extends DocumentData {
   result: boolean;
@@ -145,52 +145,28 @@ export default function Result() {
       </div>
       <p />
       {voteResult.comments && voteResult.comments.length > 0 && (
-        <mdui-list>
+        <div style={{ display: "flex", flexDirection: "column", gap: "10px", margin: "8px 0" }}>
           {voteResult.comments.map((comment, index) => (
-            <mdui-list-item
-              rounded
-              style={{
-                width: "100%",
-                padding: "20px",
-              }}
+            <div
               key={index}
-              onClick={() => {
-                confirm({
-                  icon: "mail",
-                  headline: "E-Mail senden",
-                  description: `Möchten Sie eine E-Mail an ${comment.from} senden?`,
-                  onConfirm: () => {
-                    window.open(`mailto:${comment.from}`);
-                  },
-                  confirmText: "Ja",
-                  cancelText: "Nein",
-                });
+              style={{
+                background: "var(--mdui-color-surface-variant)",
+                borderRadius: "12px",
+                padding: "14px 16px",
               }}
             >
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  gap: "20px",
-                }}
-              >
-                <mdui-avatar slot="icon">
-                  {comment.from
-                    .split(/[@.]/)
-                    .slice(0, 2)
-                    .map((part) => part.charAt(0).toUpperCase())
-                    .join("")}
-                </mdui-avatar>
-
+              <p style={{ margin: "0 0 6px 0", fontSize: "15px", lineHeight: "1.5" }}>
                 {comment.text}
-
-                <mdui-icon name="comment"></mdui-icon>
-              </div>
-            </mdui-list-item>
+              </p>
+              <p style={{ margin: 0, fontSize: "12px", opacity: 0.6 }}>
+                {comment.from}
+                {comment.timestamp ? ` · ${new Date(comment.timestamp).toLocaleDateString("de-DE")}` : ""}
+              </p>
+            </div>
           ))}
-        </mdui-list>
+        </div>
       )}
-      {voteResult.comments && <p />}
+      {voteResult.comments && voteResult.comments.length > 0 && <p />}
       <div className="button-container">
         <mdui-button onClick={() => navigate("/")}>Startseite</mdui-button>
       </div>
