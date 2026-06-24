@@ -1,4 +1,4 @@
-import { collection, getDocs, doc, updateDoc } from "firebase/firestore";
+import { collection, getDocs, doc, updateDoc, getDoc } from "firebase/firestore";
 import React from "react";
 import { Link, LoaderFunctionArgs, useLoaderData, useParams, useRevalidator } from "react-router-dom";
 import { snackbar } from "mdui";
@@ -1087,18 +1087,23 @@ export default function Match() {
 
 Match.loader = async function loader({ params }: LoaderFunctionArgs) {
   const { id } = params;
+  const voteDoc = await getDoc(doc(db, `schools/SCHOOLID/votes/${id}`));
+  const voteData = voteDoc.exists() ? { id: voteDoc.id, ...voteDoc.data() } : { allowedGrades: [] };
+
   const choices = await getDocs(
     collection(db, `schools/SCHOOLID/votes/${id}/choices`)
   );
   const choiceData = choices.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
 
   const classes = await getDocs(collection(db, `/schools/SCHOOLID/class`));
-  const classData = classes.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+  const classData = classes.docs.map((doc) => ({ id: doc.id, ...doc.data() }))
+    .filter((c: any) => !voteData.allowedGrades || voteData.allowedGrades.length === 0 || voteData.allowedGrades.includes(Number(c.grade)));
 
   const options = await getDocs(collection(db, `schools/SCHOOLID/votes/${id}/options`));
   const optionData = options.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
 
   return {
+    vote: voteData,
     choices: choiceData,
     classes: classData,
     options: optionData,

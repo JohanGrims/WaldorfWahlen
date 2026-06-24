@@ -359,7 +359,7 @@ Add.loader = async function loader({ params }: LoaderFunctionArgs) {
   const classesData = classes.docs.map((doc) => ({
     id: doc.id,
     ...doc.data(),
-  }));
+  })).filter((c: any) => !voteData.allowedGrades || voteData.allowedGrades.length === 0 || voteData.allowedGrades.includes(Number(c.grade)));
 
   return {
     vote: voteData,

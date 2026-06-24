@@ -59,6 +59,19 @@ export default function Overview({
     return assignedCount > option.max;
   });
 
+  const wrongGradeAssignments = Object.entries(results).filter(([key, value]) => {
+    const choice = choices.find((c) => c.id === key);
+    const option = options.find((o) => o.id === value);
+    if (!choice || !option) return false;
+    
+    if (option.allowedGrades && option.allowedGrades.length > 0) {
+      if (!option.allowedGrades.includes(Number(choice.grade))) {
+        return true;
+      }
+    }
+    return false;
+  });
+
   let missingStudentsCount = 0;
   classes.forEach((c: any) => {
     if (!c.students) return;
@@ -93,7 +106,7 @@ export default function Overview({
         </mdui-card>
       )}
 
-      {unexpectedAssignments.length === 0 && overCapacityProjects.length === 0 && missingStudentsCount === 0 ? (
+      {unexpectedAssignments.length === 0 && overCapacityProjects.length === 0 && missingStudentsCount === 0 && wrongGradeAssignments.length === 0 ? (
         <mdui-card style={{ padding: "40px", textAlign: "center", width: "100%" }} variant="filled">
           <mdui-icon style={{ fontSize: "48px", color: "rgb(0, 150, 0)", marginBottom: "16px" }}>check_circle</mdui-icon>
           <h3>Alles in Ordnung!</h3>
@@ -180,6 +193,42 @@ export default function Overview({
                       <td>{option.title}</td>
                       <td>{option.max}</td>
                       <td style={{ color: "rgb(255, 100, 100)", fontWeight: "bold" }}>{assignedCount}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </mdui-card>
+      )}
+
+      {wrongGradeAssignments.length > 0 && (
+        <mdui-card variant="filled" color="error" style={{ width: "100%", padding: "20px", marginBottom: "20px" }}>
+          <div style={{ display: "flex", gap: "10px", alignItems: "center", marginBottom: "16px" }}>
+            <mdui-icon style={{ fontSize: "32px", color: "rgb(255, 100, 100)" }}>warning</mdui-icon>
+            <h3 style={{ margin: 0 }}>Klassenbeschränkungen missachtet ({wrongGradeAssignments.length})</h3>
+          </div>
+          <p>Folgende Schüler wurden einem Projekt zugewiesen, das eigentlich <b>nicht</b> für ihre Klasse vorgesehen ist. (Muss ggf. abgesprochen sein)</p>
+          <div className="mdui-table">
+            <table>
+              <thead>
+                <tr>
+                  <th>Klasse</th>
+                  <th>Name</th>
+                  <th>Zugewiesenes Projekt</th>
+                  <th>Erlaubte Klassen</th>
+                </tr>
+              </thead>
+              <tbody>
+                {wrongGradeAssignments.map(([key, value], i) => {
+                  const choice = choices.find((c) => c.id === key)!;
+                  const option = options.find((o) => o.id === value)!;
+                  return (
+                    <tr key={i}>
+                      <td>{choice.grade || <span style={{ color: "gray" }}>-</span>}</td>
+                      <td>{choice.name || <span style={{ color: "gray" }}>-</span>}</td>
+                      <td>{option?.title || value || <span style={{ color: "gray" }}>-</span>}</td>
+                      <td style={{ color: "var(--mdui-color-error)" }}>{option.allowedGrades?.join(", ") || "-"}</td>
                     </tr>
                   );
                 })}

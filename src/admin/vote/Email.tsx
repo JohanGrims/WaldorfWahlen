@@ -389,10 +389,10 @@ export default function Email() {
         const classSnapshot = await getDocs(
           collection(db, "schools/SCHOOLID/class")
         );
-        const classData = classSnapshot.docs.map((doc) => ({
+        const classData = (classSnapshot.docs.map((doc) => ({
           id: doc.id,
           ...doc.data(),
-        })) as ClassData[];
+        })) as ClassData[]).filter(c => !vote.allowedGrades || vote.allowedGrades.length === 0 || vote.allowedGrades.includes(Number(c.grade)));
         setClasses(classData);
         setLoading(false);
       } catch (error) {

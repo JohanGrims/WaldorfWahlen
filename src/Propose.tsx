@@ -1,9 +1,10 @@
-import { addDoc, collection, doc, setDoc } from "firebase/firestore";
+import { addDoc, collection, doc, setDoc, getDocs } from "firebase/firestore";
 import React, { useState } from "react";
 import { db } from "./firebase";
 import { useLoaderData, useNavigate, useParams } from "react-router-dom";
 import { alert, confirm, breakpoint, snackbar } from "mdui";
 import CheckItem from "./CheckItem";
+import { formatGrades } from "./utils/format";
 
 export default function Propose() {
   let { id } = useParams();
@@ -15,6 +16,8 @@ export default function Propose() {
   const [description, setDescription] = useState("");
   const [teacher, setTeacher] = useState("");
   const [max, setMax] = useState<number | undefined>();
+  const [optionAllowedGrades, setOptionAllowedGrades] = useState<number[]>([]);
+  const [classes, setClasses] = useState<any[]>([]);
 
   // Custom field values
   const [customFieldValues, setCustomFieldValues] = useState<
@@ -31,6 +34,7 @@ export default function Propose() {
       description: description,
       teacher: teacher,
       max: max,
+      allowedGrades: optionAllowedGrades,
       customFields: customFieldValues,
     })
       .then(() => {
@@ -99,6 +103,7 @@ export default function Propose() {
         setDescription("");
         setTeacher("");
         setMax(undefined);
+        setOptionAllowedGrades([]);
         setCustomFieldValues({});
       },
       confirmText: "Zurücksetzen",
@@ -143,6 +148,12 @@ export default function Propose() {
         },
       });
     }
+    async function loadClasses() {
+      const clsSnap = await getDocs(collection(db, "schools/SCHOOLID/class"));
+      const clsData = clsSnap.docs.map(doc => doc.data());
+      setClasses(clsData);
+    }
+    loadClasses();
   }, []);
 
   return (
@@ -164,6 +175,12 @@ export default function Propose() {
           {description && (
             <>
               Beschreibung: {description}
+              <br />
+            </>
+          )}
+          {optionAllowedGrades.length > 0 && (
+            <>
+              Klassenbeschränkung: {formatGrades(optionAllowedGrades)}
               <br />
             </>
           )}
@@ -257,6 +274,41 @@ export default function Propose() {
           icon="group"
         ></mdui-text-field>
         <p />
+
+        <div style={{ marginTop: "8px", paddingTop: "8px" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
+            <span style={{ fontSize: "16px", fontWeight: "bold" }}>
+              Klassenbeschränkung
+            </span>
+          </div>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: "8px", marginBottom: "12px" }}>
+            <mdui-chip
+              selected={optionAllowedGrades.length === 0}
+              selectable
+              onClick={() => setOptionAllowedGrades([])}
+            >
+              Alle Klassen
+            </mdui-chip>
+            {Array.from(new Set(classes.map(c => c.grade)))
+              .filter(grade => !(vote as any).allowedGrades || (vote as any).allowedGrades.length === 0 || (vote as any).allowedGrades.includes(grade))
+              .sort((a,b)=>a-b).map((grade) => (
+              <mdui-chip
+                key={grade}
+                selected={optionAllowedGrades.includes(grade)}
+                selectable
+                onClick={() => {
+                  if (optionAllowedGrades.includes(grade)) {
+                    setOptionAllowedGrades(optionAllowedGrades.filter(g => g !== grade));
+                  } else {
+                    setOptionAllowedGrades([...optionAllowedGrades, grade].sort((a,b)=>a-b));
+                  }
+                }}
+              >
+                Klasse {grade}
+              </mdui-chip>
+            ))}
+          </div>
+        </div>
 
         {vote.proposeFields && (
           <>
@@ -362,6 +414,12 @@ export default function Propose() {
             <div className="teacher">
               <mdui-icon name="person"></mdui-icon>
               {teacher}
+            </div>
+          )}
+          {optionAllowedGrades && optionAllowedGrades.length > 0 && (
+            <div className="teacher" style={{ color: "var(--mdui-color-error)" }}>
+              <mdui-icon name="school"></mdui-icon>
+              Kl. {formatGrades(optionAllowedGrades)}
             </div>
           )}
           {description && <div className="description">{description}</div>}

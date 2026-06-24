@@ -21,6 +21,7 @@ import { alert, breakpoint, confirm, prompt, snackbar } from "mdui";
 import { formatBerlinTimestamp } from "./utils/date";
 import { redirect } from "react-router-dom";
 import { capitalizeWords } from "./admin/utils";
+import { formatGrades } from "./utils/format";
 import CheckItem from "./CheckItem";
 import { httpsCallable } from "firebase/functions";
 
@@ -40,6 +41,7 @@ interface OptionData extends DocumentData {
   max: number;
   teacher?: string;
   description?: string;
+  allowedGrades?: number[];
 }
 
 interface LoaderData {
@@ -760,10 +762,30 @@ export default function Vote() {
                       : "elevated"
                   }
                   onClick={() => {
-                    selected[index] === option.id
-                      ? select(index, "null")
-                      : !selected.includes(option.id) &&
-                        select(index, option.id);
+                    const handleSelect = () => {
+                      selected[index] === option.id
+                        ? select(index, "null")
+                        : !selected.includes(option.id) &&
+                          select(index, option.id);
+                    };
+
+                    if (
+                      !selected.includes(option.id) &&
+                      option.allowedGrades &&
+                      option.allowedGrades.length > 0 &&
+                      grade &&
+                      !option.allowedGrades.includes(parseInt(grade))
+                    ) {
+                      confirm({
+                        headline: "Klassenbeschränkung",
+                        description: `Diese Option ist eigentlich nur für die Klassen ${option.allowedGrades.join(", ")} vorgesehen. Die Wahl dieser Option muss mit der Projektleitung abgesprochen sein. Fortfahren?`,
+                        confirmText: "Verstanden & Auswählen",
+                        cancelText: "Abbrechen",
+                        onConfirm: handleSelect,
+                      });
+                    } else {
+                      handleSelect();
+                    }
                   }}
                 >
                   <b className="title">
@@ -782,6 +804,12 @@ export default function Vote() {
                     <div className="teacher">
                       <mdui-icon name="person"></mdui-icon>
                       {option.teacher}
+                    </div>
+                  )}
+                  {option.allowedGrades && option.allowedGrades.length > 0 && (
+                    <div className="teacher" style={{ color: "var(--mdui-color-error)" }}>
+                      <mdui-icon name="school"></mdui-icon>
+                      Kl. {formatGrades(option.allowedGrades)}
                     </div>
                   )}
                   {option.description && (

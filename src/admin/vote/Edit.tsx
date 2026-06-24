@@ -7,6 +7,7 @@ import {
   setDoc,
   DocumentData,
 } from "firebase/firestore";
+import { formatGrades } from "../../utils/format";
 import {
   LoaderFunctionArgs,
   useLoaderData,
@@ -42,6 +43,7 @@ interface OptionData {
   description: string;
   max: number;
   leaders?: string[];
+  allowedGrades?: number[];
 }
 
 interface ProposalData {
@@ -62,6 +64,7 @@ interface VoteData extends DocumentData {
   proposals: boolean;
   proposeFields?: ProposeField[];
   proposeTexts?: ProposeTexts;
+  allowedGrades?: number[];
 }
 
 interface LoaderData {
@@ -232,6 +235,10 @@ export default function Edit() {
     }
   );
 
+  const [voteAllowedGrades, setVoteAllowedGrades] = React.useState<number[]>(
+    vote.allowedGrades || []
+  );
+
   const [options, setOptions] = React.useState<OptionData[]>(loadedOptions);
   const [proposals, setProposals] =
     React.useState<ProposalData[]>(loadedProposals);
@@ -249,6 +256,7 @@ export default function Edit() {
     generateRandomHash(20)
   );
   const [leaders, setLeaders] = React.useState<string[]>([]);
+  const [optionAllowedGrades, setOptionAllowedGrades] = React.useState<number[]>([]);
   const [leaderSearchQuery, setLeaderSearchQuery] = React.useState<string>("");
 
   const toggleLeader = (classGrade: number, listIndex: string | number) => {
@@ -278,6 +286,7 @@ export default function Edit() {
     setMax(undefined);
     setOptionId(generateRandomHash(20));
     setLeaders([]);
+    setOptionAllowedGrades([]);
     setOptionDialogOpen(true);
   }
 
@@ -289,6 +298,7 @@ export default function Edit() {
     setMax(options[index].max);
     setOptionId(options[index].id);
     setLeaders(options[index].leaders || []);
+    setOptionAllowedGrades(options[index].allowedGrades || []);
     setOptionDialogOpen(true);
   }
 
@@ -304,6 +314,7 @@ export default function Edit() {
           description: optionDescription,
           id: optionId,
           leaders: leaders,
+          allowedGrades: optionAllowedGrades,
         };
       } else {
         newOptions = [
@@ -315,6 +326,7 @@ export default function Edit() {
             description: optionDescription,
             id: optionId,
             leaders: leaders,
+            allowedGrades: optionAllowedGrades,
           },
         ];
       }
@@ -340,6 +352,7 @@ export default function Edit() {
           extraFields: extraFields.length > 0 ? extraFields : [],
           proposeFields: vote.proposals ? proposeFields : [],
           proposeTexts: vote.proposals ? proposeTexts : {},
+          allowedGrades: voteAllowedGrades,
         },
         { merge: true }
       );
@@ -369,6 +382,7 @@ export default function Edit() {
             teacher: e.teacher,
             description: e.description,
             leaders: e.leaders || [],
+            allowedGrades: e.allowedGrades || [],
           }
         );
       });
@@ -399,6 +413,7 @@ export default function Edit() {
       extraFields: extraFields.length > 0 ? extraFields : [],
       proposeFields: vote.proposals ? proposeFields : [],
       proposeTexts: vote.proposals ? proposeTexts : {},
+      allowedGrades: voteAllowedGrades.length > 0 ? voteAllowedGrades : undefined,
     };
 
     const changes = Object.keys(newVote).reduce(
@@ -589,6 +604,7 @@ export default function Edit() {
                           "Der Titel sollte kurz und prägnant sein. Die Beschreibung sollte das Projekt gut umreißen und eventuelle Beschränkungen erwähnen. Tragen Sie die maximale Anzahl an SchülerInnen so ein, wie es bei der Anmeldung abgesprochen wurde. Alle Vorschläge werden manuell von den Administratoren geprüft und freigeschaltet.",
                       }
                     );
+                    setVoteAllowedGrades(vote.allowedGrades || []);
                     setOptions(loadedOptions);
                     setTotalMax(
                       loadedOptions.reduce(
@@ -684,6 +700,41 @@ export default function Edit() {
 
       <mdui-tab-panel slot="panel" value="advanced">
         <p />
+
+        <mdui-card variant="filled" style={{ width: "100%", padding: "20px", marginBottom: "20px" }}>
+          <div className="mdui-prose">
+            <h3>Klassenbeschränkung (Wahl)</h3>
+            <p>
+              Für welche Klassen findet diese Wahl statt? Standardmäßig für alle.
+            </p>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
+              <mdui-chip
+                selected={voteAllowedGrades.length === 0}
+                selectable
+                onClick={() => setVoteAllowedGrades([])}
+              >
+                Alle Klassen
+              </mdui-chip>
+              {Array.from(new Set(classes.map(c => c.grade))).sort((a,b)=>a-b).map((grade) => (
+                <mdui-chip
+                  key={grade}
+                  selected={voteAllowedGrades.includes(grade)}
+                  selectable
+                  onClick={() => {
+                    if (voteAllowedGrades.includes(grade)) {
+                      setVoteAllowedGrades(voteAllowedGrades.filter(g => g !== grade));
+                    } else {
+                      setVoteAllowedGrades([...voteAllowedGrades, grade].sort((a,b)=>a-b));
+                    }
+                  }}
+                >
+                  Klasse {grade}
+                </mdui-chip>
+              ))}
+            </div>
+          </div>
+        </mdui-card>
+
         <mdui-card variant="filled" style={{ width: "100%", padding: "20px", marginBottom: "20px" }}>
           <div className="mdui-prose">
             <h3>Zusätzliche Felder (Anmeldung)</h3>
@@ -1042,6 +1093,11 @@ export default function Edit() {
                       {e.title} <i>(#{e.id})</i>
                     </b>
                     <div className="teacher">{e.teacher}</div>
+                    {e.allowedGrades && e.allowedGrades.length > 0 && (
+                      <div className="description" style={{ marginTop: "4px" }}>
+                        <strong>Nur für Klassen:</strong> {formatGrades(e.allowedGrades)}
+                      </div>
+                    )}
                     <div className="description">{e.description}</div>
                     <div className="max">max. {e.max} SchülerInnen</div>
                     {e.leaders && e.leaders.length > 0 && (
@@ -1128,6 +1184,42 @@ export default function Edit() {
             value={optionId}
             onInput={(e: React.ChangeEvent<HTMLInputElement>) => setOptionId(e.target.value)}
           ></mdui-text-field>
+
+          {/* Allowed Grades Selection */}
+          <div style={{ marginTop: "8px", borderTop: "1px solid var(--mdui-color-outline-variant)", paddingTop: "16px" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
+              <span style={{ fontSize: "16px", fontWeight: "bold" }}>
+                Klassenbeschränkung (Option)
+              </span>
+            </div>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: "8px", marginBottom: "12px" }}>
+              <mdui-chip
+                selected={optionAllowedGrades.length === 0}
+                selectable
+                onClick={() => setOptionAllowedGrades([])}
+              >
+                Alle Klassen
+              </mdui-chip>
+              {Array.from(new Set(classes.map(c => c.grade)))
+                .filter(grade => voteAllowedGrades.length === 0 || voteAllowedGrades.includes(grade))
+                .sort((a,b)=>a-b).map((grade) => (
+                <mdui-chip
+                  key={grade}
+                  selected={optionAllowedGrades.includes(grade)}
+                  selectable
+                  onClick={() => {
+                    if (optionAllowedGrades.includes(grade)) {
+                      setOptionAllowedGrades(optionAllowedGrades.filter(g => g !== grade));
+                    } else {
+                      setOptionAllowedGrades([...optionAllowedGrades, grade].sort((a,b)=>a-b));
+                    }
+                  }}
+                >
+                  Klasse {grade}
+                </mdui-chip>
+              ))}
+            </div>
+          </div>
 
           {/* Leaders Selection */}
           <div style={{ marginTop: "8px", borderTop: "1px solid var(--mdui-color-outline-variant)", paddingTop: "16px" }}>

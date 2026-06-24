@@ -4,6 +4,7 @@ import { parseBerlinDateTime, formatBerlinDate, tryParseToBerlinDatetimeLocal } 
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { db } from "../firebase";
+import { formatGrades } from "../utils/format";
 import { generateRandomHash } from "./utils";
 import * as XLSX from "xlsx";
 
@@ -29,6 +30,7 @@ interface OptionData {
   teacher: string;
   description: string;
   leaders?: string[];
+  allowedGrades?: number[];
 }
 
 interface ProposeFieldCardProps {
@@ -180,6 +182,8 @@ export default function NewVote() {
   const [teacher, setTeacher] = React.useState<string>("");
   const [optionDescription, setOptionDescription] = React.useState<string>("");
   const [leaders, setLeaders] = React.useState<string[]>([]);
+  const [optionAllowedGrades, setOptionAllowedGrades] = React.useState<number[]>([]);
+  const [voteAllowedGrades, setVoteAllowedGrades] = React.useState<number[]>([]);
 
   const [activeTab, setActiveTab] = React.useState<string>("general");
   const [optionDialogOpen, setOptionDialogOpen] = React.useState(false);
@@ -781,6 +785,7 @@ export default function NewVote() {
     setOptionDescription("");
     setMax("");
     setLeaders([]);
+    setOptionAllowedGrades([]);
     setOptionDialogOpen(true);
   }
 
@@ -791,6 +796,7 @@ export default function NewVote() {
     setOptionDescription(options[index].description);
     setMax(options[index].max);
     setLeaders(options[index].leaders || []);
+    setOptionAllowedGrades(options[index].allowedGrades || []);
     setOptionDialogOpen(true);
   }
 
@@ -803,6 +809,7 @@ export default function NewVote() {
         teacher: teacher,
         description: optionDescription,
         leaders: leaders,
+        allowedGrades: optionAllowedGrades,
       };
       setOptions(newOptions);
     } else {
@@ -814,6 +821,7 @@ export default function NewVote() {
           teacher: teacher,
           description: optionDescription,
           leaders: leaders,
+          allowedGrades: optionAllowedGrades,
         },
       ]);
     }
@@ -841,6 +849,7 @@ export default function NewVote() {
         proposals: proposals,
         proposeFields: proposals ? proposeFields : [],
         proposeTexts: proposals ? proposeTexts : {},
+        ...(voteAllowedGrades.length > 0 && { allowedGrades: voteAllowedGrades }),
       });
 
       if (proposals) {
@@ -1318,6 +1327,11 @@ export default function NewVote() {
                     <div>
                       <b>{e.title}</b>
                       <div className="teacher">{e.teacher}</div>
+                      {e.allowedGrades && e.allowedGrades.length > 0 && (
+                        <div className="description" style={{ marginTop: "4px" }}>
+                          <strong>Nur für Klassen:</strong> {formatGrades(e.allowedGrades)}
+                        </div>
+                      )}
                       <div className="description">{e.description}</div>
                       <div className="max">max. {e.max} SchülerInnen</div>
                       {e.leaders && e.leaders.length > 0 && (
@@ -1356,6 +1370,41 @@ export default function NewVote() {
 
       <mdui-tab-panel slot="panel" value="advanced">
         <p />
+
+        <mdui-card variant="filled" style={{ width: "100%", padding: "20px", marginBottom: "20px" }}>
+          <div className="mdui-prose">
+            <h3>Klassenbeschränkung (Wahl)</h3>
+            <p>
+              Für welche Klassen findet diese Wahl statt? Standardmäßig für alle.
+            </p>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
+              <mdui-chip
+                selected={voteAllowedGrades.length === 0}
+                selectable
+                onClick={() => setVoteAllowedGrades([])}
+              >
+                Alle Klassen
+              </mdui-chip>
+              {Array.from(new Set(classes.map(c => c.grade))).sort((a,b)=>a-b).map((grade) => (
+                <mdui-chip
+                  key={grade}
+                  selected={voteAllowedGrades.includes(grade)}
+                  selectable
+                  onClick={() => {
+                    if (voteAllowedGrades.includes(grade)) {
+                      setVoteAllowedGrades(voteAllowedGrades.filter(g => g !== grade));
+                    } else {
+                      setVoteAllowedGrades([...voteAllowedGrades, grade].sort((a,b)=>a-b));
+                    }
+                  }}
+                >
+                  Klasse {grade}
+                </mdui-chip>
+              ))}
+            </div>
+          </div>
+        </mdui-card>
+
         <mdui-card variant="filled" style={{ width: "100%", padding: "20px" }}>
           <div className="mdui-prose">
             <h3>Zusätzliche Felder (Anmeldung)</h3>
@@ -1598,6 +1647,40 @@ export default function NewVote() {
                 )}
               </div>
             )}
+          </div>
+
+          {/* Option Allowed Grades */}
+          <div style={{ marginTop: "16px", borderTop: "1px solid var(--mdui-color-outline-variant)", paddingTop: "16px" }}>
+            <span style={{ fontSize: "16px", fontWeight: "bold", display: "block", marginBottom: "8px" }}>
+              Klassenbeschränkung (Option)
+            </span>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
+              <mdui-chip
+                selected={optionAllowedGrades.length === 0}
+                selectable
+                onClick={() => setOptionAllowedGrades([])}
+              >
+                Alle Klassen
+              </mdui-chip>
+              {Array.from(new Set(classes.map(c => c.grade)))
+                .filter(grade => voteAllowedGrades.length === 0 || voteAllowedGrades.includes(grade))
+                .sort((a,b)=>a-b).map((grade) => (
+                <mdui-chip
+                  key={grade}
+                  selected={optionAllowedGrades.includes(grade)}
+                  selectable
+                  onClick={() => {
+                    if (optionAllowedGrades.includes(grade)) {
+                      setOptionAllowedGrades(optionAllowedGrades.filter(g => g !== grade));
+                    } else {
+                      setOptionAllowedGrades([...optionAllowedGrades, grade].sort((a,b)=>a-b));
+                    }
+                  }}
+                >
+                  Klasse {grade}
+                </mdui-chip>
+              ))}
+            </div>
           </div>
         </div>
         <mdui-button slot="action" variant="text" onClick={() => setOptionDialogOpen(false)}>Abbrechen</mdui-button>

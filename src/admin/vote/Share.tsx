@@ -36,10 +36,10 @@ export default function Share() {
         const classSnapshot = await getDocs(
           collection(db, "schools/SCHOOLID/class")
         );
-        const classData = classSnapshot.docs.map((doc) => ({
+        const classData = (classSnapshot.docs.map((doc) => ({
           id: doc.id,
           ...doc.data(),
-        })) as ClassData[];
+        })) as ClassData[]).filter(c => !(vote as any).allowedGrades || (vote as any).allowedGrades.length === 0 || (vote as any).allowedGrades.includes(Number(c.grade)));
         setClasses(classData);
       } catch (error) {
         console.error("Error loading classes:", error);
