@@ -210,11 +210,15 @@ export default function StudentSearch({
               const assignedOptionId = results[choice.id];
               return (
                 <tr key={choice.id}>
-                  <td>{choice.name}</td>
-                  <td>{choice.grade}</td>
-                  <td>{choice.listIndex}</td>
+                  <td>{choice.name || <span style={{ color: "gray" }}>-</span>}</td>
+                  <td>{choice.grade || <span style={{ color: "gray" }}>-</span>}</td>
+                  <td>{choice.listIndex || <span style={{ color: "gray" }}>-</span>}</td>
                   <td>{choicePoints[choice.id] ? `[${choicePoints[choice.id].join(", ")}]` : "[1, 2, 4]"}</td>
-                  {(choice.selected || []).map((selected, i) => {
+                  {Array.from({ length: vote.selectCount }).map((_, i) => {
+                    const selected = (choice.selected || [])[i];
+                    if (!selected) {
+                      return <td key={i}><span style={{ color: "gray" }}>-</span></td>;
+                    }
                     const isAssigned = selected === assignedOptionId;
                     return (
                       <td

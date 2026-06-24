@@ -4,6 +4,7 @@ import {
   getDoc,
   getDocs,
   setDoc,
+  serverTimestamp,
 } from "firebase/firestore";
 import { confirm, snackbar } from "mdui";
 import React from "react";
@@ -32,7 +33,11 @@ export default function Assign() {
     choices,
     options,
     results: cloudResults,
+    classes,
   } = useLoaderData() as LoaderData;
+
+  const [localChoices, setLocalChoices] = React.useState<ChoiceData[]>(choices);
+  const [newChoices, setNewChoices] = React.useState<ChoiceData[]>([]);
 
   const [results, setResults] = React.useState<Record<string, string> | null>(
     null
@@ -53,6 +58,10 @@ export default function Assign() {
   ]);
   const [editRules, setEditRules] = React.useState<boolean>(false);
 
+  const [showMissingDialog, setShowMissingDialog] = React.useState(false);
+  const [missingStudentsList, setMissingStudentsList] = React.useState<any[]>([]);
+  const [selectedMissing, setSelectedMissing] = React.useState<string[]>([]);
+
   function setCloudResults() {
     let newResults: Record<string, string> = {};
 
@@ -61,7 +70,7 @@ export default function Assign() {
     });
 
     // assign other results to first choice
-    choices.forEach((choice) => {
+    localChoices.forEach((choice) => {
       if (!newResults[choice.id]) {
         newResults[choice.id] = choice.selected[0];
       }
@@ -71,7 +80,7 @@ export default function Assign() {
 
   function assignToFirstChoice() {
     const newResults: Record<string, string> = {};
-    choices.forEach((choice) => {
+    localChoices.forEach((choice) => {
       newResults[choice.id] = (choice.selected || [])[0];
     });
     setResults(newResults);
@@ -102,7 +111,7 @@ export default function Assign() {
       > = {};
       const calculatedPoints: Record<string, number[]> = {};
 
-      for (const choice of choices) {
+      for (const choice of localChoices) {
         const points = calculatePoints(choice, rules);
 
         preferences[choice.id] = {
@@ -140,6 +149,86 @@ export default function Assign() {
       snackbar({ message: "Fehler beim Laden der Optimierung." });
       setLoading(false);
     }
+  }
+
+  function prepareDistributeMissingStudents() {
+    const missingStudents: any[] = [];
+    classes.forEach((c: any) => {
+      if (!c.students) return;
+      c.students.forEach((s: any) => {
+        // Check if student is a leader in any option
+        const isLeader = options.some((opt) => opt.leaders?.includes(`${c.grade}-${s.listIndex}`));
+        if (isLeader) return;
+
+        const hasVoted = localChoices.some(
+          (choice) => choice.grade == c.grade && choice.listIndex == s.listIndex
+        );
+        if (!hasVoted) {
+          missingStudents.push({ ...s, grade: c.grade });
+        }
+      });
+    });
+
+    if (missingStudents.length === 0) {
+      snackbar({ message: "Alle Schüler haben bereits gewählt!" });
+      return;
+    }
+
+    setMissingStudentsList(missingStudents);
+    setSelectedMissing(missingStudents.map(s => `${s.grade}-${s.listIndex}`));
+    setShowMissingDialog(true);
+  }
+
+  function confirmDistribute() {
+    const missingStudents = missingStudentsList.filter(s => selectedMissing.includes(`${s.grade}-${s.listIndex}`));
+    if (missingStudents.length === 0) {
+      setShowMissingDialog(false);
+      return;
+    }
+
+    const currentResults = { ...results };
+    const addedChoices: ChoiceData[] = [];
+
+    // Shuffle the students so we don't just dump the lowest grades into the emptiest projects first
+    const shuffledStudents = [...missingStudents].sort(() => Math.random() - 0.5);
+
+    shuffledStudents.forEach((student) => {
+      let minFillRatio = Infinity;
+      let candidateProjects: string[] = [];
+
+      options.forEach(option => {
+        const assignedCount = Object.values(currentResults).filter(v => v === option.id).length;
+        const fillRatio = option.max > 0 ? assignedCount / option.max : assignedCount;
+        
+        if (fillRatio < minFillRatio) {
+          minFillRatio = fillRatio;
+          candidateProjects = [option.id];
+        } else if (fillRatio === minFillRatio) {
+          candidateProjects.push(option.id);
+        }
+      });
+
+      const assignedProjectId = candidateProjects[Math.floor(Math.random() * candidateProjects.length)];
+      const randomId = crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2);
+      
+      const newChoice: ChoiceData = {
+        id: randomId,
+        name: student.name + " [*]",
+        grade: student.grade,
+        listIndex: student.listIndex,
+        selected: [assignedProjectId]
+      };
+
+      addedChoices.push(newChoice);
+      currentResults[randomId] = assignedProjectId;
+    });
+
+    setLocalChoices([...localChoices, ...addedChoices]);
+    setNewChoices([...newChoices, ...addedChoices]);
+    setResults(currentResults);
+    
+    snackbar({ message: `${missingStudents.length} fehlende Schüler wurden zufällig verteilt.` });
+    setShowMissingDialog(false);
   }
 
   const switchRef = React.useRef<HTMLInputElement>(null);
@@ -226,6 +315,14 @@ export default function Assign() {
         }
       );
     });
+    
+    newChoices.forEach((choice) => {
+      setDoc(
+        doc(db, `/schools/SCHOOLID/votes/${vote.id}/choices/${choice.id}`),
+        { ...choice, timestamp: serverTimestamp() }
+      );
+    });
+
     confirm({
       headline: "Ergebnisse gespeichert",
       description:
@@ -266,6 +363,47 @@ export default function Assign() {
           </mdui-button>
           <mdui-button onClick={() => blocker.proceed?.()}>
             Verwerfen
+          </mdui-button>
+        </div>
+      </mdui-dialog>
+
+      <mdui-dialog
+        open={showMissingDialog}
+        headline="Fehlende Schüler verteilen"
+        closeOnEsc
+        closeOnOverlayClick
+        onClosed={() => setShowMissingDialog(false)}
+      >
+        <div style={{ maxHeight: "60vh", overflowY: "auto", paddingRight: "8px", overflowX: "hidden" }}>
+          <p>Wählen Sie aus, welche Schüler automatisch auf die Projekte mit der geringsten Auslastung verteilt werden sollen:</p>
+          <div style={{ display: "flex", flexDirection: "column", gap: "8px", marginTop: "16px" }}>
+            {missingStudentsList.map((s, i) => {
+              const key = `${s.grade}-${s.listIndex}`;
+              const checked = selectedMissing.includes(key);
+              return (
+                <mdui-checkbox
+                  key={i}
+                  checked={checked}
+                  onInput={(e: any) => {
+                    if (e.target.checked) {
+                      setSelectedMissing([...selectedMissing, key]);
+                    } else {
+                      setSelectedMissing(selectedMissing.filter(k => k !== key));
+                    }
+                  }}
+                >
+                  {s.name} (Klasse {s.grade})
+                </mdui-checkbox>
+              );
+            })}
+          </div>
+        </div>
+        <div style={{ display: "flex", justifyContent: "space-between", marginTop: "24px" }}>
+          <mdui-button variant="text" onClick={() => setShowMissingDialog(false)}>
+            Abbrechen
+          </mdui-button>
+          <mdui-button onClick={confirmDistribute} disabled={selectedMissing.length === 0}>
+            {selectedMissing.length} Schüler verteilen
           </mdui-button>
         </div>
       </mdui-dialog>
@@ -319,12 +457,14 @@ export default function Assign() {
         <Overview
           results={results}
           vote={vote}
-          choices={choices}
+          choices={localChoices}
           options={options}
+          classes={classes}
           onSearchRequest={(query) => {
             setSearch(query);
             setMode("power-search");
           }}
+          onDistributeMissingStudents={prepareDistributeMissingStudents}
         />
       )}
 
@@ -333,7 +473,7 @@ export default function Assign() {
           results={results}
           setResults={setResults}
           vote={vote}
-          choices={choices}
+          choices={localChoices}
           options={options}
           choicePoints={choicePoints}
         />
@@ -346,7 +486,7 @@ export default function Assign() {
           results={results}
           setResults={setResults}
           vote={vote}
-          choices={choices}
+          choices={localChoices}
           options={options}
           choicePoints={choicePoints}
         />
@@ -385,10 +525,17 @@ Assign.loader = async function loader({ params }: LoaderFunctionArgs) {
     ...doc.data(),
   })) as ResultData[];
 
+  const classes = await getDocs(collection(db, `schools/SCHOOLID/class`));
+  const classData = classes.docs.map((doc) => ({
+    id: doc.id,
+    ...doc.data(),
+  }));
+
   return {
     vote: voteData,
     choices: choiceData,
     options: optionData,
     results: resultsData,
+    classes: classData,
   };
 };

@@ -7,7 +7,9 @@ interface Props {
   vote: VoteData;
   choices: ChoiceData[];
   options: OptionData[];
+  classes: any[];
   onSearchRequest: (query: string) => void;
+  onDistributeMissingStudents?: () => void;
 }
 
 export default function Overview({
@@ -15,7 +17,9 @@ export default function Overview({
   vote,
   choices,
   options,
+  classes,
   onSearchRequest,
+  onDistributeMissingStudents,
 }: Props) {
   // 1. Success Metrics: Count 1st, 2nd, 3rd choices
   const countWahlen = (wahlen: number) => {
@@ -55,9 +59,41 @@ export default function Overview({
     return assignedCount > option.max;
   });
 
+  let missingStudentsCount = 0;
+  classes.forEach((c: any) => {
+    if (!c.students) return;
+    c.students.forEach((s: any) => {
+      const isLeader = options.some(opt => opt.leaders?.includes(`${c.grade}-${s.listIndex}`));
+      if (isLeader) return;
+
+      const hasVoted = choices.some(choice => choice.grade == c.grade && choice.listIndex == s.listIndex);
+      if (!hasVoted) missingStudentsCount++;
+    });
+  });
+
   return (
     <div className="mdui-prose" style={{ marginTop: "24px" }}>
-      {unexpectedAssignments.length === 0 && overCapacityProjects.length === 0 ? (
+      {missingStudentsCount > 0 && (
+        <mdui-card variant="filled" color="warning" style={{ width: "100%", padding: "20px", marginBottom: "20px" }}>
+          <div style={{ display: "flex", gap: "10px", alignItems: "center", marginBottom: "16px", justifyContent: "space-between" }}>
+            <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
+              <mdui-icon style={{ fontSize: "32px", color: "rgb(255, 165, 0)" }}>person_off</mdui-icon>
+              <h3 style={{ margin: 0 }}>Fehlende Wahlen ({missingStudentsCount})</h3>
+            </div>
+            {onDistributeMissingStudents && (
+              <mdui-button onClick={onDistributeMissingStudents}>
+                Fehlende Schüler verteilen
+              </mdui-button>
+            )}
+          </div>
+          <p>
+            Es gibt {missingStudentsCount} Schüler, die nicht gewählt haben und daher noch nicht zugeteilt wurden.
+            Sie können diese automatisch auf die am wenigsten gefüllten Projekte verteilen lassen.
+          </p>
+        </mdui-card>
+      )}
+
+      {unexpectedAssignments.length === 0 && overCapacityProjects.length === 0 && missingStudentsCount === 0 ? (
         <mdui-card style={{ padding: "40px", textAlign: "center", width: "100%" }} variant="filled">
           <mdui-icon style={{ fontSize: "48px", color: "rgb(0, 150, 0)", marginBottom: "16px" }}>check_circle</mdui-icon>
           <h3>Alles in Ordnung!</h3>
@@ -108,9 +144,9 @@ export default function Overview({
                   const option = options.find((o) => o.id === value)!;
                   return (
                     <tr key={i}>
-                      <td>{choice.grade}</td>
-                      <td>{choice.name}</td>
-                      <td>{option?.title || value}</td>
+                      <td>{choice.grade || <span style={{ color: "gray" }}>-</span>}</td>
+                      <td>{choice.name || <span style={{ color: "gray" }}>-</span>}</td>
+                      <td>{option?.title || value || <span style={{ color: "gray" }}>-</span>}</td>
                     </tr>
                   );
                 })}

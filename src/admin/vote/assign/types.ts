@@ -17,6 +17,7 @@ export interface OptionData extends DocumentData {
   id: string;
   title: string;
   max: number;
+  leaders?: string[];
 }
 
 export interface ResultData extends DocumentData {
@@ -29,4 +30,5 @@ export interface LoaderData {
   choices: ChoiceData[];
   options: OptionData[];
   results: ResultData[];
+  classes: any[];
 }

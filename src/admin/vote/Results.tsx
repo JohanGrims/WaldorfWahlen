@@ -1239,15 +1239,15 @@ export default function Results() {
                       {choices
                         .find((choice) => choice.id === result.id)
                         ?.name?.replace(/\[.*?\]/g, "")
-                        .trim()}
+                        .trim() || <span style={{ color: "gray" }}>-</span>}
                     </td>
                     <td>
-                      {choices.find((choice) => choice.id === result.id)?.grade}
+                      {choices.find((choice) => choice.id === result.id)?.grade || <span style={{ color: "gray" }}>-</span>}
                     </td>
                     <td>
                       {
                         choices.find((choice) => choice.id === result.id)
-                          ?.listIndex
+                          ?.listIndex || <span style={{ color: "gray" }}>-</span>
                       }
                     </td>
                     <td
@@ -1259,7 +1259,7 @@ export default function Results() {
                     >
                       {options
                         .find((option) => option.id === result.result)
-                        ?.title?.replace(/\[.*?\]/g, "")}
+                        ?.title?.replace(/\[.*?\]/g, "") || <span style={{ color: "gray" }}>-</span>}
 
                       {result.comments !== undefined &&
                       result.comments.length < 1 ? (
@@ -1455,13 +1455,13 @@ export default function Results() {
                                   {choices
                                     .find((choice) => choice.id === result.id)
                                     ?.name?.replace(/\[.*?\]/g, "")
-                                    .trim()}
+                                    .trim() || <span style={{ color: "gray" }}>-</span>}
                                 </td>
                                 <td>
                                   {
                                     choices.find(
                                       (choice) => choice.id === result.id
-                                    )?.grade
+                                    )?.grade || <span style={{ color: "gray" }}>-</span>
                                   }
                                 </td>
                               </tr>
@@ -1609,13 +1609,13 @@ export default function Results() {
                                     {choices
                                       .find((choice) => choice.id === result.id)
                                       ?.name?.replace(/\[.*?\]/g, "")
-                                      .trim()}
+                                      .trim() || <span style={{ color: "gray" }}>-</span>}
                                   </td>
                                   <td>
                                     {
                                       options.find(
                                         (option) => option.id === result.result
-                                      )?.title
+                                      )?.title || <span style={{ color: "gray" }}>-</span>
                                     }
                                   </td>
                                 </tr>

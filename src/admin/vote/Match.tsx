@@ -158,6 +158,9 @@ export default function Match() {
 
     // Start from choices and check against database
     choices.forEach((choice) => {
+      // Skip automatically added choices marked with [*]
+      if (choice.name?.endsWith(" [*]")) return;
+
       // Find the corresponding class
       const classItem = sortedClasses.find(
         (c) => Number(c.grade) === Number(choice.grade)
@@ -786,7 +789,7 @@ export default function Match() {
                                   (choice) =>
                                     choice.listIndex == s.listIndex &&
                                     choice.grade == c.grade
-                                )[0]?.name
+                                )[0]?.name || <span style={{ color: "gray", marginRight: "6px" }}>-</span>
                               }
                               {choices.filter(
                                 (choice) =>

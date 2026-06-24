@@ -53,12 +53,16 @@ export default function ProjectView({
                     const choice = choices.find((c) => c.id === key)!;
                     return (
                       <tr key={key}>
-                        <td>{choice.name}</td>
-                        <td>{choice.grade}</td>
+                        <td>{choice.name || <span style={{ color: "gray" }}>-</span>}</td>
+                        <td>{choice.grade || <span style={{ color: "gray" }}>-</span>}</td>
                         <td>
                           {choicePoints[key] ? `[${choicePoints[key].join(", ")}]` : "[1, 2, 4]"}
                         </td>
-                        {(choice.selected || []).map((selected, i) => {
+                        {Array.from({ length: vote.selectCount }).map((_, i) => {
+                          const selected = (choice.selected || [])[i];
+                          if (!selected) {
+                            return <td key={i}><span style={{ color: "gray" }}>-</span></td>;
+                          }
                           const isAssigned = selected === value;
                           return (
                             <td
@@ -121,14 +125,20 @@ export default function ProjectView({
               </thead>
               <tbody>
                 {choices
-                  .filter((choice) => (choice.selected || []).includes(option.id))
+                  .filter((choice) => (choice.selected || []).includes(option.id) || choice.name?.endsWith(" [*]"))
                   .sort((a, b) => a.name.localeCompare(b.name))
-                  .map((choice, i) => (
+                  .map((choice, i) => {
+                    const isAuto = choice.name?.endsWith(" [*]");
+                    return (
                     <tr key={i}>
-                      <td>{choice.name}</td>
-                      <td>{choice.grade}</td>
-                      <td>{choice.listIndex}</td>
-                      {(choice.selected || []).map((selected, i) => {
+                      <td>{choice.name || <span style={{ color: "gray" }}>-</span>}</td>
+                      <td>{choice.grade || <span style={{ color: "gray" }}>-</span>}</td>
+                      <td>{choice.listIndex || <span style={{ color: "gray" }}>-</span>}</td>
+                      {Array.from({ length: vote.selectCount }).map((_, i) => {
+                        const selected = isAuto ? (i === 0 ? option.id : undefined) : (choice.selected || [])[i];
+                        if (!selected) {
+                          return <td key={i}><span style={{ color: "gray" }}>-</span></td>;
+                        }
                         const isAssigned = results[choice.id] === selected;
                         return (
                           <td
@@ -159,8 +169,8 @@ export default function ProjectView({
                         );
                       })}
                     </tr>
-                  ))}
-                {choices.filter((choice) => (choice.selected || []).includes(option.id)).length === 0 && (
+                  )})}
+                {choices.filter((choice) => (choice.selected || []).includes(option.id) || choice.name?.endsWith(" [*]")).length === 0 && (
                   <tr>
                     <td colSpan={vote.selectCount + 3} style={{ textAlign: "center", fontStyle: "italic", padding: "16px" }}>Keine Wähler gefunden.</td>
                   </tr>
@@ -229,13 +239,16 @@ export default function ProjectView({
                   .filter(([, value]) => value === option.id)
                   .map(([key]) => {
                     const choice = choices.find((c) => c.id === key)!;
-                    const selectedRank = (choice.selected || []).indexOf(option.id) + 1;
+                    const isAuto = choice.name?.endsWith(" [*]");
+                    const selectedRank = isAuto ? 1 : (choice.selected || []).indexOf(option.id) + 1;
                     
                     let chipColor = "inherit";
                     if (selectedRank === 1) chipColor = "rgba(76, 175, 80, 0.15)";
                     else if (selectedRank === 2) chipColor = "rgba(255, 193, 7, 0.2)";
                     else if (selectedRank >= 3) chipColor = "rgba(255, 152, 0, 0.15)";
                     else chipColor = "rgba(244, 67, 54, 0.1)";
+
+                    const menuOptions = isAuto ? options.map(o => o.id) : (choice.selected || []);
 
                     return (
                       <mdui-dropdown key={key}>
@@ -258,12 +271,12 @@ export default function ProjectView({
                           <div style={{ padding: "8px 16px", color: "gray", fontSize: "0.85em", fontWeight: "bold" }}>
                             Zuweisen zu:
                           </div>
-                          {(choice.selected || []).map((optId, i) => {
+                          {menuOptions.map((optId, i) => {
                             const opt = options.find((o) => o.id === optId);
                             const optAssigned = Object.values(results).filter((val) => val === optId).length;
                             return (
                               <mdui-menu-item 
-                                key={i} 
+                                key={optId} 
                                 disabled={optId === option.id}
                                 onClick={() => {
                                   if (optId === option.id) return;
@@ -273,7 +286,7 @@ export default function ProjectView({
                                   snackbar({ message: `Umgebucht zu: ${opt?.title || optId}` });
                                 }}
                               >
-                                {i + 1}. Wahl: {opt?.title || optId} ({optAssigned}/{opt?.max || "?"})
+                                {isAuto ? opt?.title || optId : `${i + 1}. Wahl: ${opt?.title || optId}`} ({optAssigned}/{opt?.max || "?"})
                               </mdui-menu-item>
                             );
                           })}
