@@ -931,8 +931,8 @@ export default function Email() {
           {/* Class Content */}
           {classes.map((cls) => {
             const studentsWithEmail = cls.students.filter((s) => s.email);
-            const participantListIndexes = new Set(
-              choices.map((c) => Number(c.listIndex))
+            const participantKeys = new Set(
+              choices.map((c) => `${c.grade}-${c.listIndex}`)
             );
 
             return (
@@ -982,8 +982,8 @@ export default function Email() {
                       {studentsWithEmail.map((student) => {
                         const studentKey = `${cls.id}-${student.listIndex}`;
                         const isSelected = selectedStudents.has(studentKey);
-                        const hasVoted = participantListIndexes.has(
-                          Number(student.listIndex)
+                        const hasVoted = participantKeys.has(
+                          `${cls.grade}-${student.listIndex}`
                         );
 
                         return (
