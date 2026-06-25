@@ -27,7 +27,25 @@ import Overview from "./assign/Overview";
 import ProjectView from "./assign/ProjectView";
 import StudentSearch from "./assign/StudentSearch";
 
+function CheckboxWrapper({ checked, onChange, label }: { checked: boolean, onChange: (checked: boolean) => void, label: string }) {
+  const ref = React.useRef<any>(null);
 
+  React.useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const handler = (e: any) => {
+      onChange(e.target.checked);
+    };
+    el.addEventListener("change", handler);
+    return () => el.removeEventListener("change", handler);
+  }, [onChange]);
+
+  return checked ? (
+    <mdui-checkbox ref={ref} checked>{label}</mdui-checkbox>
+  ) : (
+    <mdui-checkbox ref={ref}>{label}</mdui-checkbox>
+  );
+}
 
 export default function Assign() {
   const {
@@ -257,6 +275,11 @@ export default function Assign() {
       snackbar({ message: "Alle Schüler haben bereits gewählt!" });
       return;
     }
+
+    missingStudents.sort((a, b) => {
+      if (a.grade !== b.grade) return a.grade - b.grade;
+      return a.name.localeCompare(b.name);
+    });
 
     setMissingStudentsList(missingStudents);
     setSelectedMissing(missingStudents.map(s => `${s.grade}-${s.listIndex}`));
@@ -700,19 +723,18 @@ export default function Assign() {
               const key = `${s.grade}-${s.listIndex}`;
               const checked = selectedMissing.includes(key);
               return (
-                <mdui-checkbox
-                  key={i}
+                <CheckboxWrapper
+                  key={key}
                   checked={checked}
-                  onInput={(e: any) => {
-                    if (e.target.checked) {
-                      setSelectedMissing([...selectedMissing, key]);
+                  onChange={(isChecked) => {
+                    if (isChecked) {
+                      setSelectedMissing((prev) => [...prev, key]);
                     } else {
-                      setSelectedMissing(selectedMissing.filter(k => k !== key));
+                      setSelectedMissing((prev) => prev.filter((k) => k !== key));
                     }
                   }}
-                >
-                  {s.name} (Klasse {s.grade})
-                </mdui-checkbox>
+                  label={`${s.name} (Klasse ${s.grade})`}
+                />
               );
             })}
           </div>
