@@ -25,7 +25,7 @@ export default function ProjectView({
   classes = [],
   onAddChoice,
 }: Props) {
-  const [viewMode, setViewMode] = useState<"single" | "grid">("single");
+  const [viewMode, setViewMode] = useState<"single" | "grid">("grid");
   const [activeTab, setActiveTab] = useState(options[0]?.id || "");
 
   const sortedResults = Object.entries(results).sort(([keyA], [keyB]) => {
@@ -484,8 +484,8 @@ export default function ProjectView({
     <div style={{ marginTop: "24px" }}>
       <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: "16px" }}>
         <mdui-segmented-button-group selects="single" value={viewMode}>
-          <mdui-segmented-button value="single" icon="tab" onClick={() => setViewMode("single")}>Einzelansicht</mdui-segmented-button>
           <mdui-segmented-button value="grid" icon="grid_view" onClick={() => setViewMode("grid")}>Kompaktansicht</mdui-segmented-button>
+          <mdui-segmented-button value="single" icon="tab" onClick={() => setViewMode("single")}>Einzelansicht</mdui-segmented-button>
         </mdui-segmented-button-group>
       </div>
 
