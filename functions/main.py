@@ -9,6 +9,7 @@ from firebase_functions.params import StringParam, IntParam
 from datetime import datetime, timedelta, timezone
 import logging
 import requests
+import time
 
 # Initialize Firebase Admin SDK
 if not firebase_admin._apps:
@@ -160,6 +161,7 @@ def replace_template_variables(template, variables):
 
 @https_fn.on_call(
     region="europe-west1",
+    memory=options.MemoryOption.MB_512,
     max_instances=1,
     cors=options.CorsOptions(
         cors_origins=[r"^http?://([a-zA-Z0-9-]+\.)*localhost(:[0-9]+)?$", r"^https?://([a-zA-Z0-9-]+\.)*beta\.praktikum\.click(:[0-9]+)?$"],
@@ -206,10 +208,21 @@ def assign(req: https_fn.CallableRequest) -> dict:
             )
         
         # Transform projects for solver
-        project_max = [int(project["max"]) for project in projects.values()]
+        default_min = int(data.get("defaultMin", 3))
+        project_max = [int(project.get("max", 0)) for project in projects.values()]
+        project_min = [int(project.get("min")) if project.get("min") is not None else default_min for project in projects.values()]
+        project_overbook = [int(project.get("overbookPenalty", 8)) for project in projects.values()]
         
         num_participants = len(student_preferences)
         num_courses = len(project_max)
+        
+        # Extract grades
+        student_grades = [preferences[list(student_ids.keys())[i]].get("grade") for i in range(num_participants)]
+        unique_grades = list(set(g for g in student_grades if g is not None))
+        grade_students = {g: [] for g in unique_grades}
+        for i, g in enumerate(student_grades):
+            if g is not None:
+                grade_students[g].append(i)
         
         scores = [1, 2, 4]
         
@@ -228,48 +241,116 @@ def assign(req: https_fn.CallableRequest) -> dict:
             "o", (j for j in range(num_courses)), lowBound=0, cat="Integer"
         )
         
+        # Project active variable (for min participants constraint)
+        y = pulp.LpVariable.dicts(
+            "y", (j for j in range(num_courses)), cat="Binary"
+        )
+        
+
+        
+        # Excess diversity variables
+        excess_c_j = pulp.LpVariable.dicts(
+            "excess_c_j", ((c, j) for c in unique_grades for j in range(num_courses)), lowBound=0, cat="Continuous"
+        )
+        
+
+        EXCESS_DIVERSITY_PENALTY = 1
+        
         # Objective function
         problem += pulp.lpSum(
-            (
-                preferences[list(student_ids.keys())[i]].get(
-                    "points", [scores[0], scores[1], scores[2]]
-                )[0] * x[i, student_preferences[i][0]]
-                + preferences[list(student_ids.keys())[i]].get(
-                    "points", [scores[0], scores[1], scores[2]]
-                )[1] * x[i, student_preferences[i][1]]
-                + preferences[list(student_ids.keys())[i]].get(
-                    "points", [scores[0], scores[1], scores[2]]
-                )[2] * x[i, student_preferences[i][2]]
-            )
+            preferences[list(student_ids.keys())[i]].get("points", scores)[k] * x[i, student_preferences[i][k]]
             for i in range(num_participants)
-        ) + pulp.lpSum(8 * o[j] for j in range(num_courses))
+            for k in range(len(student_preferences[i]))
+        ) + pulp.lpSum(project_overbook[j] * o[j] for j in range(num_courses)) \
+          + pulp.lpSum(EXCESS_DIVERSITY_PENALTY * excess_c_j[c, j] for c in unique_grades for j in range(num_courses))
         
         # Constraints
         for i in range(num_participants):
             problem += pulp.lpSum(x[i, j] for j in range(num_courses)) == 1
         
         for j in range(num_courses):
-            problem += (
-                pulp.lpSum(x[i, j] for i in range(num_participants))
-                <= project_max[j] + o[j]
-            )
+            # Total students in project j
+            tot_j = pulp.lpSum(x[i, j] for i in range(num_participants))
+            
+            # Min / Max participants constraints
+            problem += tot_j <= num_participants * y[j]
+            problem += tot_j <= project_max[j] + o[j]
+            problem += tot_j >= project_min[j] * y[j]
+        
+        for c in unique_grades:
+            for j in range(num_courses):
+                n_cj = pulp.lpSum(x[i, j] for i in grade_students[c])
+                
+
+                
+                # excess_c_j linking
+                # threshold: max 30% of project capacity or 3, whichever is higher
+                threshold = max(3, int(project_max[j] * 0.3))
+                problem += excess_c_j[c, j] >= n_cj - threshold
         
         for i in range(num_participants):
-            for j in range(num_courses):
-                if j not in student_preferences[i]:
-                    problem += x[i, j] == 0
+            if len(student_preferences[i]) > 0:
+                for j in range(num_courses):
+                    if j not in student_preferences[i]:
+                        problem += x[i, j] == 0
         
-        # Solve
-        problem.solve()
+        # Solve with time limit (30 seconds) and parse log for chart
+        start_time = time.time()
+        import tempfile
+        import os
+        
+        fd, log_path = tempfile.mkstemp(suffix=".log")
+        os.close(fd)
+        
+        solver = pulp.PULP_CBC_CMD(timeLimit=30, msg=1, logPath=log_path)
+        problem.solve(solver)
+        end_time = time.time()
+        
+        attempts_data = []
+        try:
+            if os.path.exists(log_path):
+                with open(log_path, 'r') as f:
+                    for line in f:
+                        line = line.strip()
+                        if "best solution" in line and "nodes" in line:
+                            parts = line.split()
+                            try:
+                                node_idx = parts.index("nodes,") - 1
+                                best_sol_idx = parts.index("best") - 1
+                                nodes = int(parts[node_idx])
+                                best_sol = float(parts[best_sol_idx])
+                                attempts_data.append({"nodes": nodes, "objective": best_sol})
+                            except ValueError:
+                                pass
+        except Exception:
+            pass
+        finally:
+            if os.path.exists(log_path):
+                os.remove(log_path)
+                
+        if not attempts_data:
+            attempts_data.append({"nodes": 0, "objective": float(pulp.value(problem.objective) or 0)})
+        else:
+            attempts_data.append({"nodes": attempts_data[-1]["nodes"] + 1, "objective": float(pulp.value(problem.objective) or 0)})
         
         # Extract solution
         solution = {}
         for i in range(num_participants):
             for j in range(num_courses):
-                if x[i, j].varValue == 1:
+                if x[i, j].varValue is not None and x[i, j].varValue > 0.5:
                     solution[list(student_ids.keys())[i]] = list(projects.keys())[j]
+                    
+        # Compute stats
+        stats = {
+            "status": pulp.LpStatus[problem.status],
+            "objective": float(pulp.value(problem.objective) or 0),
+            "solveTimeSec": round(end_time - start_time, 2),
+            "cancelledProjects": [list(projects.keys())[j] for j in range(num_courses) if y[j].varValue is not None and y[j].varValue < 0.5],
+            "overbookedTotal": sum(int(o[j].varValue) for j in range(num_courses) if o[j].varValue and o[j].varValue > 0),
+            "attemptsData": attempts_data,
+        }
         
-        return solution
+        return {"solution": solution, "stats": stats}
         
     except https_fn.HttpsError:
         raise

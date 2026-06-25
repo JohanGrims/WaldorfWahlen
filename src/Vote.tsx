@@ -115,6 +115,7 @@ export default function Vote() {
   const [confirmDialog, setConfirmDialog] = React.useState<boolean>(false);
 
   const [sending, setSending] = React.useState<boolean>(false);
+  const isSending = React.useRef<boolean>(false);
 
   // Feedback dialog state
   const [showFeedbackDialog, setShowFeedbackDialog] =
@@ -202,8 +203,13 @@ export default function Vote() {
   }
 
   async function submit() {
+    if (isSending.current) return;
+    isSending.current = true;
     setSending(true);
-    if (!id) return;
+    if (!id) {
+      isSending.current = false;
+      return;
+    }
 
     // Use either prefilled name or firstName + lastName
     const finalName = decodedUrlName
@@ -234,10 +240,12 @@ export default function Vote() {
         JSON.stringify({ choiceId, timestamp: Date.now() })
       );
       setConfirmDialog(false);
+      isSending.current = false;
       setSending(false);
       setShowFeedbackDialog(true);
 
       if ((response.data as any).error) {
+        isSending.current = false;
         setSending(false);
         snackbar({
           message: (response.data as any).error,
@@ -255,6 +263,7 @@ export default function Vote() {
         });
       }
     } catch (error) {
+      isSending.current = false;
       setSending(false);
       snackbar({
         message: "Es ist ein Fehler aufgetreten.",

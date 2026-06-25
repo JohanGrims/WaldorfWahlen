@@ -42,8 +42,13 @@ export default function Assign() {
   const [results, setResults] = React.useState<Record<string, string> | null>(
     null
   );
+  const [stats, setStats] = React.useState<any>(null);
+  const [projectMins, setProjectMins] = React.useState<Record<string, number>>({});
+  const [projectOverbooks, setProjectOverbooks] = React.useState<Record<string, number>>({});
+  const [showCancelledDialog, setShowCancelledDialog] = React.useState<boolean>(false);
+  const [cancelledProjects, setCancelledProjects] = React.useState<string[]>([]);
   const [loading, setLoading] = React.useState<boolean>(false);
-  const [mode, setMode] = React.useState<string>("by-option");
+  const [mode, setMode] = React.useState<string>("overview");
   const [choicePoints, setChoicePoints] = React.useState<
     Record<string, number[]>
   >({});
@@ -57,6 +62,65 @@ export default function Assign() {
     },
   ]);
   const [editRules, setEditRules] = React.useState<boolean>(false);
+
+  function distributeLeadersAutomatically() {
+    const displacedLeaders: {grade: number, listIndex: number, name: string}[] = [];
+    cancelledProjects.forEach(pid => {
+      const opt = options.find(o => o.id === pid);
+      if (opt?.leaders) {
+        opt.leaders.forEach(lId => {
+          const [g, l] = lId.split("-");
+          const cls = classes.find(c => c.grade == Number(g));
+          const stu = cls?.students?.find((s: any) => String(s.listIndex) == l);
+          if (stu) {
+            displacedLeaders.push({ grade: Number(g), listIndex: Number(l), name: stu.name });
+          }
+        });
+      }
+    });
+
+    const currentResults = { ...results };
+    const addedChoices: ChoiceData[] = [];
+    const nonCancelledOptions = options.filter(o => !cancelledProjects.includes(o.id));
+
+    displacedLeaders.forEach(leader => {
+      let minFillRatio = Infinity;
+      let candidateProjects: string[] = [];
+
+      nonCancelledOptions.forEach(option => {
+        const assignedCount = Object.values(currentResults).filter(v => v === option.id).length;
+        const fillRatio = option.max > 0 ? assignedCount / option.max : assignedCount;
+        
+        if (fillRatio < minFillRatio) {
+          minFillRatio = fillRatio;
+          candidateProjects = [option.id];
+        } else if (fillRatio === minFillRatio) {
+          candidateProjects.push(option.id);
+        }
+      });
+
+      const assignedProjectId = candidateProjects[Math.floor(Math.random() * candidateProjects.length)];
+      const randomId = crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2);
+      
+      const newChoice: ChoiceData = {
+        id: randomId,
+        name: leader.name + " [Leiter-Zuweisung]",
+        grade: leader.grade,
+        listIndex: leader.listIndex,
+        selected: [assignedProjectId]
+      };
+
+      addedChoices.push(newChoice);
+      currentResults[randomId] = assignedProjectId;
+    });
+
+    setLocalChoices([...localChoices, ...addedChoices]);
+    setNewChoices([...newChoices, ...addedChoices]);
+    setResults(currentResults);
+    
+    snackbar({ message: `${displacedLeaders.length} Leitende wurden automatisch verteilt.` });
+    setShowCancelledDialog(false);
+  }
 
   const [showMissingDialog, setShowMissingDialog] = React.useState(false);
   const [missingStudentsList, setMissingStudentsList] = React.useState<any[]>([]);
@@ -97,11 +161,13 @@ export default function Assign() {
       }
       const authToken = await auth.currentUser.getIdToken();
 
-      const projects: Record<string, { title: string; max: number }> = {};
+      const projects: Record<string, { title: string; max: number; min: number; overbookPenalty: number }> = {};
       for (const option of options) {
         projects[option.id] = {
           title: option.title,
           max: option.max,
+          min: projectMins[option.id] ?? 4,
+          overbookPenalty: projectOverbooks[option.id] ?? 8,
         };
       }
 
@@ -114,8 +180,15 @@ export default function Assign() {
       for (const choice of localChoices) {
         const points = calculatePoints(choice, rules);
 
+        let selectedToSend = choice.selected || [];
+        
+        // If a non-voter was manually assigned locally, tell the solver to lock them into that project
+        if (selectedToSend.length === 0 && results[choice.id]) {
+          selectedToSend = [results[choice.id]];
+        }
+
         preferences[choice.id] = {
-          selected: choice.selected,
+          selected: selectedToSend,
           points: points,
         };
         calculatedPoints[choice.id] = points;
@@ -134,10 +207,19 @@ export default function Assign() {
       if (!response.data) {
         throw new Error("No data in response");
       }
-      const data = response.data as Record<string, string>;
+      
+      const responseData = response.data as { solution?: Record<string, string>; stats?: any };
+      const data = responseData.solution || (response.data as Record<string, string>);
+      const returnedStats = responseData.stats || null;
 
       setResults(data);
+      setStats(returnedStats);
       setChoicePoints(calculatedPoints);
+      
+      if (returnedStats?.cancelledProjects && returnedStats.cancelledProjects.length > 0) {
+        setCancelledProjects(returnedStats.cancelledProjects);
+        setShowCancelledDialog(true);
+      }
       if (window.location.hostname === "localhost") {
         // skip throttling on localhost
         setLoading(false);
@@ -287,6 +369,11 @@ export default function Assign() {
           onClose={() => setEditRules(false)}
           rules={rules}
           setRules={setRules}
+          options={options}
+          projectMins={projectMins}
+          setProjectMins={setProjectMins}
+          projectOverbooks={projectOverbooks}
+          setProjectOverbooks={setProjectOverbooks}
         />
         <Setup
           vote={vote}
@@ -413,7 +500,34 @@ export default function Assign() {
         onClose={() => setEditRules(false)}
         rules={rules}
         setRules={setRules}
+        options={options}
+        projectMins={projectMins}
+        setProjectMins={setProjectMins}
+        projectOverbooks={projectOverbooks}
+        setProjectOverbooks={setProjectOverbooks}
       />
+
+      <mdui-dialog open={showCancelledDialog} onOpenChange={(e: any) => setShowCancelledDialog(e.target.open)} headline="Projekte wurden abgesagt!">
+        <div style={{ color: "var(--mdui-color-on-surface-variant)", marginBottom: "16px" }}>
+          Der Algorithmus hat <b>{cancelledProjects.length} Projekt(e)</b> aufgrund ungenügender Teilnehmerzahl abgesagt:
+          <ul style={{ margin: "8px 0", paddingLeft: "20px" }}>
+            {cancelledProjects.map(id => {
+              const opt = options.find(o => o.id === id);
+              return <li key={id}>{opt?.title || id}</li>;
+            })}
+          </ul>
+          Die dortigen Leitenden müssen nun in andere Projekte verschoben werden.
+        </div>
+        <div style={{ display: "flex", justifyContent: "space-between", marginTop: "24px" }}>
+          <mdui-button variant="text" onClick={distributeLeadersAutomatically}>
+            Leitende automatisch verteilen
+          </mdui-button>
+          <mdui-button variant="filled" onClick={() => setShowCancelledDialog(false)}>
+            Später manuell zuweisen
+          </mdui-button>
+
+        </div>
+      </mdui-dialog>
 
       <div
         style={{
@@ -460,6 +574,7 @@ export default function Assign() {
           choices={localChoices}
           options={options}
           classes={classes}
+          stats={stats}
           onSearchRequest={(query) => {
             setSearch(query);
             setMode("power-search");
@@ -476,6 +591,12 @@ export default function Assign() {
           choices={localChoices}
           options={options}
           choicePoints={choicePoints}
+          cancelledProjects={cancelledProjects}
+          classes={classes}
+          onAddChoice={(c) => {
+            setLocalChoices((prev) => [...prev, c]);
+            setNewChoices((prev) => [...prev, c]);
+          }}
         />
       )}
 
@@ -489,6 +610,12 @@ export default function Assign() {
           choices={localChoices}
           options={options}
           choicePoints={choicePoints}
+          classes={classes}
+          cancelledProjects={cancelledProjects}
+          onAddChoice={(c) => {
+            setLocalChoices((prev) => [...prev, c]);
+            setNewChoices((prev) => [...prev, c]);
+          }}
         />
       )}
     </div>

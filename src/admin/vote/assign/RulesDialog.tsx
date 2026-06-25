@@ -2,11 +2,18 @@ import React from "react";
 import { snackbar } from "mdui";
 import { Rule } from "../../../utils/assign";
 
+import { OptionData } from "./types";
+
 interface Props {
   open: boolean;
   onClose: () => void;
   rules: Rule[];
   setRules: (rules: Rule[]) => void;
+  options: OptionData[];
+  projectMins: Record<string, number>;
+  setProjectMins: (mins: Record<string, number>) => void;
+  projectOverbooks: Record<string, number>;
+  setProjectOverbooks: (overbooks: Record<string, number>) => void;
 }
 
 type ConditionKey = "grade" | "name" | "listIndex" | "selected";
@@ -49,7 +56,7 @@ const KEY_PLACEHOLDERS: Record<ConditionKey, string> = {
   selected: "abc123",
 };
 
-export default function RulesDialog({ open, onClose, rules, setRules }: Props) {
+export default function RulesDialog({ open, onClose, rules, setRules, options, projectMins, setProjectMins, projectOverbooks, setProjectOverbooks }: Props) {
   function updateRule(i: number, updated: Rule) {
     const newRules = [...rules];
     newRules[i] = updated;
@@ -239,6 +246,47 @@ export default function RulesDialog({ open, onClose, rules, setRules }: Props) {
       >
         Neue Regel hinzufügen
       </mdui-button>
+
+      <div style={{ marginTop: "40px", marginBottom: "8px", fontWeight: "bold", fontSize: "16px" }}>
+        Projektspezifische Einstellungen
+      </div>
+      <div style={{ color: "gray", fontSize: "13px", marginBottom: "16px" }}>
+        <strong>Min.:</strong> Mindestteilnehmerzahl (Standard: 4). Bei 0 deaktiviert.<br/>
+        <strong>Strafe:</strong> Strafpunkte für jeden überbuchten Platz (Standard: 8).
+      </div>
+      <div style={{ display: "grid", gap: "8px" }}>
+        {options.map(o => (
+          <div key={o.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px", background: "rgba(128,128,128,0.04)", borderRadius: "8px" }}>
+            <span style={{ fontWeight: 500 }}>{o.title}</span>
+            <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                <span style={{ fontSize: "12px", color: "gray" }}>Min.</span>
+                <mdui-text-field
+                  variant="outlined"
+                  type="number"
+                  min={0}
+                  placeholder="4"
+                  value={String(projectMins[o.id] ?? 4)}
+                  onInput={(e: any) => setProjectMins({ ...projectMins, [o.id]: Number(e.target.value) || 0 })}
+                  style={{ width: "70px" }}
+                />
+              </div>
+              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                <span style={{ fontSize: "12px", color: "gray" }}>Strafe</span>
+                <mdui-text-field
+                  variant="outlined"
+                  type="number"
+                  min={0}
+                  placeholder="8"
+                  value={String(projectOverbooks[o.id] ?? 8)}
+                  onInput={(e: any) => setProjectOverbooks({ ...projectOverbooks, [o.id]: Number(e.target.value) || 0 })}
+                  style={{ width: "70px" }}
+                />
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
 
       <mdui-button
         slot="action"

@@ -1,6 +1,31 @@
 import React from "react";
 import { VoteData, ChoiceData, OptionData } from "./types";
 import { Link } from "react-router-dom";
+import { Line } from "react-chartjs-2";
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title as ChartTitle,
+  Tooltip,
+  Legend,
+} from "chart.js";
+
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  ChartTitle,
+  Tooltip,
+  Legend
+);
+
+// Set default colors for Chart.js to adapt to themes
+ChartJS.defaults.color = "var(--mdui-color-on-surface-variant)";
+ChartJS.defaults.scale.grid.color = "var(--mdui-color-outline-variant)";
 
 interface Props {
   results: Record<string, string>;
@@ -8,6 +33,7 @@ interface Props {
   choices: ChoiceData[];
   options: OptionData[];
   classes: any[];
+  stats?: any;
   onSearchRequest: (query: string) => void;
   onDistributeMissingStudents?: () => void;
 }
@@ -18,6 +44,7 @@ export default function Overview({
   choices,
   options,
   classes,
+  stats,
   onSearchRequest,
   onDistributeMissingStudents,
 }: Props) {
@@ -31,6 +58,8 @@ export default function Overview({
       const choice = choices.find((c) => c.id === key);
       if (choice) {
         const selected = choice.selected || [];
+        if (selected.length === 0) return; // Ignore non-voters
+
         const index = selected.indexOf(value);
         if (index !== -1) {
           const wahl = index + 1;
@@ -51,7 +80,8 @@ export default function Overview({
   const unexpectedAssignments = Object.entries(results).filter(([key, value]) => {
     const choice = choices.find((c) => c.id === key);
     const selected = choice?.selected || [];
-    return choice && !selected.includes(value);
+    if (!choice || selected.length === 0) return false;
+    return !selected.includes(value);
   });
 
   const overCapacityProjects = options.filter((option) => {
@@ -86,6 +116,107 @@ export default function Overview({
 
   return (
     <div className="mdui-prose" style={{ marginTop: "24px" }}>
+      {stats && (
+        <mdui-card variant="filled" style={{ width: "100%", padding: "20px", marginBottom: "20px" }}>
+          <div style={{ display: "flex", gap: "10px", alignItems: "center", marginBottom: "16px" }}>
+            <mdui-icon style={{ fontSize: "32px", color: "rgb(0, 150, 200)" }}>analytics</mdui-icon>
+            <h3 style={{ margin: 0 }}>Lösungs-Statistiken (Solver)</h3>
+          </div>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: "16px", marginBottom: "16px" }}>
+            <div style={{ background: "var(--mdui-color-primary-container)", color: "var(--mdui-color-on-primary-container)", padding: "12px 16px", borderRadius: "12px", minWidth: "120px" }}>
+              <div style={{ fontSize: "0.8em", opacity: 0.8, marginBottom: "4px" }}>Status</div>
+              <div style={{ fontWeight: "bold", fontSize: "1.2em" }}>{stats.status}</div>
+            </div>
+            <div style={{ background: "var(--mdui-color-primary-container)", color: "var(--mdui-color-on-primary-container)", padding: "12px 16px", borderRadius: "12px", minWidth: "120px" }}>
+              <div style={{ fontSize: "0.8em", opacity: 0.8, marginBottom: "4px" }}>Lösungszeit</div>
+              <div style={{ fontWeight: "bold", fontSize: "1.2em" }}>{stats.solveTimeSec} s</div>
+            </div>
+            <div style={{ background: "var(--mdui-color-primary-container)", color: "var(--mdui-color-on-primary-container)", padding: "12px 16px", borderRadius: "12px", minWidth: "120px" }}>
+              <div style={{ fontSize: "0.8em", opacity: 0.8, marginBottom: "4px" }}>Zielwert (Punkte)</div>
+              <div style={{ fontWeight: "bold", fontSize: "1.2em" }}>{stats.objective}</div>
+            </div>
+            <div style={{ background: "var(--mdui-color-primary-container)", color: "var(--mdui-color-on-primary-container)", padding: "12px 16px", borderRadius: "12px", minWidth: "120px" }}>
+              <div style={{ fontSize: "0.8em", opacity: 0.8, marginBottom: "4px" }}>Überbuchte Plätze</div>
+              <div style={{ fontWeight: "bold", fontSize: "1.2em" }}>{stats.overbookedTotal}</div>
+            </div>
+          </div>
+          
+          {stats.attemptsData && stats.attemptsData.length > 1 ? (
+            <div style={{ marginTop: "32px", marginBottom: "24px", height: "300px", padding: "16px", background: "var(--mdui-color-surface)", borderRadius: "12px" }}>
+              <Line
+                options={{
+                  responsive: true,
+                  maintainAspectRatio: false,
+                  plugins: {
+                    legend: { position: "top" as const, labels: { color: "var(--mdui-color-on-surface)" } },
+                    title: { display: true, text: "Zielwert-Entwicklung (Straf-Punkte sinkend)", color: "var(--mdui-color-on-surface)" },
+                  },
+                  scales: {
+                    x: { ticks: { color: "var(--mdui-color-on-surface-variant)" } },
+                    y: { ticks: { color: "var(--mdui-color-on-surface-variant)" } }
+                  }
+                }}
+                data={{
+                  labels: stats.attemptsData.map((d: any) => `Knoten ${d.nodes}`),
+                  datasets: [
+                    {
+                      label: "Punkte (Objective)",
+                      data: stats.attemptsData.map((d: any) => d.objective),
+                      borderColor: "rgb(0, 150, 200)",
+                      backgroundColor: "rgba(0, 150, 200, 0.5)",
+                      tension: 0.1,
+                      pointRadius: 4,
+                      pointHoverRadius: 6,
+                    },
+                  ],
+                }}
+              />
+            </div>
+          ) : stats.attemptsData && stats.attemptsData.length === 1 ? (
+            <div style={{ marginTop: "16px", marginBottom: "16px", padding: "16px", background: "var(--mdui-color-surface)", borderRadius: "12px", textAlign: "center", color: "var(--mdui-color-on-surface-variant)" }}>
+              <mdui-icon style={{ fontSize: "24px", marginBottom: "8px" }}>check_circle</mdui-icon>
+              <div>Die optimale Lösung wurde sofort und ohne weitere Iterationen gefunden (Knoten 0: {stats.attemptsData[0].objective} Punkte).</div>
+            </div>
+          ) : null}
+
+          {stats.cancelledProjects && stats.cancelledProjects.length > 0 && (
+            <div style={{ background: "var(--mdui-color-error-container)", color: "var(--mdui-color-on-error-container)", padding: "16px", borderRadius: "12px", border: "1px solid var(--mdui-color-error)" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "8px", fontWeight: "bold", marginBottom: "12px", fontSize: "1.1em" }}>
+                <mdui-icon>warning</mdui-icon>
+                <span>Abgesagte Projekte (Teilnehmer Minimum nicht erreicht)</span>
+              </div>
+              <ul style={{ margin: 0, paddingLeft: "20px" }}>
+                {stats.cancelledProjects.map((id: string) => {
+                  const opt = options.find(o => o.id === id);
+                  const title = opt ? opt.title : id;
+                  // Look for leaders
+                  const displacedLeaders = opt?.leaders?.map(lId => {
+                    const [g, l] = lId.split("-");
+                    const cls = classes.find(c => c.grade == g);
+                    const stu = cls?.students?.find((s: any) => s.listIndex == l);
+                    return stu ? `${stu.name} (Klasse ${g})` : lId;
+                  }) || [];
+                  
+                  return (
+                    <li key={id}>
+                      <b>{title}</b> 
+                      {displacedLeaders.length > 0 && (
+                        <div style={{ opacity: 0.9, marginTop: "4px", fontSize: "0.95em" }}>
+                          Leitende Personen, die manuell neu zugewiesen werden müssen: <strong>{displacedLeaders.join(", ")}</strong>
+                        </div>
+                      )}
+                    </li>
+                  );
+                })}
+              </ul>
+              <div style={{ marginTop: "12px", fontSize: "0.9em", opacity: 0.85 }}>
+                Schüler, die diese Projekte gewählt hatten, wurden auf andere Projekte umverteilt. Die Projektleiter (sofern oben gelistet) müssen Sie nun manuell über die Schülersuche in andere Projekte verschieben (dort, wo es am besten passt).
+              </div>
+            </div>
+          )}
+        </mdui-card>
+      )}
+
       {missingStudentsCount > 0 && (
         <mdui-card variant="filled" color="warning" style={{ width: "100%", padding: "20px", marginBottom: "20px" }}>
           <div style={{ display: "flex", gap: "10px", alignItems: "center", marginBottom: "16px", justifyContent: "space-between" }}>

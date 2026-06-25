@@ -17,6 +17,7 @@ export interface OptionData extends DocumentData {
   id: string;
   title: string;
   max: number;
+  min?: number;
   leaders?: string[];
 }
 

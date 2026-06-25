@@ -253,7 +253,7 @@ export default function Edit() {
   const [name, setName] = React.useState<string>("");
   const [teacher, setTeacher] = React.useState<string>("");
   const [optionDescription, setOptionDescription] = React.useState<string>("");
-  const [max, setMax] = React.useState<number | undefined>(undefined);
+  const [max, setMax] = React.useState<number>(0);
   const [cost, setCost] = React.useState<number | undefined>(undefined);
   const [optionId, setOptionId] = React.useState<string>(
     generateRandomHash(20)
@@ -286,7 +286,7 @@ export default function Edit() {
     setName("");
     setTeacher("");
     setOptionDescription("");
-    setMax(undefined);
+    setMax(0);
     setCost(undefined);
     setOptionId(generateRandomHash(20));
     setLeaders([]);
@@ -627,7 +627,7 @@ export default function Edit() {
                     setName("");
                     setTeacher("");
                     setOptionDescription("");
-                    setMax(undefined);
+                    setMax(0);
                     setCost(undefined);
                     setOptionId(generateRandomHash(20));
                     setLeaders([]);

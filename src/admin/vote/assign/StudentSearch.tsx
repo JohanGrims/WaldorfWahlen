@@ -9,6 +9,11 @@ interface Props {
   choices: ChoiceData[];
   options: OptionData[];
   choicePoints: Record<string, number[]>;
+  searchQuery?: string;
+  setSearchQuery?: (q: string) => void;
+  classes?: any[];
+  cancelledProjects?: string[];
+  onAddChoice?: (c: ChoiceData) => void;
 }
 
 type FilterField = "assignedTo" | "choice" | "selected" | "selected[0]" | "selected[1]" | "selected[2]";
@@ -27,14 +32,49 @@ export default function StudentSearch({
   choices,
   options,
   choicePoints,
+  searchQuery,
+  setSearchQuery,
+  classes = [],
+  cancelledProjects = [],
+  onAddChoice,
 }: Props) {
-  const [nameSearch, setNameSearch] = useState("");
+  const [localNameSearch, setLocalNameSearch] = useState("");
+  const nameSearch = searchQuery !== undefined ? searchQuery : localNameSearch;
+  const setNameSearch = setSearchQuery !== undefined ? setSearchQuery : setLocalNameSearch;
+  
   const [activeClass, setActiveClass] = useState("all");
   const [filters, setFilters] = useState<Filter[]>([]);
+  const [assignmentDialogStudent, setAssignmentDialogStudent] = useState<ChoiceData | null>(null);
 
-  const grades = Array.from(new Set(choices.map((c) => c.grade))).sort((a, b) => parseInt(a) - parseInt(b));
+  const combinedStudents: ChoiceData[] = [...choices];
 
-  const filteredChoices = choices.filter((choice) => {
+  classes.forEach((c: any) => {
+    if (!c.students) return;
+    c.students.forEach((s: any) => {
+      const leaderOption = options.find((o) => o.leaders?.includes(`${c.grade}-${s.listIndex}`));
+      const isLeader = !!leaderOption;
+      const isLeaderOfCancelledProject = leaderOption && cancelledProjects.includes(leaderOption.id);
+      
+      const hasVoted = choices.some((choice) => String(choice.grade) === String(c.grade) && String(choice.listIndex) === String(s.listIndex));
+      
+      if (isLeader && !isLeaderOfCancelledProject) return;
+
+      if (!hasVoted) {
+        combinedStudents.push({
+          id: `${c.grade}-${s.listIndex}`,
+          name: `${s.name} ${isLeader ? '[-]' : '[*]'}`,
+          grade: c.grade,
+          listIndex: s.listIndex,
+          selected: [],
+          timestamp: "",
+        });
+      }
+    });
+  });
+
+  const grades = Array.from(new Set(combinedStudents.map((c) => c.grade))).sort((a, b) => parseInt(a) - parseInt(b));
+
+  const filteredChoices = combinedStudents.filter((choice) => {
     // 1. Name search
     if (nameSearch.trim()) {
       if (!choice.name.toLowerCase().includes(nameSearch.toLowerCase())) {
@@ -203,6 +243,7 @@ export default function StudentSearch({
               {Array.from({ length: vote.selectCount }, (_, i) => i + 1).map((i) => (
                 <th key={i}><b>Wahl {i}</b></th>
               ))}
+              <th style={{ width: "200px" }}><b>Zuweisung</b></th>
             </tr>
           </thead>
           <tbody>
@@ -242,7 +283,11 @@ export default function StudentSearch({
                           });
                         }}
                       >
-                        {isAssigned ? "✓" : (
+                        {isAssigned ? (
+                          <>
+                            ✓ {options.find((o) => o.id === selected)?.title || selected} <span style={{ opacity: 0.6 }}>({Object.values(results).filter((val) => val === selected).length}/{options.find((o) => o.id === selected)?.max || "?"})</span>
+                          </>
+                        ) : (
                           `${options.find((o) => o.id === selected)?.title || selected} (${
                             Object.values(results).filter((val) => val === selected).length
                           }/${options.find((o) => o.id === selected)?.max || "?"})`
@@ -250,6 +295,12 @@ export default function StudentSearch({
                       </td>
                     );
                   })}
+                  <td>
+                    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                      <span style={{ flexGrow: 1 }}>{assignedOptionId ? options.find(o => o.id === assignedOptionId)?.title || "Unbekannt" : "-"}</span>
+                      <mdui-button-icon icon="edit" onClick={() => setAssignmentDialogStudent(choice)} />
+                    </div>
+                  </td>
                 </tr>
               );
             })}
@@ -263,6 +314,73 @@ export default function StudentSearch({
           </tbody>
         </table>
       </div>
+
+      <mdui-dialog
+        open={!!assignmentDialogStudent}
+        onOpenChange={(e: any) => {
+          if (!e.target.open) setAssignmentDialogStudent(null);
+        }}
+        headline="Projekt zuweisen"
+      >
+        {assignmentDialogStudent && (
+          <div style={{ padding: "8px 0" }}>
+            <p>Wählen Sie ein Projekt für <b>{assignmentDialogStudent.name}</b> (Klasse {assignmentDialogStudent.grade}):</p>
+            <div style={{ maxHeight: "50vh", overflowY: "auto", display: "flex", flexDirection: "column", gap: "8px", marginTop: "16px" }}>
+              <mdui-button 
+                variant={!results[assignmentDialogStudent.id] ? "filled" : "outlined"}
+                onClick={() => {
+                  const newResults = { ...results };
+                  delete newResults[assignmentDialogStudent.id];
+                  setResults(newResults);
+                  setAssignmentDialogStudent(null);
+                  snackbar({ message: "Zuweisung entfernt." });
+                }}
+                style={{ justifyContent: "flex-start" }}
+              >
+                - Keine Zuweisung -
+              </mdui-button>
+              {options.map((opt) => {
+                const isAssigned = results[assignmentDialogStudent.id] === opt.id;
+                const assignedCount = Object.values(results).filter((val) => val === opt.id).length;
+                return (
+                  <mdui-button
+                    key={opt.id}
+                    variant={isAssigned ? "filled" : "outlined"}
+                    onClick={() => {
+                      if (!choices.some(c => c.id === assignmentDialogStudent.id) && onAddChoice) {
+                        onAddChoice({
+                          id: assignmentDialogStudent.id,
+                          name: assignmentDialogStudent.name,
+                          grade: assignmentDialogStudent.grade,
+                          listIndex: assignmentDialogStudent.listIndex,
+                          selected: [], // Keep selected empty to avoid faking a Wahl 1
+                          timestamp: new Date().toISOString()
+                        });
+                      }
+                      
+                      const newResults = { ...results };
+                      newResults[assignmentDialogStudent.id] = opt.id;
+                      setResults(newResults);
+                      
+                      const previousResults = { ...results };
+                      snackbar({
+                        message: "Zuweisung geändert",
+                        action: "Rückgängig",
+                        onActionClick: () => setResults(previousResults),
+                      });
+                      setAssignmentDialogStudent(null);
+                    }}
+                    style={{ justifyContent: "flex-start", position: "relative" }}
+                  >
+                    {opt.title} <span style={{ position: "absolute", right: "16px", opacity: 0.6 }}>({assignedCount}/{opt.max})</span>
+                  </mdui-button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+        <mdui-button slot="action" variant="text" onClick={() => setAssignmentDialogStudent(null)}>Abbrechen</mdui-button>
+      </mdui-dialog>
     </div>
   );
 }
