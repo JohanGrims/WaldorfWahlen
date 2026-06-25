@@ -12,6 +12,7 @@ interface Props {
   rules: Rule[];
   switchRef: React.RefObject<HTMLInputElement>;
   setEditRules: (edit: boolean) => void;
+  handleImport: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }
 
 export default function Setup({
@@ -24,6 +25,7 @@ export default function Setup({
   rules,
   switchRef,
   setEditRules,
+  handleImport,
 }: Props) {
   if (loading) {
     return (
@@ -62,9 +64,23 @@ export default function Setup({
         }}
       >
         <h2>Zuteilung starten</h2>
-        <mdui-button icon="settings" onClick={() => setEditRules(true)}>
-          Regeln anpassen
-        </mdui-button>
+        <div style={{ display: "flex", gap: "8px" }}>
+          <div style={{ position: "relative" }}>
+            <mdui-tooltip content="Quickimport (PDF)">
+              <mdui-button-icon icon="upload" onClick={() => document.getElementById('quickimport-input')?.click()}></mdui-button-icon>
+            </mdui-tooltip>
+            <input 
+              id="quickimport-input" 
+              type="file" 
+              accept=".pdf" 
+              style={{ display: "none" }} 
+              onChange={handleImport} 
+            />
+          </div>
+          <mdui-button icon="settings" onClick={() => setEditRules(true)}>
+            Regeln anpassen
+          </mdui-button>
+        </div>
       </div>
       <p />
       {cloudResults.length > 0 && (

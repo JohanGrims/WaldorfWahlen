@@ -18,6 +18,8 @@ import { auth, db, functions } from "../../firebase";
 import { httpsCallable } from "firebase/functions";
 import { calculatePoints, type Rule } from "../../utils/assign";
 import { VoteData, ChoiceData, OptionData, ResultData, LoaderData } from "./assign/types";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 
 import Setup from "./assign/Setup";
 import RulesDialog from "./assign/RulesDialog";
@@ -313,6 +315,235 @@ export default function Assign() {
     setShowMissingDialog(false);
   }
 
+  function quickExport() {
+    if (!results) {
+      snackbar({ message: "Bitte zuerst eine Zuteilung generieren." });
+      return;
+    }
+    const doc = new jsPDF("landscape");
+    
+    doc.setFontSize(16);
+    doc.text(`Quickexport - ${vote.title}`, 14, 15);
+    
+    let finalY = 25;
+
+    const getSoftColor = (wishIndex: number | undefined, maxWishes: number): [number, number, number] => {
+      if (wishIndex === undefined || wishIndex < 0) return [255, 240, 240];
+      const ratio = maxWishes <= 1 ? 0 : wishIndex / (maxWishes - 1);
+      if (ratio <= 0.5) {
+        const localRatio = ratio * 2;
+        return [
+          Math.round(240 + 15 * localRatio),
+          Math.round(252 + 1 * localRatio),
+          Math.round(240 - 5 * localRatio)
+        ];
+      } else {
+        const localRatio = (ratio - 0.5) * 2;
+        return [
+          255,
+          Math.round(253 - 13 * localRatio),
+          Math.round(235 + 5 * localRatio)
+        ];
+      }
+    };
+
+    const tableBody: any[][] = [];
+    
+    // Sort projects by title
+    const sortedProjects = options.slice().sort((a, b) => a.title.localeCompare(b.title));
+    
+    sortedProjects.forEach(project => {
+      const assigned = Object.keys(results).filter(id => results[id] === project.id);
+      if (assigned.length === 0) return;
+      
+      const students = assigned.map(id => localChoices.find(c => c.id === id)).filter(Boolean) as ChoiceData[];
+      
+      // Sort students by class then listIndex
+      students.sort((a, b) => {
+        if (a.grade !== b.grade) return a.grade - b.grade;
+        return a.listIndex - b.listIndex;
+      });
+
+      // Add project header row
+      tableBody.push([{ content: project.title, colSpan: 4 + vote.selectCount, styles: { fillColor: [240, 240, 240], fontStyle: 'bold' } }]);
+      
+      students.forEach(student => {
+        const choicesNames = Array.from({length: vote.selectCount}).map((_, i) => {
+          const optId = student.selected?.[i];
+          if (!optId) return "-";
+          const isAssignedToThisChoice = optId === project.id;
+          const title = options.find(o => o.id === optId)?.title || "-";
+          return isAssignedToThisChoice ? `[ ${title} ]` : title;
+        });
+        
+        let assignedText = "Manuell";
+        const wishIndex = student.selected?.indexOf(project.id);
+        if (wishIndex !== undefined && wishIndex >= 0) {
+          assignedText = `${wishIndex + 1}. Wunsch`;
+        }
+
+        const color = getSoftColor(wishIndex, vote.selectCount);
+
+        tableBody.push([
+          { content: student.name, styles: { fillColor: color } },
+          { content: student.grade.toString(), styles: { fillColor: color } },
+          { content: student.listIndex.toString(), styles: { fillColor: color } },
+          ...choicesNames.map(c => ({ content: c, styles: { fillColor: color } })),
+          { content: assignedText, styles: { fillColor: color } }
+        ]);
+      });
+    });
+
+    // Handle unassigned students
+    const unassignedStudents: {name: string, grade: number, listIndex: number, info: string, choices: string[]}[] = [];
+
+    // 1. Unassigned voters (in localChoices but no valid result)
+    const unassignedVoters = localChoices.filter(c => !results[c.id] || !options.some(o => o.id === results[c.id]));
+    unassignedVoters.forEach(student => {
+      const choicesNames = Array.from({length: vote.selectCount}).map((_, i) => {
+        const optId = student.selected?.[i];
+        return optId ? options.find(o => o.id === optId)?.title || "-" : "-";
+      });
+      unassignedStudents.push({
+        name: student.name,
+        grade: student.grade,
+        listIndex: student.listIndex,
+        info: "Wähler",
+        choices: choicesNames
+      });
+    });
+
+    // 2. Missing students (Nicht-Wähler) and Displaced Leaders
+    classes.forEach((c: any) => {
+      if (!c.students) return;
+      c.students.forEach((s: any) => {
+        const hasVoted = localChoices.some(choice => choice.grade == c.grade && choice.listIndex == s.listIndex);
+        if (hasVoted) return;
+
+        let isLeaderActive = false;
+        let isLeaderCancelled = false;
+
+        options.forEach((opt) => {
+          if (opt.leaders?.includes(`${c.grade}-${s.listIndex}`)) {
+            if (cancelledProjects.includes(opt.id)) {
+              isLeaderCancelled = true;
+            } else {
+              isLeaderActive = true;
+            }
+          }
+        });
+
+        if (isLeaderActive) return; // Active leaders are okay, they don't vote
+
+        const info = isLeaderCancelled ? "Leiter (abgesagt)" : "Nicht-Wähler";
+        
+        unassignedStudents.push({
+          name: s.name,
+          grade: c.grade,
+          listIndex: s.listIndex,
+          info: info,
+          choices: Array(vote.selectCount).fill("-")
+        });
+      });
+    });
+
+    if (unassignedStudents.length > 0) {
+      unassignedStudents.sort((a, b) => {
+        if (a.grade !== b.grade) return a.grade - b.grade;
+        return a.listIndex - b.listIndex;
+      });
+
+      tableBody.push([{ content: "Ohne Zuteilung", colSpan: 4 + vote.selectCount, styles: { fillColor: [255, 200, 200], fontStyle: 'bold', textColor: [200, 0, 0] } }]);
+      
+      unassignedStudents.forEach(student => {
+        tableBody.push([
+          student.name,
+          student.grade.toString(),
+          student.listIndex.toString(),
+          ...student.choices,
+          student.info
+        ]);
+      });
+    }
+
+    const head = [["Name", "Kl.", "Nr.", ...Array.from({length: vote.selectCount}).map((_, i) => `${i+1}. Wahl`), "Zugewiesen / Status"]];
+
+    autoTable(doc, {
+      startY: finalY,
+      head: head,
+      body: tableBody,
+      theme: "grid",
+      styles: { fontSize: 8 },
+      headStyles: { fillColor: [33, 150, 243] },
+    });
+
+    const pdfBlob = doc.output('blob');
+    const dumpData = {
+      waldorfWahlenDump: "v2",
+      results,
+      localChoices,
+      newChoices,
+      stats,
+      projectMins,
+      projectOverbooks,
+      cancelledProjects,
+      rules
+    };
+    const dumpString = "\n===WALDORFWAHLEN_DUMP===\n" + JSON.stringify(dumpData) + "\n===END_DUMP===\n";
+    const dumpBlob = new Blob([dumpString], { type: "text/plain" });
+    const finalBlob = new Blob([pdfBlob, dumpBlob], { type: "application/pdf" });
+    const url = URL.createObjectURL(finalBlob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `Quickexport_${vote.title.replace(/[^a-zA-Z0-9]/g, "_")}.pdf`;
+    link.click();
+    URL.revokeObjectURL(url);
+    snackbar({ message: "Quickexport generiert!" });
+  }
+
+  const handleImport = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const text = ev.target?.result as string;
+      const match = text.match(/===WALDORFWAHLEN_DUMP===\n([\s\S]*?)\n===END_DUMP===/);
+      if (match) {
+        try {
+          const dump = JSON.parse(match[1]);
+          if (dump.waldorfWahlenDump === "v1" || dump.waldorfWahlenDump === "v2") {
+            setResults(dump.results);
+            setLocalChoices(dump.localChoices);
+            setNewChoices(dump.newChoices);
+            
+            if (dump.stats !== undefined) setStats(dump.stats);
+            if (dump.projectMins) setProjectMins(dump.projectMins);
+            if (dump.projectOverbooks) setProjectOverbooks(dump.projectOverbooks);
+            if (dump.cancelledProjects) setCancelledProjects(dump.cancelledProjects);
+            if (dump.rules) setRules(dump.rules);
+
+            // Recalculate choice points just in case
+            const calculatedPoints: Record<string, number[]> = {};
+            dump.localChoices.forEach((choice: ChoiceData) => {
+              calculatedPoints[choice.id] = calculatePoints(choice, rules);
+            });
+            setChoicePoints(calculatedPoints);
+
+            snackbar({ message: "Stand erfolgreich aus PDF importiert!" });
+          } else {
+            snackbar({ message: "Unbekannte Dump-Version." });
+          }
+        } catch (err) {
+          snackbar({ message: "Fehler beim Lesen des Dumps." });
+        }
+      } else {
+        snackbar({ message: "Kein Quickexport-Dump in dieser Datei gefunden." });
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = ''; // Reset input
+  };
+
   const switchRef = React.useRef<HTMLInputElement>(null);
 
   let blocker = useBlocker(
@@ -385,6 +616,7 @@ export default function Assign() {
           rules={rules}
           switchRef={switchRef}
           setEditRules={setEditRules}
+          handleImport={handleImport}
         />
       </div>
     );
@@ -540,6 +772,9 @@ export default function Assign() {
       >
         <h2 style={{ margin: 0 }}>Zuteilung</h2>
         <div style={{ display: "flex", gap: "8px" }}>
+          <mdui-tooltip content="Quickexport (PDF)">
+            <mdui-button-icon icon="download" onClick={quickExport}></mdui-button-icon>
+          </mdui-tooltip>
           <mdui-tooltip content="Zurücksetzen" variant="rich">
             <mdui-button-icon
               icon="history"
