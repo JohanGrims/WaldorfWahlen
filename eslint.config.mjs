@@ -15,7 +15,7 @@ const compat = new FlatCompat({
 });
 
 export default [{
-    ignores: ["**/dist", "**/.eslintrc.cjs"],
+    ignores: ["**/dist", "**/.eslintrc.cjs", "**/functions/venv/**", "**/node_modules/**", "**/firestore-backup.json"],
 }, ...fixupConfigRules(compat.extends(
     "eslint:recommended",
     "plugin:react/recommended",
@@ -29,6 +29,7 @@ export default [{
     languageOptions: {
         globals: {
             ...globals.browser,
+            ...globals.node,
         },
 
         ecmaVersion: "latest",

@@ -23,7 +23,7 @@ function getSchoolIdFromHost(req) {
   const forwardedHost = req.headers["x-forwarded-host"];
   const host = req.headers["host"];
   const hostname = forwardedHost || host || "unknown";
-  let schoolId = "unknown";
+  let schoolId;
   // Try to extract subdomain (schoolId) if present
   if (hostname.includes(".")) {
     schoolId = hostname.split(".")[0];

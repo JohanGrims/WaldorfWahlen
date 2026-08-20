@@ -343,7 +343,7 @@ export default function Assign() {
       snackbar({ message: "Bitte zuerst eine Zuteilung generieren." });
       return;
     }
-    const doc = new jsPDF("landscape");
+    const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: [297, 210] });
     
     doc.setFontSize(16);
     doc.text(`Quickexport - ${vote.title}`, 14, 15);

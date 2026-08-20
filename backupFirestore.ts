@@ -1,11 +1,10 @@
-import admin from "firebase-admin";
+import { initializeApp, cert } from "firebase-admin/app";
+import { getFirestore } from "firebase-admin/firestore";
 import * as fs from "fs";
 import * as path from "path";
 import { fileURLToPath } from "url";
 
 console.log("Starting backup script...");
-console.log("Firebase admin import:", typeof admin);
-console.log("Admin credential:", typeof admin?.credential);
 
 // Path to your Firebase service account key JSON
 const __filename = fileURLToPath(import.meta.url);
@@ -20,15 +19,13 @@ console.log("Service account path:", serviceAccountPath);
 console.log("Service account file exists:", fs.existsSync(serviceAccountPath));
 
 console.log("About to initialize Firebase admin...");
-console.log("admin.credential:", admin.credential);
-console.log("admin.credential.cert:", typeof admin.credential?.cert);
 
-admin.initializeApp({
-  credential: admin.credential.cert(serviceAccountPath),
+initializeApp({
+  credential: cert(serviceAccountPath),
 });
 
 console.log("Firebase admin initialized successfully");
-const db = admin.firestore();
+const db = getFirestore();
 console.log("Firestore instance created:", typeof db);
 
 async function getAllCollections(): Promise<string[]> {

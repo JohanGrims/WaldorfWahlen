@@ -4,9 +4,8 @@ import ErrorPage from "./Error";
 import "./styles.css";
 
 import "mdui";
-import { alert, setColorScheme, setTheme } from "mdui";
+import { setColorScheme, setTheme } from "mdui";
 import "mdui/mdui.css";
-import { getToken } from "firebase/app-check";
 import ScrollToTop from "./admin/utils";
 import { SchoolProvider } from "./contexts";
 

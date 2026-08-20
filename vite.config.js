@@ -24,7 +24,7 @@ function schoolIdReplacementPlugin() {
 
           // Clear the module cache to force retransformation
           const moduleGraph = server.moduleGraph;
-          for (const [url, mod] of moduleGraph.urlToModuleMap) {
+          for (const [, mod] of moduleGraph.urlToModuleMap) {
             if (mod.file && mod.file.includes("src/")) {
               moduleGraph.invalidateModule(mod);
             }
@@ -92,7 +92,7 @@ const allPackages = [...new Set([...dependencies, ...commonLargePackages])];
 const packageToChunk = {};
 allPackages.forEach((pkg) => {
   // Convert package names to valid chunk names
-  const chunkName = `vendor-${pkg.replace(/[@\/]/g, "-")}`;
+  const chunkName = `vendor-${pkg.replace(/[@/]/g, "-")}`;
   packageToChunk[pkg] = chunkName;
 });
 

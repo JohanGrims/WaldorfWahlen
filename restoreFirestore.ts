@@ -1,4 +1,5 @@
-import admin from "firebase-admin";
+import { initializeApp, cert } from "firebase-admin/app";
+import { getFirestore, Timestamp } from "firebase-admin/firestore";
 import * as fs from "fs";
 import * as path from "path";
 import { fileURLToPath } from "url";
@@ -30,12 +31,12 @@ if (!fs.existsSync(backupPath)) {
 }
 
 // Initialize Firebase Admin
-admin.initializeApp({
-  credential: admin.credential.cert(serviceAccountPath),
+initializeApp({
+  credential: cert(serviceAccountPath),
 });
 
 console.log("Firebase admin initialized successfully");
-const db = admin.firestore();
+const db = getFirestore();
 
 // Helper function to convert timestamp objects
 function convertTimestamps(obj: any): any {
@@ -49,7 +50,7 @@ function convertTimestamps(obj: any): any {
     obj._nanoseconds !== undefined
   ) {
     // Convert Firestore timestamp format to Timestamp object
-    return admin.firestore.Timestamp.fromMillis(
+    return Timestamp.fromMillis(
       obj._seconds * 1000 + Math.floor(obj._nanoseconds / 1000000)
     );
   }

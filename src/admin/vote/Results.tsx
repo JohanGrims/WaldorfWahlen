@@ -114,6 +114,7 @@ export default function Results() {
         <head>
           <title>Drucken</title>
           <style>
+            @page { size: A4; margin: 20mm; }
             /* Optional: Stil-Definitionen für den Druck */
             body { font-family: Arial, sans-serif; }
             table { width: 100%; border-collapse: collapse; }
@@ -203,6 +204,7 @@ export default function Results() {
         <head>
           <title>Drucken - ${project.title.replace(/\[.*?\]/g, "")}</title>
           <style>
+            @page { size: A4; margin: 20mm; }
             body { font-family: Arial, sans-serif; }
             table { width: 100%; border-collapse: collapse; }
             th, td { border: 1px solid #000; padding: 8px; text-align: left; }
@@ -290,6 +292,7 @@ export default function Results() {
         <head>
           <title>Drucken - Klasse ${grade}</title>
           <style>
+            @page { size: A4; margin: 20mm; }
             body { font-family: Arial, sans-serif; }
             table { width: 100%; border-collapse: collapse; }
             th, td { border: 1px solid #000; padding: 8px; text-align: left; }
@@ -523,7 +526,7 @@ export default function Results() {
     emptyRows: number = 2,
     headers: string[] = []
   ) {
-    const doc = new jsPDF("landscape", "mm", "a4");
+    const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: [297, 210] });
     const pageWidth = 297; // A4 landscape width
     const pageHeight = 210; // A4 landscape height
     const margin = 15;
@@ -613,14 +616,14 @@ export default function Results() {
       const totalRows = projectStudents.length + emptyRows;
 
       if (optionIndex > 0) {
-        doc.addPage();
+        doc.addPage([297, 210], "landscape");
         currentPage++;
         currentY = margin;
       }
 
       // Project title
       doc.setFontSize(12);
-      doc.text(option.title.replace(/\[.*?\]/g, ""), margin, currentY + 8);
+      doc.text(option.title.replace(/\[.*?\]/g, ""), margin, currentY + 8, { maxWidth: usableWidth });
       currentY += 18;
 
       addCustomMessage();
@@ -634,7 +637,7 @@ export default function Results() {
       // Process each row
       for (let rowIndex = 0; rowIndex < totalRows; rowIndex++) {
         if (currentY + rowHeight > pageHeight - margin) {
-          doc.addPage();
+          doc.addPage([297, 210], "landscape");
           currentPage++;
           currentY = margin;
 
@@ -642,7 +645,8 @@ export default function Results() {
           doc.text(
             option.title.replace(/\[.*?\]/g, "") + " (Fortsetzung)",
             margin,
-            currentY + 8
+            currentY + 8,
+            { maxWidth: usableWidth }
           );
           currentY += 18;
 
@@ -716,8 +720,9 @@ export default function Results() {
       doc.setTextColor(128, 128, 128);
       doc.text(
         `Seite ${i} von ${totalPages} - Erstellt mit WaldorfWahlen`,
-        pageWidth - margin - 50,
-        pageHeight - 5
+        pageWidth - margin,
+        pageHeight - 10,
+        { align: "right" }
       );
     }
 
